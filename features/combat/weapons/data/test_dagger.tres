@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="WeaponDefinition" format=3]
+
+[ext_resource type="Resource" path="res://features/combat/weapons/data/combo_test_dagger.tres" id="1_ophwp"]
+[ext_resource type="Script" path="res://features/combat/weapons/weapon_definition.gd" id="2_ux8k5"]
+
+[resource]
+script = ExtResource("2_ux8k5")
+weapon_id = &"test_dagger"
+display_name = "Test Dagger"
+weapon_type_id = &"dagger"
+combo = ExtResource("1_ophwp")
+visual_color = Color(0.6, 0.95, 0.7, 1)
+visual_length = 11.0
+visual_width = 2.0

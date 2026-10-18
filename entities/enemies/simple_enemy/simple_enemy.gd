@@ -16,6 +16,7 @@ var _spawn_position: Vector2
 
 @onready var _health: HealthComponent = $HealthComponent
 @onready var _melee: MeleeAttack = $MeleeAttack
+@onready var _knockback: KnockbackComponent = $KnockbackComponent
 
 
 func _ready() -> void:
@@ -29,17 +30,19 @@ func _physics_process(_delta: float) -> void:
 	velocity = Vector2.ZERO
 	if not _has_live_target():
 		_state = State.IDLE
-		return
-	var to_target: Vector2 = target.global_position - global_position
-	var distance: float = to_target.length()
-	if distance <= _melee.attack_range * attack_trigger_ratio or _melee.is_attacking():
-		_state = State.ATTACK
-		_melee.attack(to_target)
-	elif distance <= detection_range:
-		_state = State.CHASE
-		velocity = to_target / distance * move_speed
 	else:
-		_state = State.IDLE
+		var to_target: Vector2 = target.global_position - global_position
+		var distance: float = to_target.length()
+		if distance <= _melee.attack_range * attack_trigger_ratio or _melee.is_attacking():
+			_state = State.ATTACK
+			_melee.attack(to_target)
+		elif distance <= detection_range:
+			_state = State.CHASE
+			velocity = to_target / distance * move_speed
+		else:
+			_state = State.IDLE
+	# Knockback cộng vào velocity rồi đi qua move_and_slide() nên vật cản vẫn chặn.
+	velocity += _knockback.get_velocity()
 	move_and_slide()
 
 
@@ -55,6 +58,7 @@ func is_dead() -> bool:
 func reset_state() -> void:
 	global_position = _spawn_position
 	velocity = Vector2.ZERO
+	_knockback.clear()
 	_melee.cancel()
 	_health.reset()
 	_state = State.IDLE

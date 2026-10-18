@@ -1,0 +1,41 @@
+[gd_resource type="Resource" script_class="ComboDefinition" format=3]
+
+[ext_resource type="Script" path="res://features/combat/weapons/combo_definition.gd" id="1_57g7m"]
+[ext_resource type="Script" path="res://features/combat/weapons/combo_step_definition.gd" id="2_l7te2"]
+
+[sub_resource type="Resource" id="Resource_5kiv4"]
+script = ExtResource("2_l7te2")
+damage = 12
+attack_range = 32.0
+attack_width = 26.0
+windup = 0.06
+recovery = 0.14
+link_window = 0.3
+knockback = 120.0
+
+[sub_resource type="Resource" id="Resource_csvgl"]
+script = ExtResource("2_l7te2")
+damage = 14
+attack_range = 34.0
+attack_width = 22.0
+windup = 0.06
+recovery = 0.16
+link_window = 0.3
+knockback = 140.0
+effect_color = Color(0.85, 0.95, 1, 0.6)
+
+[sub_resource type="Resource" id="Resource_vbald"]
+script = ExtResource("2_l7te2")
+damage = 22
+attack_range = 38.0
+attack_width = 32.0
+windup = 0.12
+active = 0.12
+recovery = 0.3
+link_window = 0.0
+knockback = 260.0
+effect_color = Color(1, 0.8, 0.35, 0.7)
+
+[resource]
+script = ExtResource("1_57g7m")
+steps = Array[ExtResource("2_l7te2")]([SubResource("Resource_5kiv4"), SubResource("Resource_csvgl"), SubResource("Resource_vbald")])

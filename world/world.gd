@@ -11,6 +11,8 @@ extends Node2D
 @export var interaction_feedback: InteractionFeedback
 @export var player_health: HealthComponent
 @export var combat_hud: CombatHUD
+@export var player_weapon: WeaponEquipment
+@export var player_attack: BasicAttackController
 
 @onready var _environment: Node2D = $Environment
 @onready var _map_container: Node2D = $MapContainer
@@ -91,6 +93,10 @@ func _setup_combat_hud() -> void:
 		return
 	if player_health != null:
 		combat_hud.bind_player_health(player_health)
+	if player_weapon != null:
+		combat_hud.bind_weapon(player_weapon)
+	if player_attack != null:
+		combat_hud.bind_attack(player_attack)
 	for node: Node in get_tree().get_nodes_in_group(Hurtbox.GROUP):
 		var hurtbox: Hurtbox = node as Hurtbox
 		if hurtbox != null and is_ancestor_of(hurtbox):

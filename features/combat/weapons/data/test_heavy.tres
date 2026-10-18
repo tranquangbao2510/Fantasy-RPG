@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="WeaponDefinition" format=3]
+
+[ext_resource type="Resource" path="res://features/combat/weapons/data/combo_test_heavy.tres" id="1_pagl6"]
+[ext_resource type="Script" path="res://features/combat/weapons/weapon_definition.gd" id="2_svhgf"]
+
+[resource]
+script = ExtResource("2_svhgf")
+weapon_id = &"test_heavy"
+display_name = "Test Heavy Weapon"
+weapon_type_id = &"heavy"
+combo = ExtResource("1_pagl6")
+visual_color = Color(0.75, 0.5, 0.35, 1)
+visual_length = 24.0
+visual_width = 6.0

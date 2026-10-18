@@ -6,6 +6,8 @@ extends RefCounted
 var amount: int = 0
 ## Thực thể gây sát thương (gốc scene của attacker). Dùng để tránh tự đánh chính mình.
 var source: Node
+## Vận tốc đẩy lùi ban đầu (px/s, đã gồm hướng). ZERO = không đẩy.
+var knockback: Vector2 = Vector2.ZERO
 
 
 func _init(p_amount: int = 0, p_source: Node = null) -> void:

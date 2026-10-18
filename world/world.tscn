@@ -13,7 +13,7 @@
 [ext_resource type="PackedScene" path="res://entities/enemies/simple_enemy/simple_enemy.tscn" id="11_enemy"]
 [ext_resource type="PackedScene" path="res://ui/combat/combat_hud.tscn" id="12_hud"]
 
-[node name="World" type="Node2D" node_paths=PackedStringArray("camera", "camera_target", "map_bounds", "interaction_detector", "interaction_prompt", "interaction_feedback", "player_health", "combat_hud")]
+[node name="World" type="Node2D" node_paths=PackedStringArray("camera", "camera_target", "map_bounds", "interaction_detector", "interaction_prompt", "interaction_feedback", "player_health", "combat_hud", "player_weapon", "player_attack")]
 script = ExtResource("1_world")
 camera = NodePath("CameraContainer/GameCamera")
 camera_target = NodePath("EntityContainer/Player")
@@ -23,6 +23,8 @@ interaction_prompt = NodePath("UILayer/InteractionPrompt")
 interaction_feedback = NodePath("UILayer/InteractionFeedback")
 player_health = NodePath("EntityContainer/Player/HealthComponent")
 combat_hud = NodePath("UILayer/CombatHUD")
+player_weapon = NodePath("EntityContainer/Player/WeaponEquipment")
+player_attack = NodePath("EntityContainer/Player/BasicAttackController")
 
 [node name="Environment" type="Node2D" parent="."]
 

@@ -1,10 +1,16 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://entities/player/player.gd" id="1_player"]
 [ext_resource type="PackedScene" path="res://features/interaction/interaction_detector.tscn" id="2_detector"]
 [ext_resource type="Script" path="res://features/character/health_component.gd" id="3_health"]
 [ext_resource type="Script" path="res://features/combat/hurtbox.gd" id="4_hurtbox"]
-[ext_resource type="PackedScene" path="res://features/combat/melee_attack.tscn" id="5_melee"]
+[ext_resource type="PackedScene" path="res://features/combat/weapons/basic_attack_controller.tscn" id="5_attack"]
+[ext_resource type="Script" path="res://features/combat/weapons/weapon_equipment.gd" id="7_equipment"]
+[ext_resource type="Script" path="res://features/combat/weapons/debug_weapon_switcher.gd" id="8_switcher"]
+[ext_resource type="Resource" path="res://features/combat/weapons/data/test_sword.tres" id="9_sword"]
+[ext_resource type="Resource" path="res://features/combat/weapons/data/test_dagger.tres" id="10_dagger"]
+[ext_resource type="Resource" path="res://features/combat/weapons/data/test_heavy.tres" id="11_heavy"]
+[ext_resource type="Script" path="res://features/combat/weapons/weapon_definition.gd" id="12_weapon_def"]
 [ext_resource type="Script" path="res://features/combat/hit_flash.gd" id="6_flash"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_feet"]
@@ -56,17 +62,22 @@ health = NodePath("../HealthComponent")
 position = Vector2(0, -14)
 shape = SubResource("RectangleShape2D_hurt")
 
-[node name="MeleeAttack" parent="." node_paths=PackedStringArray("health") instance=ExtResource("5_melee")]
-position = Vector2(0, -12)
-damage = 20
-attack_range = 30.0
-attack_width = 26.0
-duration = 0.12
-cooldown = 0.35
-target_layers = 32
-health = NodePath("../HealthComponent")
-
 [node name="HitFlash" type="Node" parent="." node_paths=PackedStringArray("health", "visual")]
 script = ExtResource("6_flash")
 health = NodePath("../HealthComponent")
 visual = NodePath("../Visual")
+
+[node name="WeaponEquipment" type="Node" parent="."]
+script = ExtResource("7_equipment")
+starting_weapon = ExtResource("9_sword")
+
+[node name="BasicAttackController" parent="." node_paths=PackedStringArray("equipment", "health") instance=ExtResource("5_attack")]
+position = Vector2(0, -12)
+equipment = NodePath("../WeaponEquipment")
+health = NodePath("../HealthComponent")
+target_layers = 32
+
+[node name="DebugWeaponSwitcher" type="Node" parent="." node_paths=PackedStringArray("equipment")]
+script = ExtResource("8_switcher")
+equipment = NodePath("../WeaponEquipment")
+weapons = Array[ExtResource("12_weapon_def")]([ExtResource("9_sword"), ExtResource("10_dagger"), ExtResource("11_heavy")])

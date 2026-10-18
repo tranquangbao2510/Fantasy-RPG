@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://entities/enemies/simple_enemy/simple_enemy.gd" id="1_enemy"]
 [ext_resource type="Script" path="res://features/character/health_component.gd" id="2_health"]
@@ -6,6 +6,7 @@
 [ext_resource type="Script" path="res://features/combat/hit_flash.gd" id="4_flash"]
 [ext_resource type="Script" path="res://ui/combat/world_health_bar.gd" id="5_bar"]
 [ext_resource type="PackedScene" path="res://features/combat/melee_attack.tscn" id="6_melee"]
+[ext_resource type="Script" path="res://features/combat/knockback_component.gd" id="7_knockback"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_feet"]
 radius = 6.0
@@ -74,4 +75,9 @@ visual = NodePath("../Visual")
 [node name="HealthBar" type="Node2D" parent="." node_paths=PackedStringArray("health")]
 position = Vector2(0, -32)
 script = ExtResource("5_bar")
+health = NodePath("../HealthComponent")
+
+[node name="KnockbackComponent" type="Node" parent="." node_paths=PackedStringArray("hurtbox", "health")]
+script = ExtResource("7_knockback")
+hurtbox = NodePath("../Hurtbox")
 health = NodePath("../HealthComponent")

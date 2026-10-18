@@ -135,7 +135,7 @@ Player (CharacterBody2D, motion_mode = Floating) ── player.gd
 │   └── FacingPivot (Node2D)      — xoay theo hướng di chuyển cuối
 │       └── Marker (Polygon2D)    — tam giác vàng chỉ hướng trước mặt
 ├── CollisionShape2D              — CircleShape2D r=6, tâm (0,-6): chạm tới chân
-└── InteractionDetector, HealthComponent, Hurtbox, MeleeAttack, HitFlash — xem 2e, 2f
+└── InteractionDetector, HealthComponent, Hurtbox, HitFlash, WeaponEquipment, BasicAttackController, DebugWeaponSwitcher — xem 2e, 2f, 2g
 ```
 
 - **Origin = chân nhân vật**, nên Y-sort trong `EntityContainer` dựa trên điểm tiếp xúc mặt đất. Visual vẽ phía trên origin. Không dùng Z-index.
@@ -144,7 +144,7 @@ Player (CharacterBody2D, motion_mode = Floating) ── player.gd
 - `move_speed` (`@export`, mặc định **160 px/s**) — giá trị thử nghiệm.
 - **Spawn:** đặt trực tiếp trong `world.tscn` tại (480, 320), giữa quảng trường đá. Chưa có SpawnManager/checkpoint.
 - Placeholder: toàn bộ visual, kích thước collision, tốc độ, vị trí spawn.
-- `player.gd` chỉ đọc input (`basic_attack` → `MeleeAttack.attack()`), chặn điều khiển khi chết và cung cấp `is_dead()`, `reset_state()`, `get_aim_direction(world_point)`. Logic HP/đòn đánh nằm trong component.
+- `player.gd` chỉ đọc input (`basic_attack` → `BasicAttackController.request_attack()`), chặn điều khiển khi chết và cung cấp `is_dead()`, `reset_state()`, `get_aim_direction(world_point)`. Logic HP/đòn đánh nằm trong component.
 
 ## 2d. Camera — GameCamera [Đã triển khai]
 
@@ -228,7 +228,8 @@ features/combat/
 ├── damage_info.gd        — class_name DamageInfo (RefCounted): amount, source
 ├── hitbox.gd             — class_name Hitbox (Area2D): vùng gây đòn, bật/tắt theo đòn
 ├── hurtbox.gd            — class_name Hurtbox (Area2D): vùng nhận đòn → HealthComponent
-├── melee_attack.gd/.tscn — class_name MeleeAttack (Node2D): đòn cận chiến dùng chung Player/enemy
+├── melee_attack.gd/.tscn — class_name MeleeAttack (Node2D): đòn đơn dùng cho enemy (Player dùng BasicAttackController, xem 2g)
+├── knockback_component.gd — class_name KnockbackComponent (Node): đẩy lùi cho CharacterBody2D
 └── hit_flash.gd          — class_name HitFlash (Node): nháy màu / tô xám theo HP (chỉ visual)
 entities/enemies/
 ├── training_dummy/       — Node2D đứng yên, HP 60, không AI
@@ -239,11 +240,11 @@ ui/combat/
 └── world_health_bar.gd   — thanh HP nhỏ trên đầu dummy/enemy
 ```
 
-**Luồng:** Input (`basic_attack` = chuột trái) → `player.gd` tính hướng tới chuột → `MeleeAttack.attack(dir)` → (windup) → `Hitbox.activate(DamageInfo)` → mỗi physics tick duyệt `get_overlapping_areas()` → `Hurtbox.receive_damage(info)` → `HealthComponent.apply_damage()` → signal `damaged` / `health_changed` / `died` → HitFlash, WorldHealthBar, CombatHUD, logic chết của thực thể.
+**Luồng:** Input (`basic_attack` = chuột trái) → `BasicAttackController` (Player, 2g) hoặc `MeleeAttack` (enemy) → (windup) → `Hitbox.activate(DamageInfo)` → mỗi physics tick duyệt `get_overlapping_areas()` → `Hurtbox.receive_damage(info)` → `HealthComponent.apply_damage()` → signal `damaged` / `health_changed` / `died` → HitFlash, WorldHealthBar, CombatHUD, logic chết của thực thể.
 
 **HealthComponent** — `max_health` (export), `current_health`, `is_dead()`, `apply_damage(n) -> int`, `heal(n) -> int`, `reset()`. HP kẹp trong [0, max]; amount ≤ 0 bị bỏ qua; đã chết thì không nhận damage/heal; `died` phát đúng 1 lần cho tới `reset()` (phát `revived`). Không biết chủ thể là gì.
 
-**Damage** — `DamageInfo.new(amount, source)`; một instance dùng chung cho mọi mục tiêu của một đòn. Mục tiêu = Hurtbox nhận đòn. Chưa có chỉ số/phòng thủ/chí mạng/nguyên tố; mở rộng bằng cách thêm field vào DamageInfo.
+**Damage** — `DamageInfo.new(amount, source)` + `knockback: Vector2`; một instance dùng chung cho mọi mục tiêu của một đòn. Mục tiêu = Hurtbox nhận đòn. Chưa có chỉ số/phòng thủ/chí mạng/nguyên tố; mở rộng bằng cách thêm field vào DamageInfo.
 
 **Hitbox / Hurtbox**
 
@@ -251,14 +252,13 @@ ui/combat/
 - Hurtbox: `health` (export); bỏ qua đòn có `source == owner` (tự đánh mình), amount không hợp lệ, hoặc mục tiêu đã chết. Phát `hit_received(info, applied)`. Tự vào group `hurtboxes`.
 - Phe = collision layer: Player Hurtbox layer 5, enemy/dummy Hurtbox layer 6. Hitbox `layer = 0`; Player Hitbox mask 6, enemy Hitbox mask 5 → không tự đánh, dummy/enemy không đánh lẫn nhau. Hitbox/Hurtbox là Area2D, không chặn chuyển động, không dùng layer `interaction`.
 
-**MeleeAttack** (export, mọi giá trị là placeholder):
+**MeleeAttack** (enemy; export, mọi giá trị là placeholder):
 
 | | damage | attack_range | attack_width | windup | duration | cooldown | target_layers |
 |---|---|---|---|---|---|---|---|
-| Player | 20 | 30 | 26 | 0 | 0.12 s | 0.35 s | 6 `enemy_hurtbox` |
 | SimpleEnemy | 10 | 26 | 20 | 0.35 s | 0.15 s | 1.0 s | 5 `player_hurtbox` |
 
-API: `attack(direction) -> bool`, `can_attack()`, `is_attacking()`, `cancel()`, `get_hitbox()`; signal `attack_started(direction)`, `attack_finished`. Chỉ xoay node MeleeAttack (Hitbox + visual), không xoay thực thể. Mỗi click là một đòn (không echo, không buffer); đang đánh/nghỉ thì bỏ qua. Không đánh khi `health` của chủ thể đã chết. Hướng ngắm của Player: từ điểm đánh tới chuột (world), tự do 360°; chuột quá gần (≤ 4 px) thì dùng hướng nhìn hiện tại.
+API: `attack(direction) -> bool`, `can_attack()`, `is_attacking()`, `cancel()`, `get_hitbox()`; signal `attack_started(direction)`, `attack_finished`. Chỉ xoay node MeleeAttack (Hitbox + visual), không xoay thực thể. Đang đánh/nghỉ thì bỏ qua. Không đánh khi `health` của chủ thể đã chết.
 
 **SimpleEnemy** — export `target` (World gán Player), `move_speed` 70, `detection_range` 150, `attack_trigger_ratio` 0.8 × `MeleeAttack.attack_range`. Ngoài tầm: đứng yên; trong tầm: đi thẳng tới target (`move_and_slide`, mask `world`, có thể kẹt sau vật cản, không pathfinding); đủ gần: đứng lại và đánh. Chỉ đọc vị trí và `is_dead()` của target (nếu có), không đọc HP. Chết: dừng AI, hủy đòn. Thân enemy layer 4, mask 1; Player và enemy không chặn nhau.
 
@@ -276,10 +276,67 @@ API: `attack(direction) -> bool`, `can_attack()`, `is_attacking()`, `cancel()`, 
 Giới hạn prototype:
 
 - Hurtbox chỉ được nối vào HUD lúc `World._ready()`; thực thể sinh ra sau này cần được nối thêm.
-- Không knockback, không i-frame: enemy đánh trúng mỗi lần hết cooldown.
+- Không i-frame: enemy đánh trúng mỗi lần hết cooldown. Knockback chỉ có ở SimpleEnemy (Player và dummy không bị đẩy).
 - Enemy không pathfinding, không tránh vật cản; Player và enemy có thể chồng lên nhau.
 - Vùng tấn công là hình chữ nhật; chưa có animation chính thức.
 - `get_global_mouse_position()` đọc con trỏ thật nên kiểm thử tự động không giả lập được hướng chuột (đã tách `get_aim_direction()` để kiểm thử).
+
+## 2g. Weapon & basic attack combo [Đã triển khai, placeholder]
+
+Quy tắc đã chốt: một class dùng được nhiều loại vũ khí; **mỗi loại vũ khí có combo đánh thường riêng**; **kỹ năng chủ động thuộc class, không thuộc vũ khí**; ultimate là một trong bốn ô active skill. Module này chỉ lo vũ khí + đánh thường; chưa có class/skill/ultimate.
+
+```
+features/combat/weapons/
+├── weapon_definition.gd        — class_name WeaponDefinition (Resource)
+├── combo_definition.gd         — class_name ComboDefinition (Resource)
+├── combo_step_definition.gd    — class_name ComboStepDefinition (Resource)
+├── weapon_equipment.gd         — class_name WeaponEquipment (Node): vũ khí đang trang bị
+├── basic_attack_controller.gd/.tscn — class_name BasicAttackController (Node2D): chạy combo
+├── debug_weapon_switcher.gd    — class_name DebugWeaponSwitcher (Node): phím debug 1/2/3
+└── data/                       — test_sword/dagger/heavy.tres + combo_test_*.tres
+```
+
+**Schema (definition = dữ liệu thiết kế, chỉ đọc lúc chạy):**
+
+| Resource | Field |
+|---|---|
+| `WeaponDefinition` | `weapon_id: StringName` (ổn định, không phụ thuộc tên), `display_name`, `weapon_type_id: StringName`, `combo: ComboDefinition`, nhóm *Placeholder visual*: `visual_color`, `visual_length`, `visual_width`. `is_valid()` |
+| `ComboDefinition` | `steps: Array[ComboStepDefinition]`, `input_buffer` (giây). `get_step_count()`, `get_step(i)`, `is_valid()` |
+| `ComboStepDefinition` | `damage`, `attack_range`, `attack_width` (hitbox chữ nhật riêng từng bước), `windup`, `active`, `recovery`, `link_window`, `knockback` (px/s), `effect_color`. `is_valid()` |
+
+Runtime state (bước hiện tại, phase, thời gian, buffer, hướng, shape Hitbox) nằm trong `BasicAttackController` / `WeaponEquipment` của từng thực thể; không ghi vào Resource.
+
+**WeaponEquipment** — export `starting_weapon`; `get_weapon()`, `equip_weapon(w) -> bool` (definition không hợp lệ → cảnh báo, giữ vũ khí cũ), `unequip_weapon()`, `can_equip(w)` (điểm mở rộng cho luật class ↔ `weapon_type_id`; hiện chỉ kiểm tra dữ liệu); signal `weapon_changed(weapon)`. Không tính damage.
+
+**BasicAttackController** — export `equipment`, `health`, `target_layers`. Lấy combo từ vũ khí đang trang bị; đổi vũ khí → `cancel()` rồi dùng combo mới.
+
+- Phase: `READY → WINDUP → ACTIVE (Hitbox bật) → RECOVERY → LINK → READY`.
+- Nhấn khi READY → bước 1; trong LINK → bước kế; hết LINK hoặc xong bước cuối → về bước 1 (`combo_ended(completed)`).
+- Nhấn khi đang đánh: chỉ ghi nhớ **1 lần** nếu còn ≤ `input_buffer` tới hết recovery, chạy ngay khi recovery kết thúc (không bỏ qua recovery); sớm hơn thì bỏ qua.
+- Hướng đánh chốt lúc bắt đầu mỗi bước (`set_aim_provider(callable)`, Player cung cấp hướng tới chuột); di chuột trong lúc đòn chạy không xoay hitbox. Chỉ xoay node controller. Player vẫn di chuyển bình thường.
+- Mỗi bước là một lần `Hitbox.activate()` mới → mỗi mục tiêu trúng tối đa 1 lần/bước.
+- `cancel()` khi chết, reset, đổi vũ khí: tắt Hitbox, xóa buffer, về READY.
+- API: `request_attack() -> bool`, `cancel()`, `get_phase()`, `get_step_index()` (−1 khi chưa đánh), `get_step_count()`, `is_attacking()`, `has_buffered_input()`, `get_hitbox()`; signal `step_started(index, count, direction)`, `phase_changed(phase, index, count)`, `combo_ended(completed)`, `hit_landed(hurtbox, applied)`.
+
+**Luồng:** chuột trái → `player.gd` → `request_attack()` → bước combo (dữ liệu từ WeaponDefinition) → `Hitbox.activate(DamageInfo{damage, source, knockback})` → Hurtbox → HealthComponent (như 2f).
+
+**Knockback** — `DamageInfo.knockback = hướng đòn × step.knockback`. `KnockbackComponent` (trên SimpleEnemy) nhận qua `Hurtbox.hit_received`, giảm dần (`decay`), thân enemy cộng vào `velocity` trước `move_and_slide()` → vật cản vẫn chặn. Đặt `knockback = 0` (dữ liệu) hoặc `strength_multiplier = 0` để tắt. Đã chết thì không nhận; reset xóa. Không có stagger/stun.
+
+**Feedback** — `WeaponVisual` (Line2D, màu/độ dài/độ dày theo vũ khí) chỉ hướng đòn cuối; `SwingVisual` (Polygon2D đúng kích thước hitbox của bước): mờ khi windup, đậm khi active (màu theo bước), mờ dần khi recovery, chớp trắng khi trúng. HUD: tên vũ khí, dòng debug `Combo 2/3 · ACTIVE`, "Combo: hoàn thành" khi đánh hết chuỗi.
+
+**Vũ khí thử nghiệm** (placeholder, không phải cân bằng chính thức):
+
+| Vũ khí | Bước | Damage | Range × width | Nhịp mỗi bước (windup/active/recovery) | Buffer |
+|---|---|---|---|---|---|
+| Test Sword | 3 | 12 / 14 / 22 | 32–38 × 22–32 | ~0.06 / 0.10 / 0.14–0.30 s | 0.20 s |
+| Test Dagger | 4 | 6 / 6 / 7 / 12 | 22–26 × 16–24 | ~0.03 / 0.07 / 0.08–0.20 s | 0.15 s |
+| Test Heavy Weapon | 2 | 30 / 45 | 40–44 × 44–52 | 0.25–0.32 / 0.14–0.16 / 0.40–0.55 s | 0.25 s |
+
+**Phím debug** (không phải phím chính thức): `1` Sword, `2` Dagger, `3` Heavy (`debug_weapon_1..3`, xử lý bởi `DebugWeaponSwitcher`; xóa node này khi có quy trình trang bị chính thức).
+
+**Tạo vũ khí mới:** FileSystem → New Resource → `ComboStepDefinition`/`ComboDefinition` (hoặc nhân bản `combo_test_*.tres`) → chỉnh các bước; New Resource → `WeaponDefinition`, đặt `weapon_id`, `weapon_type_id`, gán `combo`. Gán vào `WeaponEquipment.starting_weapon` hoặc thêm vào mảng `DebugWeaponSwitcher.weapons`. Không cần sửa code.
+
+Giới hạn: hitbox mỗi bước là hình chữ nhật (chưa có arc thật); chưa có animation; enemy vẫn dùng MeleeAttack đơn (không combo); chưa có luật class ↔ vũ khí.
 
 ## 3. Quy ước đặt tên [Đã quyết định]
 

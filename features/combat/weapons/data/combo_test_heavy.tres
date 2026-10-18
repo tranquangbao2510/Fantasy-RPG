@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="ComboDefinition" format=3]
+
+[ext_resource type="Script" path="res://features/combat/weapons/combo_definition.gd" id="1_xim04"]
+[ext_resource type="Script" path="res://features/combat/weapons/combo_step_definition.gd" id="2_pm8mt"]
+
+[sub_resource type="Resource" id="Resource_lub37"]
+script = ExtResource("2_pm8mt")
+damage = 30
+attack_range = 40.0
+attack_width = 44.0
+windup = 0.25
+active = 0.14
+recovery = 0.4
+link_window = 0.35
+knockback = 260.0
+effect_color = Color(1, 0.55, 0.45, 0.6)
+
+[sub_resource type="Resource" id="Resource_5w2qj"]
+script = ExtResource("2_pm8mt")
+damage = 45
+attack_range = 44.0
+attack_width = 52.0
+windup = 0.32
+active = 0.16
+recovery = 0.55
+link_window = 0.0
+knockback = 380.0
+effect_color = Color(1, 0.35, 0.3, 0.7)
+
+[resource]
+script = ExtResource("1_xim04")
+steps = Array[ExtResource("2_pm8mt")]([SubResource("Resource_lub37"), SubResource("Resource_5w2qj")])
+input_buffer = 0.25

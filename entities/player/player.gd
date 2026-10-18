@@ -1,7 +1,8 @@
 extends CharacterBody2D
 ## Player placeholder: di chuyển liên tục 8 hướng và điều phối các component (combat, interaction, health).
 ## Origin đặt tại chân nhân vật để Y-sort đúng trong EntityContainer.
-## Logic tấn công nằm trong MeleeAttack, HP trong HealthComponent; script này chỉ đọc input và nối trạng thái.
+## Combo đánh thường nằm trong BasicAttackController (dữ liệu từ vũ khí đang trang bị), HP trong HealthComponent;
+## script này chỉ đọc input và nối trạng thái.
 
 @export var move_speed: float = 160.0
 
@@ -11,13 +12,15 @@ var _spawn_position: Vector2
 
 @onready var _facing_pivot: Node2D = $Visual/FacingPivot
 @onready var _health: HealthComponent = $HealthComponent
-@onready var _melee: MeleeAttack = $MeleeAttack
+@onready var _attack: BasicAttackController = $BasicAttackController
 @onready var _interaction_detector: InteractionDetector = $InteractionDetector
 
 
 func _ready() -> void:
 	_spawn_position = global_position
 	_health.died.connect(_on_died)
+	_attack.set_aim_provider(_get_attack_direction)
+	_attack.step_started.connect(_on_attack_step_started)
 
 
 func _physics_process(_delta: float) -> void:
@@ -28,15 +31,13 @@ func _physics_process(_delta: float) -> void:
 	var direction: Vector2 = Input.get_vector(&"move_left", &"move_right", &"move_up", &"move_down")
 	velocity = direction * move_speed
 	move_and_slide()
-	if direction != Vector2.ZERO:
+	if direction != Vector2.ZERO and not _attack.is_attacking():
 		_set_facing(direction)
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed(&"basic_attack") and not is_dead():
-		var direction: Vector2 = _get_attack_direction()
-		if _melee.attack(direction):
-			_set_facing(direction)
+		_attack.request_attack()
 		get_viewport().set_input_as_handled()
 
 
@@ -44,11 +45,11 @@ func is_dead() -> bool:
 	return _health.is_dead()
 
 
-## Reset thử nghiệm: về spawn, hồi đầy HP, xóa vận tốc và đòn đang đánh, bật lại tương tác.
+## Reset thử nghiệm: về spawn, hồi đầy HP, xóa vận tốc và combo đang đánh, bật lại tương tác.
 func reset_state() -> void:
 	global_position = _spawn_position
 	velocity = Vector2.ZERO
-	_melee.cancel()
+	_attack.cancel()
 	_health.reset()
 	_interaction_detector.set_enabled(true)
 	_set_facing(Vector2.DOWN)
@@ -56,7 +57,7 @@ func reset_state() -> void:
 
 ## Hướng tấn công từ điểm đánh tới world_point; điểm quá gần thì dùng hướng nhìn hiện tại.
 func get_aim_direction(world_point: Vector2) -> Vector2:
-	var to_point: Vector2 = world_point - _melee.global_position
+	var to_point: Vector2 = world_point - _attack.global_position
 	return to_point.normalized() if to_point.length() > 4.0 else _facing
 
 
@@ -69,7 +70,11 @@ func _set_facing(direction: Vector2) -> void:
 	_facing_pivot.rotation = _facing.angle()
 
 
+func _on_attack_step_started(_step_index: int, _step_count: int, direction: Vector2) -> void:
+	_set_facing(direction)
+
+
 func _on_died() -> void:
 	velocity = Vector2.ZERO
-	_melee.cancel()
+	_attack.cancel()
 	_interaction_detector.set_enabled(false)

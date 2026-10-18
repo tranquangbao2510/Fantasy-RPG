@@ -1,0 +1,56 @@
+[gd_resource type="Resource" script_class="ComboDefinition" format=3]
+
+[ext_resource type="Script" path="res://features/combat/weapons/combo_definition.gd" id="1_o26kw"]
+[ext_resource type="Script" path="res://features/combat/weapons/combo_step_definition.gd" id="2_24pio"]
+
+[sub_resource type="Resource" id="Resource_b1ov2"]
+script = ExtResource("2_24pio")
+damage = 6
+attack_range = 22.0
+attack_width = 18.0
+windup = 0.03
+active = 0.07
+recovery = 0.08
+link_window = 0.22
+knockback = 40.0
+effect_color = Color(0.75, 1, 0.75, 0.55)
+
+[sub_resource type="Resource" id="Resource_ch1du"]
+script = ExtResource("2_24pio")
+damage = 6
+attack_range = 22.0
+attack_width = 18.0
+windup = 0.03
+active = 0.07
+recovery = 0.08
+link_window = 0.22
+knockback = 40.0
+effect_color = Color(0.6, 1, 0.85, 0.55)
+
+[sub_resource type="Resource" id="Resource_sypxo"]
+script = ExtResource("2_24pio")
+damage = 7
+attack_range = 24.0
+attack_width = 16.0
+windup = 0.03
+active = 0.07
+recovery = 0.08
+link_window = 0.22
+knockback = 40.0
+effect_color = Color(0.75, 1, 0.75, 0.55)
+
+[sub_resource type="Resource" id="Resource_dia1d"]
+script = ExtResource("2_24pio")
+damage = 12
+attack_range = 26.0
+windup = 0.06
+active = 0.08
+recovery = 0.2
+link_window = 0.0
+knockback = 140.0
+effect_color = Color(0.4, 1, 0.6, 0.7)
+
+[resource]
+script = ExtResource("1_o26kw")
+steps = Array[ExtResource("2_24pio")]([SubResource("Resource_b1ov2"), SubResource("Resource_ch1du"), SubResource("Resource_sypxo"), SubResource("Resource_dia1d")])
+input_buffer = 0.15

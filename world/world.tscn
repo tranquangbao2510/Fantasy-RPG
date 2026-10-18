@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" uid="uid://ddak435txd5d4" path="res://world/world.gd" id="1_world"]
+[ext_resource type="PackedScene" path="res://world/maps/test_map/test_map.tscn" id="2_test_map"]
 
 [node name="World" type="Node2D"]
 script = ExtResource("1_world")
@@ -9,27 +10,9 @@ script = ExtResource("1_world")
 
 [node name="MapContainer" type="Node2D" parent="."]
 
+[node name="TestMap" parent="MapContainer" instance=ExtResource("2_test_map")]
+
 [node name="EntityContainer" type="Node2D" parent="."]
+y_sort_enabled = true
 
 [node name="CameraContainer" type="Node2D" parent="."]
-
-[node name="PrototypeBackground" type="CanvasLayer" parent="."]
-layer = -100
-
-[node name="Fill" type="ColorRect" parent="PrototypeBackground"]
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-color = Color(0.22, 0.24, 0.23, 1)
-
-[node name="PrototypeOverlay" type="CanvasLayer" parent="."]
-
-[node name="Label" type="Label" parent="PrototypeOverlay"]
-offset_left = 16.0
-offset_top = 16.0
-offset_right = 216.0
-offset_bottom = 42.0
-text = "World Prototype"

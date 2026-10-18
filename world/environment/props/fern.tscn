@@ -4,17 +4,17 @@
 [ext_resource type="Texture2D" path="res://world/environment/art/decals/shadow_soft.png" id="2_ym4us"]
 [ext_resource type="Texture2D" path="res://world/environment/art/props/fern.png" id="3_beev3"]
 
-[node name="Fern" type="Node2D" unique_id=814541761]
+[node name="Fern" type="Node2D" unique_id=1771899439]
 script = ExtResource("1_wjov3")
 
-[node name="Shadow" type="Sprite2D" parent="." unique_id=440702980]
+[node name="Shadow" type="Sprite2D" parent="." unique_id=129764546]
 modulate = Color(1, 1, 1, 0.35)
 z_index = -1
-position = Vector2(7.2, 2)
-scale = Vector2(0.2578125, 0.2109375)
+position = Vector2(8.4, 2.4)
+scale = Vector2(0.234375, 0.234375)
 texture = ExtResource("2_ym4us")
 
-[node name="Visual" type="Sprite2D" parent="." unique_id=1457242274]
+[node name="Visual" type="Sprite2D" parent="." unique_id=1632264785]
 scale = Vector2(0.5, 0.5)
 texture = ExtResource("3_beev3")
 offset = Vector2(0, -39)

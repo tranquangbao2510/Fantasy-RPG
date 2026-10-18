@@ -4,17 +4,17 @@
 [ext_resource type="Texture2D" path="res://world/environment/art/decals/shadow_soft.png" id="2_jr2oe"]
 [ext_resource type="Texture2D" path="res://world/environment/art/props/rock_flat.png" id="3_efer4"]
 
-[node name="RockFlat" type="Node2D" unique_id=1294638335]
+[node name="RockFlat" type="Node2D" unique_id=2143347154]
 script = ExtResource("1_6wxl0")
 
-[node name="Shadow" type="Sprite2D" parent="." unique_id=78452300]
+[node name="Shadow" type="Sprite2D" parent="." unique_id=202202158]
 modulate = Color(1, 1, 1, 0.35)
 z_index = -1
-position = Vector2(10.2, 2)
-scale = Vector2(0.36523438, 0.29882813)
+position = Vector2(11.9, 3.4)
+scale = Vector2(0.33203125, 0.33203125)
 texture = ExtResource("2_jr2oe")
 
-[node name="Visual" type="Sprite2D" parent="." unique_id=1746638948]
+[node name="Visual" type="Sprite2D" parent="." unique_id=67309098]
 scale = Vector2(0.5, 0.5)
 texture = ExtResource("3_efer4")
 offset = Vector2(0, -39)

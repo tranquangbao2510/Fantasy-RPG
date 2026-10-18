@@ -4,26 +4,22 @@
 [ext_resource type="Texture2D" path="res://world/environment/art/decals/shadow_soft.png" id="2_4d3fi"]
 [ext_resource type="Texture2D" path="res://world/environment/art/props/ruin_pillar_broken.png" id="3_2re6e"]
 
-[sub_resource type="CircleShape2D" id="CircleShape2D_xun81"]
-radius = 14.0
-
-[node name="RuinPillarBroken" type="Node2D" unique_id=219463052]
+[node name="RuinPillarBroken" type="Node2D" unique_id=1185122156]
 script = ExtResource("1_ov250")
 
-[node name="Shadow" type="Sprite2D" parent="." unique_id=1657412611]
+[node name="Shadow" type="Sprite2D" parent="." unique_id=1922180074]
 modulate = Color(1, 1, 1, 0.55)
 z_index = -1
-position = Vector2(5.04, 2)
-scale = Vector2(0.18046875, 0.14765625)
+position = Vector2(7.84, 2.24)
+scale = Vector2(0.21875, 0.21875)
 texture = ExtResource("2_4d3fi")
 
-[node name="Visual" type="Sprite2D" parent="." unique_id=1356974450]
+[node name="Visual" type="Sprite2D" parent="." unique_id=1200724814]
 scale = Vector2(0.5, 0.5)
 texture = ExtResource("3_2re6e")
-offset = Vector2(0, -86)
+offset = Vector2(0, -102)
 
-[node name="Collision" type="StaticBody2D" parent="." unique_id=1558076353]
+[node name="Collision" type="StaticBody2D" parent="." unique_id=553647647]
 
-[node name="Shape0" type="CollisionShape2D" parent="Collision" unique_id=1674441241]
-position = Vector2(0, -6)
-shape = SubResource("CircleShape2D_xun81")
+[node name="Footprint0" type="CollisionPolygon2D" parent="Collision" unique_id=243659609]
+polygon = PackedVector2Array(0, -24.96, 24.96, -12.48, 0, 0, -24.96, -12.48)

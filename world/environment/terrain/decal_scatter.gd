@@ -42,6 +42,12 @@ extends Node2D
 	set(value):
 		random_rotation = value
 		_queue_rebuild()
+## Decal nằm phẳng trên mặt đất (mảng rêu, bóng, đốm nắng): xoay trên mặt đất rồi nén dọc 2:1 theo phép chiếu iso.
+## false: decal đứng (cụm cỏ, hoa) — giữ nguyên, neo tại chân.
+@export var flat_on_ground: bool = false:
+	set(value):
+		flat_on_ground = value
+		_queue_rebuild()
 @export var avoid_lines: Array[Line2D] = []:
 	set(value):
 		avoid_lines = value
@@ -134,13 +140,14 @@ func _pick_position(rng: RandomNumberGenerator) -> Vector2:
 		return Vector2(rng.randf_range(area.position.x, area.end.x), rng.randf_range(area.position.y, area.end.y))
 	var points: PackedVector2Array = along_line.points
 	var i: int = rng.randi_range(0, points.size() - 2)
-	var a: Vector2 = along_line.to_global(points[i])
-	var b: Vector2 = along_line.to_global(points[i + 1])
+	# Tính trong toạ độ local của Line2D (vd. mặt phẳng đất iso) rồi mới chuyển sang toạ độ của node này.
+	var a: Vector2 = points[i]
+	var b: Vector2 = points[i + 1]
 	var t: float = rng.randf()
 	var normal: Vector2 = (b - a).orthogonal().normalized()
 	var side: float = -1.0 if rng.randf() < 0.5 else 1.0
 	var offset: float = along_line.width * 0.5 + rng.randf_range(edge_offset.x, edge_offset.y)
-	return to_local(a.lerp(b, t) + normal * side * offset)
+	return to_local(along_line.to_global(a.lerp(b, t) + normal * side * offset))
 
 
 func _is_free(pos: Vector2, avoid_polygons: Array[PackedVector2Array]) -> bool:
@@ -175,7 +182,11 @@ func _draw() -> void:
 	var cell_size: Vector2 = Vector2(texture.get_width() / float(atlas_columns), texture.get_height())
 	for item: Dictionary in _items:
 		var region: Rect2 = Rect2(Vector2(cell_size.x * int(item["cell"]), 0), cell_size)
-		draw_set_transform(item["pos"], item["rot"], item["scale"])
+		if flat_on_ground:
+			var ground: Transform2D = Transform2D(0.0, Vector2(1.0, IsoProjection.GROUND_SQUASH), 0.0, item["pos"])
+			draw_set_transform_matrix(ground * Transform2D(item["rot"], item["scale"], 0.0, Vector2.ZERO))
+		else:
+			draw_set_transform(item["pos"], item["rot"], item["scale"])
 		# Neo tại chân (giữa cạnh dưới) để cụm cỏ/hoa "mọc" từ điểm đặt.
-		draw_texture_rect_region(texture, Rect2(Vector2(-cell_size.x * 0.5, -cell_size.y * (0.5 if random_rotation else 0.9)), cell_size), region, item["color"])
+		draw_texture_rect_region(texture, Rect2(Vector2(-cell_size.x * 0.5, -cell_size.y * (0.5 if random_rotation or flat_on_ground else 0.9)), cell_size), region, item["color"])
 	draw_set_transform(Vector2.ZERO)

@@ -6,45 +6,41 @@
 [ext_resource type="Texture2D" path="res://world/environment/art/fx/glow.png" id="4_k6621"]
 [ext_resource type="Script" path="res://world/environment/atmosphere/ambient_drift.gd" id="5_aoudh"]
 
-[sub_resource type="CircleShape2D" id="CircleShape2D_bedka"]
-radius = 13.0
-
-[sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_ieyp6"]
+[sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_bedka"]
 blend_mode = 1
 
-[node name="RuneStone" type="Node2D" unique_id=573265930]
+[node name="RuneStone" type="Node2D" unique_id=273922792]
 script = ExtResource("1_xlw7i")
 
-[node name="Shadow" type="Sprite2D" parent="." unique_id=335326903]
+[node name="Shadow" type="Sprite2D" parent="." unique_id=2076340129]
 modulate = Color(1, 1, 1, 0.55)
 z_index = -1
-position = Vector2(5.76, 2)
-scale = Vector2(0.20625, 0.16875)
+position = Vector2(7.7, 2.2)
+scale = Vector2(0.21484375, 0.21484375)
 texture = ExtResource("2_hgf3f")
 
-[node name="Visual" type="Sprite2D" parent="." unique_id=767822906]
+[node name="Visual" type="Sprite2D" parent="." unique_id=618231633]
 scale = Vector2(0.5, 0.5)
 texture = ExtResource("3_ukg62")
-offset = Vector2(0, -81)
+offset = Vector2(0, -106)
 
-[node name="Collision" type="StaticBody2D" parent="." unique_id=645669355]
+[node name="Collision" type="StaticBody2D" parent="." unique_id=995351376]
 
-[node name="Shape0" type="CollisionShape2D" parent="Collision" unique_id=717939563]
-position = Vector2(0, -6)
-shape = SubResource("CircleShape2D_bedka")
+[node name="Footprint0" type="CollisionPolygon2D" parent="Collision" unique_id=947348551]
+polygon = PackedVector2Array(0.8, -9.2, 18.4, -0.4, 8.8, 4.4, -8.8, -4.4)
 
-[node name="GlowLight" type="PointLight2D" parent="." unique_id=2113814582]
-position = Vector2(0, -40)
+[node name="GlowLight" type="PointLight2D" parent="." unique_id=1283444062]
+position = Vector2(0, -44)
 color = Color(0.45, 0.9, 1, 1)
 energy = 0.85
 texture = ExtResource("4_k6621")
 texture_scale = 1.1
 
-[node name="GlowHalo" type="Sprite2D" parent="." unique_id=1791622212]
+[node name="GlowHalo" type="Sprite2D" parent="." unique_id=694846701]
 modulate = Color(0.45, 0.95, 1, 0.35)
-material = SubResource("CanvasItemMaterial_ieyp6")
-position = Vector2(0, -44)
-scale = Vector2(0.32, 0.4)
+material = SubResource("CanvasItemMaterial_bedka")
+position = Vector2(-6, -50)
+scale = Vector2(0.3, 0.42)
 texture = ExtResource("4_k6621")
 script = ExtResource("5_aoudh")
 amplitude = Vector2(0, 0)

@@ -4,28 +4,22 @@
 [ext_resource type="Texture2D" path="res://world/environment/art/decals/shadow_soft.png" id="2_5s5al"]
 [ext_resource type="Texture2D" path="res://world/environment/art/props/rock_large.png" id="3_jnpig"]
 
-[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_x6702"]
-radius = 16.0
-height = 93.5
-
-[node name="RockLarge" type="Node2D" unique_id=1383383686]
+[node name="RockLarge" type="Node2D" unique_id=1852023765]
 script = ExtResource("1_jkvjg")
 
-[node name="Shadow" type="Sprite2D" parent="." unique_id=334770604]
+[node name="Shadow" type="Sprite2D" parent="." unique_id=776744491]
 modulate = Color(1, 1, 1, 0.55)
 z_index = -1
-position = Vector2(13.2, 2)
-scale = Vector2(0.47265625, 0.38671875)
+position = Vector2(15.4, 4.4)
+scale = Vector2(0.4296875, 0.4296875)
 texture = ExtResource("2_5s5al")
 
-[node name="Visual" type="Sprite2D" parent="." unique_id=862573231]
+[node name="Visual" type="Sprite2D" parent="." unique_id=218072019]
 scale = Vector2(0.5, 0.5)
 texture = ExtResource("3_jnpig")
 offset = Vector2(0, -72)
 
-[node name="Collision" type="StaticBody2D" parent="." unique_id=218265922]
+[node name="Collision" type="StaticBody2D" parent="." unique_id=51890643]
 
-[node name="Shape0" type="CollisionShape2D" parent="Collision" unique_id=874623800]
-position = Vector2(0, -14)
-rotation = 1.5707964
-shape = SubResource("CapsuleShape2D_x6702")
+[node name="Footprint0" type="CollisionPolygon2D" parent="Collision" unique_id=311711281]
+polygon = PackedVector2Array(46.2, -12, 40.010372, -0.4499998, 23.1, 8.005186, 2.8288406e-15, 11.1, -23.1, 8.005186, -40.010372, -0.4499998, -46.2, -12, -40.010372, -23.55, -23.1, -32.005188, -8.486522e-15, -35.1, 23.1, -32.005188, 40.010372, -23.55)

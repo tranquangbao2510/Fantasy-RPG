@@ -6,11 +6,14 @@ extends Node2D
 ##   không lấy từ texture.
 ## - Hiển thị: Top (Polygon2D) + các FaceChunk (mặt vách, chân vách, mép cỏ) được sinh lại khi sửa thuộc tính
 ##   (cả trong Editor). Node con sinh ra không có owner nên không lưu vào scene.
-## - Mỗi đoạn mặt vách là một node Y-sort riêng neo tại chân vách → entity tầng thấp đứng trước vách luôn vẽ đè lên vách.
+## - Mỗi đoạn mặt vách (≤ 32 px) là một node Y-sort riêng neo tại điểm CAO NHẤT của chân vách trong đoạn → với cạnh chéo
+##   của lưới isometric, entity tầng thấp đứng trước bất kỳ phần nào của đoạn vẫn vẽ đè lên vách; entity phía sau bị che.
+## - Isometric: khối cao lộ hai mặt vách (tây nam + đông nam) vì cả hai cạnh đều hướng xuống màn hình (normal.y > 0).
+## - `back_lip`: vẽ mép cỏ ở cạnh phía sau (hướng lên màn hình), dùng cho mép vực của mặt đất chính.
 ## Ràng buộc: cạnh hướng nam không được có phần mặt trên khác nằm ngay bên dưới trong khoảng `height` (front đơn điệu).
 
 const TEXEL_DENSITY: float = 2.0
-const MAX_CHUNK_LENGTH: float = 40.0
+const MAX_CHUNK_LENGTH: float = 32.0
 const LIP_ABOVE: float = 5.0
 const LIP_HEIGHT: float = 24.0
 const BASE_HEIGHT: float = 24.0
@@ -52,6 +55,10 @@ const BASE_HEIGHT: float = 24.0
 @export var face_light_bias: float = 0.22:
 	set(value):
 		face_light_bias = value
+		_queue_rebuild()
+@export var back_lip: bool = false:
+	set(value):
+		back_lip = value
 		_queue_rebuild()
 
 var _rebuild_queued: bool = false
@@ -162,6 +169,8 @@ func _build_faces() -> void:
 			if normal.y > 0.05 and absf(pb.x - pa.x) > 0.5:
 				_add_chunk(index, pa, pb, distance, normal)
 				index += 1
+			elif back_lip and normal.y < -0.05:
+				_add_back_lip(pa, pb, distance)
 			distance += piece_length
 
 
@@ -169,8 +178,8 @@ func _add_chunk(index: int, a: Vector2, b: Vector2, distance: float, normal: Vec
 	var chunk: Node2D = Node2D.new()
 	chunk.name = "Face%d" % index
 	chunk.set_meta(&"generated", true)
-	# Neo Y-sort tại chân vách (điểm thấp nhất của đoạn).
-	chunk.position = Vector2((a.x + b.x) * 0.5, maxf(a.y, b.y) + height)
+	# Neo Y-sort tại điểm cao nhất (y nhỏ nhất) của chân vách trong đoạn.
+	chunk.position = Vector2((a.x + b.x) * 0.5, minf(a.y, b.y) + height)
 	add_child(chunk)
 	var la: Vector2 = a - chunk.position
 	var lb: Vector2 = b - chunk.position
@@ -192,6 +201,27 @@ func _add_strip(parent: Node2D, texture: Texture2D, a: Vector2, b: Vector2, top:
 	strip.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
 	strip.color = tint
 	strip.polygon = PackedVector2Array([a + Vector2(0, top), b + Vector2(0, top), b + Vector2(0, bottom), a + Vector2(0, bottom)])
-	var v1: float = float(texture.get_height())
+	# Lặp theo chiều cao: vách cao hơn texture (vd. vách vực) không bị kéo giãn.
+	var v1: float = (bottom - top) * TEXEL_DENSITY
 	strip.uv = PackedVector2Array([Vector2(u0, 0), Vector2(u1, 0), Vector2(u1, v1), Vector2(u0, v1)])
 	parent.add_child(strip)
+
+
+## Mép cỏ ở cạnh phía sau (mép vực nhìn từ trên): cỏ phủ lên mặt trên, rủ ra phía ngoài (lên màn hình).
+func _add_back_lip(a: Vector2, b: Vector2, distance: float) -> void:
+	var top_node: Node2D = get_node_or_null(^"Top") as Node2D
+	if top_node == null or lip_texture == null:
+		return
+	var la: Vector2 = a - top_node.position
+	var lb: Vector2 = b - top_node.position
+	var u0: float = distance * TEXEL_DENSITY
+	var u1: float = (distance + a.distance_to(b)) * TEXEL_DENSITY
+	# Lật dọc: phần cỏ dày nằm phía trong mặt đất, phần rủ hướng ra vực.
+	var strip: Polygon2D = Polygon2D.new()
+	strip.texture = lip_texture
+	strip.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
+	var h: float = LIP_HEIGHT
+	strip.polygon = PackedVector2Array([la + Vector2(0, LIP_ABOVE), lb + Vector2(0, LIP_ABOVE), lb + Vector2(0, LIP_ABOVE - h), la + Vector2(0, LIP_ABOVE - h)])
+	var v1: float = float(lip_texture.get_height())
+	strip.uv = PackedVector2Array([Vector2(u0, 0), Vector2(u1, 0), Vector2(u1, v1), Vector2(u0, v1)])
+	top_node.add_child(strip)

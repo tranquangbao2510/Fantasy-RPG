@@ -8,7 +8,8 @@
 shader = ExtResource("1_46mb6")
 shader_parameter/albedo = ExtResource("2_j1rav")
 shader_parameter/macro_noise = ExtResource("3_olsod")
-shader_parameter/texture_world_size = null
+shader_parameter/tiles_per_texture = 6.0
+shader_parameter/anti_tiling = 1.0
 shader_parameter/tint_a = Color(1.08, 1.06, 0.95, 1)
 shader_parameter/tint_b = Color(1.12, 1.04, 0.84, 1)
 shader_parameter/macro_scale = null

@@ -1,11 +1,12 @@
+@tool
 class_name Footbridge
 extends Node2D
-## Cầu gỗ thấp (cùng tầng với mặt nước): vùng `deck_size` (local, căn giữa) được khoét khỏi collision của Stream.
-## Phẳng sát mặt đất nên nằm trong nhóm Ground (vẽ dưới entity), không cần Y-sort.
+## Cầu gỗ thấp (cùng tầng với mặt nước): vùng `deck_polygon` (local) được khoét khỏi collision của Stream.
+## Map isometric: polygon là hình bình hành theo trục lưới (cầu bắc chéo). Phẳng sát mặt đất nên nằm trong nhóm
+## Ground (vẽ dưới entity), không cần Y-sort.
 
-@export var deck_size: Vector2 = Vector2(56, 124)
+@export var deck_polygon: PackedVector2Array = PackedVector2Array([Vector2(-28, -62), Vector2(28, -62), Vector2(28, 62), Vector2(-28, 62)])
 
 
 func get_walkable_polygon() -> PackedVector2Array:
-	var h: Vector2 = deck_size * 0.5
-	return global_transform * PackedVector2Array([Vector2(-h.x, -h.y), Vector2(h.x, -h.y), Vector2(h.x, h.y), Vector2(-h.x, h.y)])
+	return global_transform * deck_polygon

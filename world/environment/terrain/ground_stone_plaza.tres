@@ -1,0 +1,16 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://world/environment/terrain/terrain_ground.gdshader" id="1_iu0yv"]
+[ext_resource type="Texture2D" path="res://world/environment/art/ground/stone_floor.png" id="2_7jjdh"]
+[ext_resource type="Texture2D" path="res://world/environment/art/fx/water_noise.png" id="3_ni6ya"]
+
+[resource]
+shader = ExtResource("1_iu0yv")
+shader_parameter/albedo = ExtResource("2_7jjdh")
+shader_parameter/macro_noise = ExtResource("3_ni6ya")
+shader_parameter/tiles_per_texture = 8.0
+shader_parameter/anti_tiling = 0.0
+shader_parameter/tint_a = Color(1, 1, 1, 1)
+shader_parameter/tint_b = Color(0.96, 0.95, 0.9, 1)
+shader_parameter/macro_scale = null
+shader_parameter/blend_scale = null

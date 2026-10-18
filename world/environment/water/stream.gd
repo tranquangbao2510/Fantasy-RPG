@@ -2,6 +2,8 @@ class_name Stream
 extends Node2D
 ## Suối / sông: hiển thị bằng Line2D (bờ bùn + mặt nước với shader), collision sinh lúc chạy từ đường tâm
 ## và bề rộng của `water_line` (kể cả width_curve) — không phụ thuộc hình dạng texture.
+## Hình học dựng trong toạ độ local của Line2D rồi nhân global_transform: đặt Line2D trong node mặt phẳng đất
+## (scale y 0.5) thì collision tự thành dải/khớp ellipse đúng phép chiếu isometric.
 ## `crossings`: node có get_walkable_polygon() (vd. Footbridge) được khoét khỏi collision để đi qua.
 ## Không có bơi/lặn/vật lý nước: nước chỉ là vật cản của tầng `elevation_tier`.
 
@@ -45,9 +47,8 @@ func _ready() -> void:
 
 ## Đa giác (global) cho từng đoạn + khớp nối, bán kính theo width_curve.
 func _build_polygons() -> Array[PackedVector2Array]:
-	var points: PackedVector2Array = PackedVector2Array()
-	for p: Vector2 in water_line.points:
-		points.append(water_line.to_global(p))
+	var points: PackedVector2Array = water_line.points
+	var to_world: Transform2D = water_line.global_transform
 	var total: float = 0.0
 	for i: int in points.size() - 1:
 		total += points[i].distance_to(points[i + 1])
@@ -63,11 +64,11 @@ func _build_polygons() -> Array[PackedVector2Array]:
 		var joint: PackedVector2Array = PackedVector2Array()
 		for k: int in JOINT_SIDES:
 			joint.append(points[i] + Vector2.from_angle(TAU * k / JOINT_SIDES) * radii[i])
-		result.append(joint)
+		result.append(to_world * joint)
 		if i == points.size() - 1:
 			break
 		var normal: Vector2 = (points[i + 1] - points[i]).orthogonal().normalized()
-		result.append(PackedVector2Array([
+		result.append(to_world * PackedVector2Array([
 			points[i] + normal * radii[i], points[i + 1] + normal * radii[i + 1],
 			points[i + 1] - normal * radii[i + 1], points[i] - normal * radii[i],
 		]))

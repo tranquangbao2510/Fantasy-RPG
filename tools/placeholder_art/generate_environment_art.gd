@@ -3,9 +3,9 @@ extends SceneTree
 ## Chạy:  Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tools/placeholder_art/generate_environment_art.gd
 ## Sau khi sinh lại: mở Editor (hoặc chạy --headless --import) để Godot import lại PNG.
 ##
-## Quy ước (xem docs/visual/environment-style-guide.md):
-## - Mật độ texel = 2 texel / 1 đơn vị world (sprite dùng scale 0.5).
-## - Ánh sáng chính từ trên-trái (tây bắc); bóng đổ về dưới-phải.
+## Quy ước (xem docs/visual/environment-style-guide.md) — isometric dimetric 2:1 từ VISUAL-02:
+## - Mật độ texel = 2 texel / 1 đơn vị world (sprite dùng scale 0.5). Tile thoi 64×32, tầng 64 px; texture nền vẽ top-down.
+## - Ánh sáng chính từ trên-trái màn hình; bóng đổ về dưới-phải.
 ## - Đây là PLACEHOLDER kỹ thuật, không phải production art.
 
 const Painter := preload("res://tools/placeholder_art/painter.gd")
@@ -234,7 +234,8 @@ func _grass(path: String, seed_value: int) -> void:
 		var p: Vector2 = Vector2(rng.randf() * size.x, rng.randf() * size.y)
 		var base: Color = c.get_c(int(p.x), int(p.y))
 		var length: float = rng.randf_range(4, 10)
-		var ang: float = -PI / 2 + rng.randf_range(-0.55, 0.55)
+		# Vẽ top-down (nhìn thẳng xuống mặt đất): nét đa hướng; shader chiếu lên mặt phẳng iso.
+		var ang: float = rng.randf() * TAU
 		var tip: Vector2 = p + Vector2.from_angle(ang) * length
 		var light: float = rng.randf_range(0.8, 1.3)
 		var tip_col: Color = _shade(base, light).lerp(Color(0.62, 0.7, 0.28), 0.18 * light)
@@ -244,7 +245,7 @@ func _grass(path: String, seed_value: int) -> void:
 		var p: Vector2 = Vector2(rng.randf() * size.x, rng.randf() * size.y)
 		if macro[int(p.y) * size.x + int(p.x)] < rng.randf_range(0.3, 0.8):
 			continue
-		var tip: Vector2 = p + Vector2.from_angle(-PI / 2 + rng.randf_range(-0.4, 0.4)) * rng.randf_range(3, 6)
+		var tip: Vector2 = p + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(3, 6)
 		c.stroke(p.x, p.y, tip.x, tip.y, 0.7, 0.4, Color(0.5, 0.62, 0.24), Color(0.74, 0.8, 0.38), 0.55, 0.5)
 	c.save(path)
 
@@ -285,40 +286,39 @@ func _dirt(path: String, seed_value: int) -> void:
 	c.save(path)
 
 
+## Đá lát vuông 8×8 viên / 512 texel (1 viên ≈ 1 tile lưới). Shader chiếu lên mặt phẳng iso → viên đá thành hình thoi.
 func _stone_floor(path: String, seed_value: int) -> void:
 	var size: Vector2i = Vector2i(512, 512)
 	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 	rng.seed = seed_value
 	var c: Painter = Painter.new(size.x, size.y, Color.BLACK, true)
-	var vor: Dictionary = _voronoi(size, Vector2(92, 74), rng, true)
-	var ids: PackedInt32Array = vor["id"]
-	var d1s: PackedFloat32Array = vor["d1"]
-	var d2s: PackedFloat32Array = vor["d2"]
-	var points: PackedVector2Array = vor["points"]
+	var cell: float = 64.0
 	var grain: FastNoiseLite = _noise(seed_value, 0.08, 3)
 	var moss_n: PackedFloat32Array = _seamless(seed_value + 5, size, 0.02, 3)
 	var tints: PackedColorArray = PackedColorArray()
-	for i: int in points.size():
+	for i: int in 64:
 		tints.append(Color(0.6, 0.57, 0.5).lerp(Color(0.5, 0.5, 0.48), rng.randf()) * rng.randf_range(0.85, 1.1))
 	for y: int in size.y:
 		for x: int in size.x:
-			var i: int = y * size.x + x
-			var edge: float = d2s[i] - d1s[i]
-			var col: Color = tints[ids[i]]
+			var cx: int = int(x / cell)
+			var cy: int = int(y / cell)
+			var lx: float = fposmod(x, cell)
+			var ly: float = fposmod(y, cell)
+			var edge: float = minf(minf(lx, cell - lx), minf(ly, cell - ly))
+			var col: Color = tints[(cy * 8 + cx) % 64]
 			col.a = 1.0
 			col = _shade(col, 0.9 + _n01(grain, x, y) * 0.2)
-			# Bevel: hướng từ tâm viên đá; cạnh hướng về nguồn sáng sáng hơn.
-			var center: Vector2 = points[ids[i]]
-			var to_px: Vector2 = Vector2(wrapf(x - center.x, -size.x / 2.0, size.x / 2.0), wrapf(y - center.y, -size.y / 2.0, size.y / 2.0)).normalized()
-			var near: float = 1.0 - smoothstep(2.0, 9.0, edge)
-			col = _shade(col, 1.0 + near * 0.28 * to_px.dot(L2))
-			if edge < 2.6:
-				var mortar: Color = Color(0.2, 0.19, 0.15).lerp(Color(0.26, 0.34, 0.14), smoothstep(0.45, 0.7, moss_n[i]))
-				col = mortar
-			elif edge < 7.0 and moss_n[i] > 0.6:
-				col = col.lerp(Color(0.32, 0.42, 0.16), (moss_n[i] - 0.6) * 1.8 * (1.0 - edge / 7.0))
+			# Bevel: cạnh trên-trái sáng, dưới-phải tối.
+			var near: float = 1.0 - smoothstep(2.0, 8.0, edge)
+			var lit: float = 1.0 if (lx < cell - lx and lx <= ly) or (ly < cell - ly and ly < lx) else -1.0
+			col = _shade(col, 1.0 + near * 0.22 * lit)
+			var m: float = moss_n[y * size.x + x]
+			if edge < 2.4:
+				col = Color(0.2, 0.19, 0.15).lerp(Color(0.26, 0.34, 0.14), smoothstep(0.45, 0.7, m))
+			elif edge < 7.0 and m > 0.6:
+				col = col.lerp(Color(0.32, 0.42, 0.16), (m - 0.6) * 1.8 * (1.0 - edge / 7.0))
 			c.set_c(x, y, col)
-	_cracks(c, rng, 40, 30, Color(0.18, 0.17, 0.14))
+	_cracks(c, rng, 40, 26, Color(0.18, 0.17, 0.14))
 	c.save(path)
 
 
@@ -704,16 +704,77 @@ func _h(heights: PackedFloat32Array, size: Vector2i, x: int, y: int) -> float:
 	return heights[y * size.x + x]
 
 
-# ---------------------------------------------------------------- ruins
+# ---------------------------------------------------------------- isometric painting
+
+## Toạ độ texel (mật độ 2) của điểm lưới (i, j) và độ cao z (px world) so với gốc o: x = (i − j)·64, y = (i + j)·32 − 2z.
+func _iso(i: float, j: float, z: float = 0.0) -> Vector2:
+	return Vector2((i - j) * 64.0, (i + j) * 32.0 - z * 2.0)
+
+
+## Tô hình bình hành p0 + u·du + v·dv (u, v ∈ [0,1]); pattern(u, v) trả về màu (alpha 0 = bỏ qua).
+func _iso_quad(c: Painter, p0: Vector2, du: Vector2, dv: Vector2, pattern: Callable) -> void:
+	var det: float = du.x * dv.y - du.y * dv.x
+	if absf(det) < 0.0001:
+		return
+	var pts: Array[Vector2] = [p0, p0 + du, p0 + dv, p0 + du + dv]
+	var lo: Vector2 = pts[0]
+	var hi: Vector2 = pts[0]
+	for p: Vector2 in pts:
+		lo = Vector2(minf(lo.x, p.x), minf(lo.y, p.y))
+		hi = Vector2(maxf(hi.x, p.x), maxf(hi.y, p.y))
+	for y: int in range(floori(lo.y), ceili(hi.y) + 1):
+		for x: int in range(floori(lo.x), ceili(hi.x) + 1):
+			var d: Vector2 = Vector2(x + 0.5, y + 0.5) - p0
+			var u: float = (d.x * dv.y - d.y * dv.x) / det
+			var v: float = (du.x * d.y - du.y * d.x) / det
+			if u < 0.0 or u > 1.0 or v < 0.0 or v > 1.0:
+				continue
+			var col: Color = pattern.call(u, v)
+			if col.a > 0.0:
+				c.blend(x, y, col, col.a)
+
+
+## Hộp isometric: gốc o = đỉnh trên của footprint (z = 0); a tile theo i, b tile theo j, cao h px.
+## Vẽ 3 mặt nhìn thấy: SE (i = a, tối nhất), SW (j = b, sáng vừa — hướng về nguồn sáng trên-trái), mặt trên (sáng nhất).
+## pattern(face, u_px, v_px) → màu nền của mặt; face: 0 = trên, 1 = SW, 2 = SE; u, v tính theo px world dọc mặt.
+func _iso_box(c: Painter, o: Vector2, a: float, b: float, h: float, pattern: Callable) -> void:
+	var len_a: float = a * 35.78
+	var len_b: float = b * 35.78
+	_iso_quad(c, o + _iso(a, 0, h), _iso(0, b) , Vector2(0, h * 2.0), func(u: float, v: float) -> Color:
+		return _shade(pattern.call(2, u * len_b, v * h), 0.66))
+	_iso_quad(c, o + _iso(0, b, h), _iso(a, 0), Vector2(0, h * 2.0), func(u: float, v: float) -> Color:
+		return _shade(pattern.call(1, u * len_a, v * h), 0.95))
+	_iso_quad(c, o + _iso(0, 0, h), _iso(a, 0), _iso(0, b), func(u: float, v: float) -> Color:
+		return _shade(pattern.call(0, u * len_a, v * len_b), 1.15))
+
+
+## Mẫu khối đá xây: mạch ngang mỗi `course` px, mạch đứng so le mỗi `block` px; mặt trên là đá lát.
+func _masonry(grain: FastNoiseLite, course: float, block: float, base: Color) -> Callable:
+	return func(face: int, u: float, v: float) -> Color:
+		var col: Color = _shade(base, 0.86 + _n01(grain, u * 2.0 + face * 97.0, v * 2.0) * 0.28)
+		if face == 0:
+			if fposmod(u, block) < 0.8 or fposmod(v, block) < 0.8:
+				col = _shade(col, 0.62)
+			return col
+		var row: float = floorf(v / course)
+		var off: float = block * 0.5 if fposmod(row, 2.0) == 1.0 else 0.0
+		if fposmod(v, course) < 0.9 or fposmod(u + off, block) < 0.9:
+			col = _shade(col, 0.55)
+		elif fposmod(v, course) < 1.8:
+			col = _shade(col, 1.08)
+		return col
+
+
+# ---------------------------------------------------------------- ruins (isometric)
 
 func _ruins() -> void:
 	var dir: String = _dir("props")
-	_pillar(dir + "ruin_pillar.png", Vector2i(84, 270), 81, false)
-	_pillar(dir + "ruin_pillar_broken.png", Vector2i(84, 180), 82, true)
-	_arch(dir + "ruin_arch.png", Vector2i(320, 300), 83)
-	_wall(dir + "ruin_wall.png", Vector2i(260, 150), 84)
-	_blocks(dir + "ruin_blocks.png", Vector2i(180, 100), 85)
-	_rune_stone(dir + "rune_stone.png", Vector2i(96, 170), 86)
+	_pillar(dir + "ruin_pillar.png", 81, false)
+	_pillar(dir + "ruin_pillar_broken.png", 82, true)
+	_arch(dir + "ruin_arch.png", 83)
+	_wall(dir + "ruin_wall.png", 84)
+	_blocks(dir + "ruin_blocks.png", 85)
+	_rune_stone(dir + "rune_stone.png", 86)
 
 
 const STONE: Color = Color(0.64, 0.61, 0.55)
@@ -726,221 +787,169 @@ func _cylinder_shade(u: float) -> float:
 	return clampf(n.dot(Vector3(L3.x, 0.0, L3.z).normalized()) * 0.75 + 0.35, 0.2, 1.15)
 
 
-func _pillar(path: String, size: Vector2i, seed_value: int, broken: bool) -> void:
+## Cột tròn trên bệ vuông isometric. Ảnh 112×300 texel; gốc (điểm chạm đất) = đỉnh dưới của footprint bệ ở giữa đáy ảnh.
+func _pillar(path: String, seed_value: int, broken: bool) -> void:
+	var size: Vector2i = Vector2i(112, 300 if not broken else 210)
 	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 	rng.seed = seed_value
 	var c: Painter = Painter.new(size.x, size.y)
 	var grain: FastNoiseLite = _noise(seed_value, 0.1, 3)
 	var top_n: FastNoiseLite = _noise(seed_value + 1, 0.12, 2)
-	var cx: float = size.x * 0.5
-	var shaft_hw: float = size.x * 0.3
-	var plinth_h: float = 22.0
-	var cap_h: float = 0.0 if broken else 26.0
-	var bottom: float = size.y - 4.0
-	var shaft_top: float = 14.0 + cap_h
+	var s: float = 0.78
+	var bottom: Vector2 = Vector2(size.x * 0.5, size.y - 3.0)
+	var o: Vector2 = bottom - _iso(s, s)
+	_iso_box(c, o, s, s, 10.0, _masonry(grain, 100.0, 100.0, STONE))
+	# Thân trụ: tâm footprint, bán kính 22 texel; mép dưới/trên là cung ellipse 2:1.
+	var center: Vector2 = o + _iso(s * 0.5, s * 0.5)
+	var r: float = 22.0
+	var shaft_bottom: float = center.y - 20.0
+	var shaft_top: float = 62.0 if not broken else 40.0
 	for y: int in size.y:
 		for x: int in size.x:
-			var hw: float = shaft_hw
-			var region: int = 0
-			if y > bottom - plinth_h:
-				hw = size.x * 0.46
-				region = 1
-			elif not broken and y < shaft_top:
-				hw = size.x * 0.46 if y > 14.0 + cap_h * 0.4 else size.x * 0.42
-				region = 2
-			var top_limit: float = 14.0
-			if broken:
-				top_limit = 14.0 + _n01(top_n, x, 0) * 40.0
-			if y < top_limit or y > bottom:
-				continue
-			var u: float = (x + 0.5 - cx) / hw
+			var u: float = (x + 0.5 - center.x) / r
 			if absf(u) > 1.0:
 				continue
-			var lit: float = _cylinder_shade(u) if region == 0 else (1.05 - u * 0.35)
-			var col: Color = _shade(STONE, lit)
-			if region == 0:
-				# Rãnh dọc (fluting).
-				col = _shade(col, 0.88 + 0.12 * cos(u * PI * 3.5))
-				# Mạch nối giữa các khối trụ.
-				var joint: float = fposmod(y - shaft_top, 52.0)
-				if joint < 1.6:
-					col = _shade(col, 0.55)
-				elif joint < 3.0:
-					col = _shade(col, 1.1)
+			var arc: float = sqrt(1.0 - u * u) * r * 0.5
+			var top_limit: float = shaft_top + arc
+			if broken:
+				top_limit = shaft_top + _n01(top_n, x, 0) * 34.0 + arc
+			if y < top_limit - arc * 2.0 or y > shaft_bottom + arc:
+				continue
+			var col: Color = _shade(STONE, _cylinder_shade(u))
+			col = _shade(col, 0.88 + 0.12 * cos(u * PI * 3.5))
+			var joint: float = fposmod(shaft_bottom - y, 52.0)
+			if joint < 1.6:
+				col = _shade(col, 0.6)
 			col = _shade(col, 0.85 + _n01(grain, x, y) * 0.3)
-			col = _shade(col, lerpf(1.0, 0.7, smoothstep(bottom - plinth_h - 30, bottom, y)))
-			col.a = clampf((1.0 - absf(u)) * hw * 1.2, 0.0, 1.0)
-			c.set_c(x, y, col)
-	if broken:
-		# Mặt cắt gãy (nhìn từ trên): elip sáng ở đỉnh.
-		for i: int in 30:
-			var q: Vector2 = Vector2(cx + rng.randf_range(-shaft_hw * 0.7, shaft_hw * 0.7), 20.0 + rng.randf_range(0, 22))
-			if c.get_alpha(int(q.x), int(q.y)) > 0.5 and c.get_alpha(int(q.x), int(q.y) - 3) < 0.5:
-				c.ellipse(q.x, q.y + 2, 5, 2.5, 0, _shade(STONE, 1.3), 0.7, 0.4)
-	_bevel(c, 2, 0.12, 0.25)
+			# Mặt cắt trên (ellipse) sáng hơn.
+			if y < top_limit:
+				col = _shade(STONE, 1.22 * (0.9 + _n01(grain, x * 2.0, y * 2.0) * 0.2))
+			c.blend(x, y, col, clampf((1.0 - absf(u)) * r, 0.0, 1.0))
+	if not broken:
+		# Đầu cột: hộp vuông đặt đúng trên mặt cắt trên của thân (tâm footprint trùng tâm ellipse đỉnh thân).
+		var cap_o: Vector2 = Vector2(center.x, shaft_top) - _iso(s * 0.5, s * 0.5)
+		_iso_box(c, cap_o, s, s, 14.0, _masonry(grain, 100.0, 100.0, STONE))
 	_moss(c, seed_value + 2, 0.45, 0.7)
 	_cracks(c, rng, 8, 40, Color(0.2, 0.19, 0.17))
 	c.save(path)
 
 
-func _arch(path: String, size: Vector2i, seed_value: int) -> void:
+## Vòm đá cổ trên hai trụ vuông, mặt vòm nằm trong mặt phẳng SW (chạy theo trục i).
+## Ảnh 300×300 texel; gốc = điểm giữa cạnh trước (SW) của chân hai trụ.
+func _arch(path: String, seed_value: int) -> void:
+	var size: Vector2i = Vector2i(300, 330)
 	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 	rng.seed = seed_value
 	var c: Painter = Painter.new(size.x, size.y)
 	var grain: FastNoiseLite = _noise(seed_value, 0.09, 3)
-	var pier_w: float = 52.0
-	var bottom: float = size.y - 4.0
-	var spring: float = size.x * 0.5 + 2.0
-	var center: Vector2 = Vector2(size.x * 0.5, spring)
-	var r_in: float = size.x * 0.5 - pier_w
-	var r_out: float = size.x * 0.5 - 4.0
-	for y: int in size.y:
-		for x: int in size.x:
-			var inside: bool = false
-			var shade: float = 1.0
-			var joint: bool = false
-			# Trụ vuông hai bên.
-			if y >= spring and y <= bottom and (x < pier_w + 4 or x > size.x - pier_w - 4) and x > 4 and x < size.x - 4:
-				inside = true
-				var course: float = fposmod(bottom - y, 30.0)
-				joint = course < 1.8
-				var local_x: float = fposmod(x - 4, size.x - pier_w - 8)
-				if fposmod(floorf((bottom - y) / 30.0), 2.0) == 1.0:
-					joint = joint or absf(local_x - pier_w * 0.5) < 1.0
-			var d: float = Vector2(x + 0.5, y + 0.5).distance_to(center)
-			if y < spring and d >= r_in and d <= r_out:
-				var ang: float = rad_to_deg((Vector2(x, y) - center).angle())
-				# Đoạn vòm bị vỡ phía phải.
-				if ang > -62.0 and ang < -22.0:
-					continue
-				inside = true
-				joint = fposmod(ang, 14.0) < 1.2 or absf(d - r_in) < 1.2
-				if d < r_in + 8.0:
-					shade = 0.7
-			if not inside:
-				continue
-			var col: Color = _shade(STONE, shade * (0.85 + _n01(grain, x, y) * 0.3))
-			if joint:
-				col = _shade(col, 0.5)
-			col = _shade(col, lerpf(1.0, 0.72, smoothstep(spring, bottom, y)))
-			c.set_c(x, y, col)
-	_bevel(c, 2, 0.16, 0.3)
+	var span: float = 3.0
+	var pier: float = 0.62
+	var depth: float = 0.62
+	var pier_h: float = 66.0
+	# Gốc o: đỉnh trên footprint (i = 0, j = 0); đặt sao cho toàn bộ nằm trong ảnh.
+	var o: Vector2 = Vector2(size.x * 0.5, size.y - 4.0) - _iso(span * 0.5, depth) - Vector2(0, 0)
+	o -= Vector2(0, 0)
+	var mason: Callable = _masonry(grain, 15.0, 22.0, STONE)
+	# Vòng vòm: tâm giữa nhịp, trong mặt phẳng (i, z) — vẽ lớp sau (tối) rồi lớp trước.
+	var r_in: float = (span * 0.5 - pier) * 35.78
+	var r_out: float = r_in + 15.0
+	for layer: int in 2:
+		var jplane: float = 0.0 if layer == 0 else depth
+		var shade: float = 0.58 if layer == 0 else 0.95
+		var p0: Vector2 = o + _iso(0, jplane, pier_h + r_out)
+		_iso_quad(c, p0, _iso(span, 0), Vector2(0, (r_out) * 2.0), func(u: float, v: float) -> Color:
+			var sx: float = (u - 0.5) * span * 35.78
+			var tz: float = (1.0 - v) * r_out
+			var d: float = Vector2(sx, tz).length()
+			if d < r_in or d > r_out:
+				return Color(0, 0, 0, 0)
+			var ang: float = rad_to_deg(atan2(tz, sx))
+			if ang > 22.0 and ang < 58.0:
+				return Color(0, 0, 0, 0)
+			var col: Color = _shade(STONE, shade * (0.86 + _n01(grain, sx * 2.0, tz * 2.0) * 0.28))
+			if fposmod(ang, 14.0) < 1.4 or absf(d - r_in) < 0.9:
+				col = _shade(col, 0.55)
+			return col)
+	_iso_box(c, o, pier, depth, pier_h, mason)
+	_iso_box(c, o + _iso(span - pier, 0), pier, depth, pier_h, mason)
 	_moss(c, seed_value + 1, 0.55, 0.7)
 	_cracks(c, rng, 14, 40, Color(0.2, 0.19, 0.17))
-	# Dây leo rủ từ vòm.
-	for i: int in 9:
-		var p: Vector2 = center + Vector2.from_angle(deg_to_rad(rng.randf_range(-170, -90))) * rng.randf_range(r_in, r_out)
-		for s: int in rng.randi_range(14, 40):
+	for i: int in 8:
+		var p: Vector2 = o + _iso(rng.randf_range(0.3, span - 0.3), depth, pier_h + rng.randf_range(4.0, r_out - 4.0))
+		for k: int in rng.randi_range(12, 34):
 			p += Vector2(rng.randf_range(-0.6, 0.6), 1.6)
 			c.dab(p.x, p.y, rng.randf_range(1.2, 2.4), Color(0.2, 0.36, 0.14).lerp(Color(0.45, 0.58, 0.22), rng.randf()), 0.95, 0.5)
 	c.save(path)
 
 
-func _wall(path: String, size: Vector2i, seed_value: int) -> void:
+## Tường đổ dài theo trục i (2.4 × 0.4 tile), đỉnh gãy. Ảnh 220×200; gốc = giữa cạnh trước SW của chân tường.
+func _wall(path: String, seed_value: int) -> void:
+	var size: Vector2i = Vector2i(220, 200)
 	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 	rng.seed = seed_value
 	var c: Painter = Painter.new(size.x, size.y)
 	var grain: FastNoiseLite = _noise(seed_value, 0.09, 3)
-	var top_n: FastNoiseLite = _noise(seed_value + 1, 0.011, 3)
-	var course_h: float = 22.0
-	var brick_w: float = 44.0
-	var top_face: float = 16.0
-	var bottom: float = size.y - 4.0
-	var tints: Dictionary = {}
-	for y: int in size.y:
-		for x: int in range(4, size.x - 4):
-			var top_limit: float = 6.0 + _n01(top_n, x, 0) * 70.0 + (x * 0.15)
-			if y < top_limit or y > bottom:
-				continue
-			var row: int = floori((bottom - y) / course_h)
-			var off: float = brick_w * 0.5 if row % 2 == 1 else 0.0
-			var col_i: int = floori((x + off) / brick_w)
-			var key: int = row * 100 + col_i
-			if not tints.has(key):
-				tints[key] = rng.randf_range(0.82, 1.12)
-				if rng.randf() < 0.06:
-					tints[key] = -1.0
-			var t: float = tints[key]
-			if t < 0.0 and y > top_limit + 20:
-				c.set_c(x, y, Color(0.12, 0.11, 0.1, 1))
-				continue
-			var col: Color = _shade(STONE, absf(t) * (0.85 + _n01(grain, x, y) * 0.3))
-			var in_course: float = fposmod(bottom - y, course_h)
-			var in_brick: float = fposmod(x + off, brick_w)
-			if in_course < 1.8 or in_brick < 1.6:
-				col = _shade(col, 0.5)
-			# Mặt trên của tường (nhìn từ trên) sáng hơn.
-			if y < top_limit + top_face * 0.5:
-				col = _shade(col, 1.2)
-			col = _shade(col, lerpf(1.0, 0.7, smoothstep(size.y * 0.5, bottom, y)))
-			c.set_c(x, y, col)
-	_bevel(c, 2, 0.15, 0.3)
+	var top_n: FastNoiseLite = _noise(seed_value + 1, 0.9, 3)
+	var a: float = 2.4
+	var b: float = 0.4
+	var hmax: float = 52.0
+	var o: Vector2 = Vector2(size.x * 0.5, size.y - 4.0) - _iso(a * 0.5, b)
+	var mason: Callable = _masonry(grain, 11.0, 20.0, STONE)
+	# Mỗi cột theo i có chiều cao riêng (đỉnh gãy); vẽ từ sau ra trước theo i.
+	var cols: int = 12
+	for k: int in cols:
+		var i0: float = a * k / cols
+		var hk: float = hmax * (0.45 + 0.55 * _n01(top_n, k * 0.37, 0.0))
+		_iso_box(c, o + _iso(i0, 0), a / cols + 0.002, b, hk, mason)
 	_moss(c, seed_value + 2, 0.6, 0.8)
 	_cracks(c, rng, 10, 30, Color(0.2, 0.19, 0.17))
 	c.save(path)
 
 
-func _blocks(path: String, size: Vector2i, seed_value: int) -> void:
+func _blocks(path: String, seed_value: int) -> void:
+	var size: Vector2i = Vector2i(200, 130)
 	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 	rng.seed = seed_value
 	var c: Painter = Painter.new(size.x, size.y)
 	var grain: FastNoiseLite = _noise(seed_value, 0.1, 3)
-	var blocks: Array[Rect2] = [Rect2(10, 40, 80, 52), Rect2(80, 50, 70, 44), Rect2(40, 14, 62, 40), Rect2(130, 66, 40, 28)]
-	for b: Rect2 in blocks:
-		var top_h: float = b.size.y * 0.38
-		var t: float = rng.randf_range(0.85, 1.1)
-		for y: int in range(int(b.position.y), int(b.end.y)):
-			for x: int in range(int(b.position.x), int(b.end.x)):
-				var col: Color = _shade(STONE, t * (0.85 + _n01(grain, x, y) * 0.3))
-				col = _shade(col, 1.22 if y < b.position.y + top_h else 0.78)
-				c.set_c(x, y, col)
-	_bevel(c, 2, 0.15, 0.3)
+	var o: Vector2 = Vector2(size.x * 0.5, size.y - 4.0) - _iso(1.2, 0.9)
+	var mason: Callable = _masonry(grain, 100.0, 100.0, STONE)
+	_iso_box(c, o + _iso(0.1, 0.0), 0.8, 0.5, 18.0, mason)
+	_iso_box(c, o + _iso(0.7, 0.35), 0.5, 0.45, 26.0, mason)
+	_iso_box(c, o + _iso(0.0, 0.5), 0.6, 0.4, 14.0, mason)
+	_iso_box(c, o + _iso(0.9, 0.0), 0.3, 0.3, 10.0, mason)
 	_moss(c, seed_value + 1, 0.55, 0.8)
 	_cracks(c, rng, 6, 20, Color(0.2, 0.19, 0.17))
 	c.save(path)
 
 
-func _rune_stone(path: String, size: Vector2i, seed_value: int) -> void:
+## Đá rune: phiến đá đứng (0.55 × 0.3 tile, cao 82 px), rune phát sáng trên mặt SW.
+func _rune_stone(path: String, seed_value: int) -> void:
+	var size: Vector2i = Vector2i(110, 220)
 	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 	rng.seed = seed_value
 	var c: Painter = Painter.new(size.x, size.y)
 	var grain: FastNoiseLite = _noise(seed_value, 0.1, 3)
-	var edge_n: FastNoiseLite = _noise(seed_value + 1, 0.08, 2)
-	var cx: float = size.x * 0.5
-	var bottom: float = size.y - 4.0
-	for y: int in size.y:
-		var t: float = float(y) / size.y
-		var hw: float = lerpf(size.x * 0.28, size.x * 0.44, t) + _n01(edge_n, 0, y) * 5.0
-		var top: float = 10.0 + absf(0.0) * 0.0
-		for x: int in size.x:
-			var u: float = (x + 0.5 - cx) / hw
-			if absf(u) > 1.0 or y > bottom:
-				continue
-			# Đỉnh bo tròn.
-			var round_top: float = top + (1.0 - sqrt(maxf(0.0, 1.0 - u * u))) * 22.0
-			if y < round_top:
-				continue
-			var col: Color = _shade(Color(0.5, 0.52, 0.53), (1.05 - u * 0.45) * (0.85 + _n01(grain, x, y) * 0.3))
-			col = _shade(col, lerpf(1.05, 0.65, smoothstep(0.6, 1.0, t)))
-			col.a = clampf((1.0 - absf(u)) * hw, 0.0, 1.0)
-			c.set_c(x, y, col)
-	_bevel(c, 2, 0.15, 0.3)
+	var a: float = 0.55
+	var b: float = 0.3
+	var h: float = 82.0
+	var o: Vector2 = Vector2(size.x * 0.5, size.y - 4.0) - _iso(a * 0.5, b)
+	var base: Color = Color(0.5, 0.52, 0.53)
+	_iso_box(c, o, a, b, h, func(face: int, u: float, v: float) -> Color:
+		return _shade(base, 0.86 + _n01(grain, u * 2.0 + face * 91.0, v * 2.0) * 0.28))
 	_moss(c, seed_value + 2, 0.4, 0.6)
-	# Rune phát sáng.
 	var glow: Color = Color(0.45, 0.95, 1.0)
-	var y0: float = 44.0
 	for g: int in 5:
-		var gy: float = y0 + g * 20.0
-		var p: Vector2 = Vector2(cx + rng.randf_range(-8, 8), gy)
+		var p: Vector2 = o + _iso(a * 0.5, b, h - 14.0 - g * 13.0) + Vector2(rng.randf_range(-6, 6), 0)
 		for s: int in 3:
-			var q: Vector2 = p + Vector2(rng.randf_range(-9, 9), rng.randf_range(-7, 7))
+			var q: Vector2 = p + Vector2(rng.randf_range(-8, 8), rng.randf_range(-6, 6))
 			c.stroke(p.x, p.y, q.x, q.y, 3.6, 3.6, glow, glow, 0.25, 0.1)
 			c.stroke(p.x, p.y, q.x, q.y, 1.3, 1.3, Color(0.85, 1.0, 1.0), glow, 1.0, 0.7)
 			p = q
 	c.save(path)
 
 
-# ---------------------------------------------------------------- structures (bridge, stairs, footbridge)
+# ---------------------------------------------------------------- structures (isometric)
 
 func _structures() -> void:
 	var dir: String = _dir("structures")
@@ -949,53 +958,47 @@ func _structures() -> void:
 	_footbridge(dir + "footbridge.png", 93)
 
 
-## Cầu đá tầng cao: 320×240 texel (= 160×120 world). 112 texel trên là mặt cầu, 128 texel dưới là mặt trước có vòm.
+## Lối đi tầng cao trên vòm: hộp dài theo trục i (4.6 × 1.5 tile, cao 64 px = 1 tầng), mặt SW có vòm cho lối đi tầng
+## thấp chạy theo trục j xuyên qua. Gốc o = đỉnh trên của footprint; xem BRIDGE_* trong builder để khớp hình học.
 func _stone_bridge(path: String, seed_value: int) -> void:
-	var size: Vector2i = Vector2i(320, 240)
+	var a: float = 4.6
+	var b: float = 1.5
+	var h: float = 64.0
+	var size: Vector2i = Vector2i(int((a + b) * 64.0) + 8, int((a + b) * 32.0 + h * 2.0) + 8)
 	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 	rng.seed = seed_value
 	var c: Painter = Painter.new(size.x, size.y)
 	var grain: FastNoiseLite = _noise(seed_value, 0.09, 3)
-	var deck_h: float = 112.0
-	var arch_center: Vector2 = Vector2(size.x * 0.5, size.y + 6.0)
-	var arch_r: float = 104.0
-	for y: int in size.y:
-		for x: int in size.x:
-			var col: Color
-			if y < deck_h:
-				# Mặt cầu: đá lát, lan can thấp ở hai mép.
-				var row: int = floori(y / 18.0)
-				var off: float = 13.0 if row % 2 == 1 else 0.0
-				var joint: bool = fposmod(y, 18.0) < 1.4 or fposmod(x + off, 26.0) < 1.4
-				col = _shade(Color(0.66, 0.62, 0.55), 0.9 + _n01(grain, x, y) * 0.25)
-				if joint:
-					col = _shade(col, 0.6)
-				if y < 14:
-					col = _shade(STONE, 1.1 if y < 8 else 0.8)
-				elif y > deck_h - 18:
-					col = _shade(STONE, 1.2 if y < deck_h - 11 else 0.95)
-			else:
-				var d: float = Vector2(x + 0.5, y + 0.5).distance_to(arch_center)
-				if d < arch_r:
-					continue
-				var course: float = fposmod(y - deck_h, 22.0)
-				var off2: float = 20.0 if floori((y - deck_h) / 22.0) % 2 == 1 else 0.0
-				var joint2: bool = course < 1.6 or fposmod(x + off2, 40.0) < 1.6
-				col = _shade(STONE, 0.78 * (0.85 + _n01(grain, x, y) * 0.3))
-				if d < arch_r + 14.0:
-					var ang: float = rad_to_deg((Vector2(x, y) - arch_center).angle())
-					joint2 = fposmod(ang, 10.0) < 1.0 or d < arch_r + 1.5
-					col = _shade(col, 0.95)
-				if joint2:
-					col = _shade(col, 0.55)
-				col = _shade(col, lerpf(1.0, 0.65, smoothstep(deck_h, size.y, y)))
-			col.a = 1.0
-			c.set_c(x, y, col)
-	_bevel(c, 2, 0.12, 0.25)
+	var o: Vector2 = Vector2(b * 64.0 + 4.0, h * 2.0 + 4.0)
+	var deck: Color = Color(0.66, 0.62, 0.55)
+	# Tâm vòm cách đầu cầu 1.25 tile: khớp lối đi tầng thấp chạy dưới gầm (xem builder prototype).
+	var arch_c: float = 1.25 * 35.78
+	var arch_r: float = 34.0
+	var pattern: Callable = func(face: int, u: float, v: float) -> Color:
+		if face == 0:
+			var col0: Color = _shade(deck, 0.88 + _n01(grain, u * 2.0, v * 2.0) * 0.24)
+			if fposmod(u, 18.0) < 0.9 or fposmod(v, 13.0) < 0.9:
+				col0 = _shade(col0, 0.62)
+			if v < 3.0 or v > b * 35.78 - 3.0:
+				col0 = _shade(STONE, 1.2)
+			return col0
+		if face == 1:
+			# Vòm: nửa ellipse từ chân (v = h) — tz = khoảng cách từ chân lên.
+			var tz: float = h - v
+			var dx: float = u - arch_c
+			if dx * dx / (arch_r * arch_r) + tz * tz / ((h - 12.0) * (h - 12.0)) < 1.0:
+				return Color(0, 0, 0, 0)
+		var col: Color = _shade(STONE, 0.86 + _n01(grain, u * 2.0 + face * 77.0, v * 2.0) * 0.28)
+		var row: float = floorf(v / 11.0)
+		var off: float = 10.0 if fposmod(row, 2.0) == 1.0 else 0.0
+		if fposmod(v, 11.0) < 0.9 or fposmod(u + off, 20.0) < 0.9:
+			col = _shade(col, 0.55)
+		return _shade(col, lerpf(1.0, 0.72, v / h))
+	_iso_box(c, o, a, b, h, pattern)
 	_moss(c, seed_value + 1, 0.45, 0.7)
 	for i: int in 10:
-		var p: Vector2 = Vector2(rng.randf() * size.x, deck_h + 2)
-		for s: int in rng.randi_range(10, 50):
+		var p: Vector2 = o + _iso(rng.randf_range(0.2, a - 0.2), b, h - 1.0)
+		for s: int in rng.randi_range(10, 40):
 			p += Vector2(rng.randf_range(-0.6, 0.6), 1.7)
 			if c.get_alpha(int(p.x), int(p.y)) < 0.5:
 				break
@@ -1003,80 +1006,61 @@ func _stone_bridge(path: String, seed_value: int) -> void:
 	c.save(path)
 
 
-## Cầu thang đá xẻ vào vách: 128×200 texel (= 64×100 world). Đỉnh hòa vào mặt trên, chân đặt trên mặt đất.
+## Cầu thang đá dựa vào mặt vách SW, đi lên theo hướng −j (lên-phải màn hình). Rộng 1.5 tile theo i, chạy 1.75 tile
+## theo j, cao 64 px, 7 bậc. Gốc o = đỉnh trên của footprint (i = 0, j = 0 — mép chân vách).
 func _stairs(path: String, seed_value: int) -> void:
-	var size: Vector2i = Vector2i(128, 200)
-	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
-	rng.seed = seed_value
+	var w: float = 1.5
+	var run: float = 1.75
+	var h: float = 64.0
+	var steps: int = 7
+	var size: Vector2i = Vector2i(int((w + run) * 64.0) + 8, int((w + run) * 32.0 + h * 2.0) + 8)
 	var c: Painter = Painter.new(size.x, size.y)
 	var grain: FastNoiseLite = _noise(seed_value, 0.1, 3)
-	var cheek: float = 16.0
-	var steps: int = 8
-	var top: float = 24.0
-	var bottom: float = size.y - 8.0
-	var step_h: float = (bottom - top) / steps
-	for y: int in size.y:
-		for x: int in size.x:
-			var col: Color
-			var a: float = 1.0
-			if x < cheek or x >= size.x - cheek:
-				var block: bool = fposmod(y, 26.0) < 1.6
-				col = _shade(STONE, (1.0 if x < cheek else 0.72) * (0.85 + _n01(grain, x, y) * 0.3))
-				if block:
-					col = _shade(col, 0.55)
-			else:
-				if y < top:
-					a = smoothstep(0.0, top, y)
-					col = _shade(Color(0.62, 0.58, 0.5), 0.95)
-				else:
-					var s: float = fposmod(y - top, step_h)
-					var tread: bool = s < step_h * 0.55
-					col = _shade(Color(0.66, 0.62, 0.55), (1.15 if tread else 0.66) * (0.85 + _n01(grain, x, y) * 0.3))
-					if s < 1.5:
-						col = _shade(col, 1.25)
-					col = _shade(col, lerpf(1.0, 0.82, float(y) / size.y))
-			col.a = a
-			c.set_c(x, y, col)
-	_bevel(c, 2, 0.1, 0.2)
+	var o: Vector2 = Vector2(run * 64.0 + 4.0, h * 2.0 + 4.0)
+	var tread: Color = Color(0.68, 0.64, 0.57)
+	for k: int in range(steps - 1, -1, -1):
+		var depth: float = run * float(steps - k) / steps
+		var hk: float = h * float(k + 1) / steps
+		_iso_box(c, o, w, depth, hk, func(face: int, u: float, v: float) -> Color:
+			var col: Color = _shade(tread if face == 0 else STONE, 0.86 + _n01(grain, u * 2.0 + face * 53.0, v * 2.0 + k * 31.0) * 0.28)
+			if face == 1 and v < 1.4:
+				col = _shade(col, 1.25)
+			if face == 0 and fposmod(u, 18.0) < 0.8:
+				col = _shade(col, 0.7)
+			return col)
 	_moss(c, seed_value + 1, 0.4, 0.5)
 	c.save(path)
 
 
-## Cầu gỗ thấp qua suối: 128×256 texel (= 64×128 world), ván ngang, dầm dọc hai bên.
+## Cầu gỗ thấp bắc theo trục j: rộng 1.1 tile (i), dài 3.6 tile (j), dày 5 px. Gốc o = đỉnh trên của footprint.
 func _footbridge(path: String, seed_value: int) -> void:
-	var size: Vector2i = Vector2i(128, 256)
+	var w: float = 1.1
+	var length: float = 3.6
+	var size: Vector2i = Vector2i(int((w + length) * 64.0) + 8, int((w + length) * 32.0 + 10.0 * 2.0) + 8)
 	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 	rng.seed = seed_value
 	var c: Painter = Painter.new(size.x, size.y)
 	var grain: FastNoiseLite = _noise(seed_value, 0.04, 3)
-	var plank_h: float = 15.0
-	var beam: float = 12.0
-	var plank_tints: PackedFloat32Array = PackedFloat32Array()
-	for i: int in 40:
-		plank_tints.append(rng.randf_range(0.8, 1.15))
+	var o: Vector2 = Vector2(length * 64.0 + 4.0, 10.0 * 2.0 + 4.0)
 	var wood: Color = Color(0.52, 0.38, 0.25)
-	for y: int in size.y:
-		for x: int in size.x:
-			var col: Color
-			if x < beam or x >= size.x - beam:
-				var u: float = (x - (beam * 0.5 if x < beam else size.x - beam * 0.5)) / (beam * 0.5)
-				col = _shade(Color(0.36, 0.26, 0.17), 1.0 - u * 0.35)
-				col = _shade(col, 0.85 + _n01(grain, x * 0.3, y * 2.0) * 0.3)
-			else:
-				var pi: int = floori(y / plank_h)
-				var s: float = fposmod(y, plank_h)
-				col = _shade(wood, plank_tints[pi % plank_tints.size()])
-				col = _shade(col, 0.82 + _n01(grain, x * 2.5 + pi * 50.0, y * 0.25) * 0.35)
-				if s < 1.8:
-					col = Color(0.1, 0.07, 0.05)
-				elif s < 3.0:
-					col = _shade(col, 1.18)
-				elif s > plank_h - 2.5:
-					col = _shade(col, 0.7)
-				if absf(x - beam - 6) < 1.5 and absf(s - plank_h * 0.5) < 1.5 or absf(x - (size.x - beam - 6)) < 1.5 and absf(s - plank_h * 0.5) < 1.5:
-					col = Color(0.2, 0.2, 0.22)
-			col.a = 1.0
-			c.set_c(x, y, col)
+	var tints: PackedFloat32Array = PackedFloat32Array()
+	for i: int in 40:
+		tints.append(rng.randf_range(0.8, 1.15))
+	var len_w: float = w * 35.78
+	_iso_box(c, o, w, length, 5.0, func(face: int, u: float, v: float) -> Color:
+		if face != 0:
+			return _shade(Color(0.32, 0.23, 0.15), 0.9)
+		# Mặt trên: ván ngang (song song trục i), dầm dọc hai mép.
+		if u < 3.5 or u > len_w - 3.5:
+			return _shade(Color(0.36, 0.26, 0.17), 0.85 + _n01(grain, u, v * 2.0) * 0.3)
+		var plank: int = floori(v / 7.5)
+		var s: float = fposmod(v, 7.5)
+		var col: Color = _shade(wood, tints[plank % tints.size()] * (0.82 + _n01(grain, u * 2.5 + plank * 50.0, v * 0.3) * 0.35))
+		if s < 0.9:
+			col = Color(0.1, 0.07, 0.05)
+		elif s > 6.6:
+			col = _shade(col, 0.72)
+		return col)
 	c.save(path)
 
 
@@ -1271,51 +1255,72 @@ func _scenery() -> void:
 
 
 ## Thung lũng xa nhìn từ mép vực: 1024×512, lặp theo x. Trên = xa (mờ xanh), dưới = gần chân vực (tối, nhiều sương).
+## Phông xa sau vực: 1024×768, lặp theo x. Trên: trời + hai lớp núi (lớp xa có lâu đài mờ); giữa: rừng thung lũng;
+## dưới: tan vào màu sương vực (ABYSS_HAZE) để khớp nền lấp đầy quanh map.
+const ABYSS_HAZE: Color = Color(0.6, 0.68, 0.72)
+
+
 func _valley(path: String, seed_value: int) -> void:
-	var size: Vector2i = Vector2i(1024, 512)
+	var size: Vector2i = Vector2i(1024, 768)
 	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 	rng.seed = seed_value
 	var c: Painter = Painter.new(size.x, size.y, Color.BLACK, true)
-	var far: Color = Color(0.66, 0.76, 0.8)
-	var near: Color = Color(0.17, 0.28, 0.24)
+	var sky_top: Color = Color(0.62, 0.74, 0.86)
+	var sky_low: Color = Color(0.86, 0.88, 0.84)
 	for y: int in size.y:
 		var t: float = float(y) / size.y
 		for x: int in size.x:
-			c.set_c(x, y, far.lerp(near, smoothstep(0.0, 1.0, t)))
-	# Dãy núi xa.
-	var ridge: FastNoiseLite = _noise(seed_value, 0.004, 4)
+			c.set_c(x, y, sky_top.lerp(sky_low, smoothstep(0.0, 0.32, t)))
+	var ridge_far: FastNoiseLite = _noise(seed_value, 0.004, 4)
+	var ridge_near: FastNoiseLite = _noise(seed_value + 7, 0.006, 5)
+	var castle_x: float = 640.0
 	for x: int in size.x:
 		var ang: float = TAU * x / size.x
-		var hgt: float = 70.0 + _n01(ridge, cos(ang) * 120.0, sin(ang) * 120.0) * 80.0
-		for y: int in range(int(hgt), int(hgt) + 120):
-			if y >= size.y:
-				break
-			var k: float = float(y - hgt) / 120.0
-			c.blend(x, y, Color(0.48, 0.58, 0.66).lerp(Color(0.4, 0.5, 0.52), k), 0.85 * (1.0 - k * 0.5))
-		c.blend(x, int(hgt), Color(0.85, 0.88, 0.9), 0.5)
-	# Lớp ngọn cây: xa → gần, kích thước và độ tương phản tăng dần.
+		var far_h: float = 150.0 + _n01(ridge_far, cos(ang) * 120.0, sin(ang) * 120.0) * 90.0
+		var near_h: float = 230.0 + _n01(ridge_near, cos(ang) * 90.0, sin(ang) * 90.0) * 80.0
+		# Lâu đài trên đỉnh núi xa: tháp + chóp nhọn, cùng màu núi nhưng sáng hơn chút (mờ do khoảng cách).
+		var dx: float = absf(x - castle_x)
+		var castle_top: float = INF
+		if dx < 46.0:
+			castle_top = far_h - 34.0 - (12.0 if fposmod(x - castle_x + 46.0, 23.0) < 9.0 else 0.0)
+			for tower: float in [-40.0, -8.0, 30.0]:
+				var tdx: float = absf(x - castle_x - tower)
+				if tdx < 7.0:
+					castle_top = minf(castle_top, far_h - 62.0 - (16.0 - tdx * 2.3))
+		for y: int in size.y:
+			if y >= minf(far_h, castle_top):
+				var k: float = clampf((y - far_h) / 160.0, 0.0, 1.0)
+				var col: Color = Color(0.56, 0.64, 0.74).lerp(Color(0.5, 0.6, 0.64), k)
+				if y < far_h:
+					col = Color(0.66, 0.72, 0.8)
+				c.set_c(x, y, col)
+			if y >= near_h:
+				var k2: float = clampf((y - near_h) / 120.0, 0.0, 1.0)
+				c.set_c(x, y, Color(0.4, 0.5, 0.52).lerp(Color(0.32, 0.43, 0.4), k2))
+		c.blend(x, int(far_h), Color(0.9, 0.92, 0.94), 0.45)
+	# Rừng thung lũng: xa → gần.
 	for layer: int in 6:
 		var t: float = float(layer) / 5.0
-		var y_band: float = lerpf(170.0, 470.0, t)
+		var y_band: float = lerpf(320.0, 560.0, t)
 		var count: int = int(lerpf(2400, 900, t))
-		var r_max: float = lerpf(4.0, 16.0, t)
-		var haze: Color = far.lerp(near, lerpf(0.35, 1.0, t))
+		var r_max: float = lerpf(4.0, 14.0, t)
+		var haze: Color = Color(0.5, 0.6, 0.62).lerp(Color(0.2, 0.32, 0.26), t)
 		for i: int in count:
-			var p: Vector2 = Vector2(rng.randf() * size.x, minf(y_band + rng.randf_range(-40, 40), size.y - 18.0))
+			var p: Vector2 = Vector2(rng.randf() * size.x, y_band + rng.randf_range(-40, 40))
 			var r: float = rng.randf_range(r_max * 0.5, r_max)
-			var tree_col: Color = Color(0.12, 0.25, 0.16).lerp(Color(0.3, 0.45, 0.22), rng.randf() * 0.6)
-			var col: Color = tree_col.lerp(haze, lerpf(0.75, 0.15, t))
+			var col: Color = Color(0.14, 0.27, 0.18).lerp(Color(0.3, 0.45, 0.22), rng.randf() * 0.6).lerp(haze, lerpf(0.7, 0.2, t))
 			c.dab(p.x + r * 0.3, p.y + r * 0.3, r, _shade(col, 0.7), 0.9, 0.5)
 			c.dab(p.x, p.y, r * 0.85, col, 0.95, 0.5)
 			c.dab(p.x - r * 0.3, p.y - r * 0.35, r * 0.45, _shade(col, 1.12), 0.35, 0.2)
-	# Sương theo dải.
+	# Đáy: tan vào sương vực.
 	var mn: FastNoiseLite = _noise(seed_value + 1, 0.006, 3)
 	for y: int in size.y:
+		var fade: float = smoothstep(560.0, 720.0, y)
 		for x: int in size.x:
 			var ang: float = TAU * x / size.x
-			var band: float = sin(y * 0.03) * 0.5 + 0.5
-			var m: float = _n01(mn, cos(ang) * 160.0, sin(ang) * 160.0 + y * 0.8) * band
-			c.blend(x, y, Color(0.85, 0.9, 0.95), smoothstep(0.45, 0.9, m) * 0.45)
+			var m: float = _n01(mn, cos(ang) * 160.0, sin(ang) * 160.0 + y * 0.8) * (sin(y * 0.03) * 0.5 + 0.5)
+			c.blend(x, y, Color(0.85, 0.9, 0.95), smoothstep(0.45, 0.9, m) * 0.4)
+			c.blend(x, y, ABYSS_HAZE, fade)
 	c.save(path)
 
 
@@ -1334,12 +1339,15 @@ func _foreground_leaves(path: String, seed_value: int) -> void:
 func _logic_tiles() -> void:
 	var dir: String = _dir("terrain")
 	var colors: Array[Color] = [Color(0.3, 0.8, 0.3), Color(0.85, 0.6, 0.3), Color(0.25, 0.55, 1.0), Color(1.0, 0.3, 0.3), Color(0.7, 0.4, 1.0), Color(0.1, 0.1, 0.1)]
-	var c: Painter = Painter.new(32 * colors.size(), 32)
+	# Atlas ô thoi 64×32 (khớp TileSet isometric). Thứ tự: grass, dirt, water, cliff, high, void.
+	var c: Painter = Painter.new(64 * colors.size(), 32)
 	for i: int in colors.size():
 		for y: int in 32:
-			for x: int in 32:
-				var border: bool = x == 0 or y == 0 or x == 31 or y == 31
+			for x: int in 64:
+				var d: float = absf(x + 0.5 - 32.0) / 32.0 + absf(y + 0.5 - 16.0) / 16.0
+				if d > 1.0:
+					continue
 				var col: Color = colors[i]
-				col.a = 0.9 if border else 0.45
-				c.set_c(i * 32 + x, y, col)
+				col.a = 0.9 if d > 0.88 else 0.45
+				c.set_c(i * 64 + x, y, col)
 	c.save(dir + "terrain_logic_tiles.png")

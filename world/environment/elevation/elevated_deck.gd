@@ -1,15 +1,15 @@
+@tool
 class_name ElevatedDeck
 extends Node2D
-## Mặt sàn tầng cao không chặn tầng dưới (cầu đá, lối đi trên cao): chỉ thêm vùng đi được cho `tier`.
+## Mặt sàn tầng cao không chặn tầng dưới (lối đi trên vòm, cầu đá): chỉ thêm vùng đi được cho `tier`.
 ## Tầng dưới đi qua bên dưới tự do (trừ trụ/mố nếu có collision riêng).
-## Origin đặt tại chân mặt trước của cầu để Y-sort cùng entity tầng thấp: entity ở trước chân cầu vẽ đè lên cầu,
-## entity ở sau/dưới gầm cầu bị cầu che. Occupant tầng cao vẽ trên cầu nhờ z_index theo tầng (ElevationAgent).
+## Hiển thị thường là FootprintSortedSprite (cắt lát, mỗi lát neo tại mép trước của chân cầu) để entity tầng thấp
+## đứng trước cầu vẽ đè lên cầu, đứng sau/dưới gầm bị cầu che. Occupant tầng cao vẽ trên cầu nhờ z_index theo tầng.
 
 @export var tier: int = 1
-## Vùng đi được của mặt cầu (local).
-@export var deck_rect: Rect2 = Rect2(-80, -120, 160, 56)
+## Vùng đi được của mặt cầu (local, màn hình) — map isometric: hình bình hành theo trục lưới.
+@export var deck_polygon: PackedVector2Array = PackedVector2Array()
 
 
 func get_walkable_polygon() -> PackedVector2Array:
-	var r: Rect2 = deck_rect
-	return global_transform * PackedVector2Array([r.position, Vector2(r.end.x, r.position.y), r.end, Vector2(r.position.x, r.end.y)])
+	return global_transform * deck_polygon

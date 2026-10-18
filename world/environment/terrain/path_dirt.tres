@@ -8,7 +8,7 @@
 shader = ExtResource("1_mo2rp")
 shader_parameter/albedo = ExtResource("2_7i0tx")
 shader_parameter/edge_noise = ExtResource("3_r7cvx")
-shader_parameter/texture_world_size = null
+shader_parameter/tiles_per_texture = null
 shader_parameter/tint = Color(1, 1, 1, 1)
 shader_parameter/edge_start = 0.5
 shader_parameter/edge_noise_strength = null

@@ -1,29 +1,28 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://world/environment/props/environment_prop.gd" id="1_2uk7d"]
-[ext_resource type="Texture2D" path="res://world/environment/art/decals/shadow_soft.png" id="2_uiy7h"]
-[ext_resource type="Texture2D" path="res://world/environment/art/props/ruin_wall.png" id="3_q2xak"]
+[ext_resource type="Script" path="res://world/environment/props/environment_prop.gd" id="1_uiy7h"]
+[ext_resource type="Texture2D" path="res://world/environment/art/decals/shadow_soft.png" id="2_q2xak"]
+[ext_resource type="Script" path="res://world/environment/iso/footprint_sorted_sprite.gd" id="3_2sy1c"]
+[ext_resource type="Texture2D" path="res://world/environment/art/props/ruin_wall.png" id="4_k3gti"]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_2sy1c"]
-size = Vector2(119.6, 14)
+[node name="RuinWall" type="Node2D" unique_id=896947731]
+y_sort_enabled = true
+script = ExtResource("1_uiy7h")
 
-[node name="RuinWall" type="Node2D" unique_id=947383042]
-script = ExtResource("1_2uk7d")
-
-[node name="Shadow" type="Sprite2D" parent="." unique_id=1324567586]
+[node name="Shadow" type="Sprite2D" parent="." unique_id=1149368814]
 modulate = Color(1, 1, 1, 0.55)
 z_index = -1
-position = Vector2(15.6, 2)
-scale = Vector2(0.55859375, 0.45703125)
-texture = ExtResource("2_uiy7h")
+position = Vector2(15.4, 4.4)
+scale = Vector2(0.4296875, 0.4296875)
+texture = ExtResource("2_q2xak")
 
-[node name="Visual" type="Sprite2D" parent="." unique_id=95655724]
-scale = Vector2(0.5, 0.5)
-texture = ExtResource("3_q2xak")
-offset = Vector2(0, -71)
+[node name="Visual" type="Node2D" parent="." unique_id=1789517260]
+script = ExtResource("3_2sy1c")
+texture = ExtResource("4_k3gti")
+image_offset = Vector2(-55, -98)
+footprint = PackedVector2Array(-25.6, -25.6, 51.2, 12.8, 38.4, 19.2, -38.4, -19.2)
 
-[node name="Collision" type="StaticBody2D" parent="." unique_id=600818910]
+[node name="Collision" type="StaticBody2D" parent="." unique_id=945050214]
 
-[node name="Shape0" type="CollisionShape2D" parent="Collision" unique_id=1229783220]
-position = Vector2(0, -7)
-shape = SubResource("RectangleShape2D_2sy1c")
+[node name="Footprint0" type="CollisionPolygon2D" parent="Collision" unique_id=1209643887]
+polygon = PackedVector2Array(-25.6, -25.6, 51.2, 12.8, 38.4, 19.2, -38.4, -19.2)

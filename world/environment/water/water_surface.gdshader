@@ -1,4 +1,4 @@
-// Mặt nước suối (Line2D, texture_mode = Stretch): sâu ở giữa, nông + bọt ở mép, gợn sóng trôi theo flow_direction.
+// Mặt nước suối (Line2D trong node mặt phẳng đất scale y 0.5, texture_mode = Stretch; gợn sóng theo toạ độ lưới iso): sâu ở giữa, nông + bọt ở mép, gợn sóng trôi theo flow_direction.
 // Tương thích Compatibility renderer (không dùng SCREEN_TEXTURE).
 shader_type canvas_item;
 
@@ -12,9 +12,13 @@ uniform float ripple_scale = 160.0;
 uniform float edge_alpha_start = 0.82;
 
 varying vec2 world_pos;
+varying vec4 vertex_color;
 
 void vertex() {
-	world_pos = (MODEL_MATRIX * vec4(VERTEX, 0.0, 1.0)).xy;
+	vertex_color = COLOR;
+	vec2 p = (MODEL_MATRIX * vec4(VERTEX, 0.0, 1.0)).xy;
+	// Toạ độ mặt đất (px, bỏ nén dọc) để gợn sóng tròn trên mặt đất thành ellipse 2:1 trên màn hình.
+	world_pos = vec2(p.x, p.y * 2.0);
 }
 
 void fragment() {
@@ -32,5 +36,5 @@ void fragment() {
 	float foam = smoothstep(0.62, 0.85, d + (n2 - 0.5) * 0.4);
 	c = mix(c, foam_color.rgb, foam * 0.75);
 	float alpha = 1.0 - smoothstep(edge_alpha_start, 1.0, d + (n1 - 0.5) * 0.2);
-	COLOR = vec4(c, alpha * COLOR.a);
+	COLOR = vec4(c, alpha * vertex_color.a);
 }

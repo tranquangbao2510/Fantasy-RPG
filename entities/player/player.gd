@@ -7,6 +7,9 @@ extends CharacterBody2D
 ## script này chỉ đọc input và nối trạng thái.
 
 @export var move_speed: float = 160.0
+## Hệ số vận tốc theo trục dọc màn hình. 1 = map top-down cũ; 0.5 = map isometric 2:1 (tốc độ đều trên mặt phẳng đất,
+## nhấn chéo đi đúng theo trục lưới thoi). Hướng phím vẫn theo màn hình (W = lên màn hình).
+@export var vertical_speed_scale: float = 1.0
 
 ## Hướng nhìn cuối cùng; dùng khi chuột trùng vị trí Player.
 var _facing: Vector2 = Vector2.DOWN
@@ -39,7 +42,7 @@ func _physics_process(_delta: float) -> void:
 		return
 	# get_vector giới hạn độ dài <= 1 nên đi chéo không nhanh hơn đi thẳng.
 	var direction: Vector2 = Input.get_vector(&"move_left", &"move_right", &"move_up", &"move_down")
-	velocity = direction * move_speed * _passives.get_move_speed_multiplier()
+	velocity = direction * Vector2(1.0, vertical_speed_scale) * move_speed * _passives.get_move_speed_multiplier()
 	move_and_slide()
 	if direction != Vector2.ZERO and not _attack.is_attacking():
 		_set_facing(direction)

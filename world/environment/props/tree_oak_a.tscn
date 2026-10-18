@@ -5,37 +5,30 @@
 [ext_resource type="Texture2D" path="res://world/environment/art/props/tree_oak_a.png" id="3_ja3ie"]
 [ext_resource type="Script" path="res://world/environment/props/occlusion_fader.gd" id="4_7rq1y"]
 
-[sub_resource type="CircleShape2D" id="CircleShape2D_5w0mw"]
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_cxha3"]
-size = Vector2(151.2, 212)
-
-[node name="TreeOakA" type="Node2D" unique_id=1700154439]
+[node name="TreeOakA" type="Node2D" unique_id=4121782]
 script = ExtResource("1_vd6nr")
 
-[node name="Shadow" type="Sprite2D" parent="." unique_id=1104918441]
+[node name="Shadow" type="Sprite2D" parent="." unique_id=563749195]
 modulate = Color(1, 1, 1, 0.55)
 z_index = -1
-position = Vector2(21.6, 2)
-scale = Vector2(0.7734375, 0.6328125)
+position = Vector2(25.2, 7.2)
+scale = Vector2(0.703125, 0.703125)
 texture = ExtResource("2_wsje7")
 
-[node name="Visual" type="Sprite2D" parent="." unique_id=1014332567]
+[node name="Visual" type="Sprite2D" parent="." unique_id=1867117464]
 scale = Vector2(0.5, 0.5)
 texture = ExtResource("3_ja3ie")
 offset = Vector2(0, -208)
 
-[node name="Collision" type="StaticBody2D" parent="." unique_id=1428532959]
+[node name="Collision" type="StaticBody2D" parent="." unique_id=300777014]
 
-[node name="Shape0" type="CollisionShape2D" parent="Collision" unique_id=1070520887]
-position = Vector2(0, -4)
-shape = SubResource("CircleShape2D_5w0mw")
+[node name="Footprint0" type="CollisionPolygon2D" parent="Collision" unique_id=1597660512]
+polygon = PackedVector2Array(11, -2, 9.526279, 0.75, 5.5, 2.7631397, 6.735335e-16, 3.5, -5.5, 2.7631397, -9.526279, 0.75, -11, -2, -9.526279, -4.75, -5.5, -6.7631397, -2.0206005e-15, -7.5, 5.5, -6.7631397, 9.526279, -4.75)
 
-[node name="OcclusionFader" type="Area2D" parent="." unique_id=1291945176 node_paths=PackedStringArray("target")]
+[node name="OcclusionFader" type="Area2D" parent="." unique_id=829778910 node_paths=PackedStringArray("target")]
 collision_mask = 2
 script = ExtResource("4_7rq1y")
 target = NodePath("../Visual")
 
-[node name="Shape" type="CollisionShape2D" parent="OcclusionFader" unique_id=400140427]
-position = Vector2(0, -108)
-shape = SubResource("RectangleShape2D_cxha3")
+[node name="Shape" type="CollisionPolygon2D" parent="OcclusionFader" unique_id=1442783356]
+polygon = PackedVector2Array(-75.6, -214, 75.6, -214, 75.6, -2, -75.6, -2)

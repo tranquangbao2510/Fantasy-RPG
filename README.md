@@ -45,4 +45,6 @@ Quy tắc cộng tác cho AI agent: [docs/agent_rules.md](docs/agent_rules.md).
 
 - TASK 05 — Camera (`world/camera/`): theo player, smoothing, **lăn chuột** để zoom 2×–4× (mức nguyên), không nhìn ra ngoài bản đồ.
 
-Chưa có animation, combat, menu hay hệ thống nào khác.
+- TASK 06 — Interaction System (`features/interaction/`, `ui/interaction/`): đến gần bảng thông báo, rương hoặc tinh thể thử nghiệm và nhấn **E**.
+
+Chưa có animation, combat, inventory, hội thoại, menu hay hệ thống nào khác.

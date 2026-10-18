@@ -1,0 +1,21 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://ui/interaction/interaction_feedback.gd" id="1_feedback"]
+
+[node name="InteractionFeedback" type="PanelContainer"]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_top = 24.0
+offset_bottom = 56.0
+grow_horizontal = 2
+mouse_filter = 2
+script = ExtResource("1_feedback")
+
+[node name="Label" type="Label" parent="."]
+layout_mode = 2
+text = "Thông báo"
+horizontal_alignment = 1
+
+[node name="HideTimer" type="Timer" parent="."]
+one_shot = true

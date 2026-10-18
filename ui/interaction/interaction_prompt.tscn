@@ -1,0 +1,21 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://ui/interaction/interaction_prompt.gd" id="1_prompt"]
+
+[node name="InteractionPrompt" type="PanelContainer"]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_top = -72.0
+offset_bottom = -40.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+script = ExtResource("1_prompt")
+
+[node name="Label" type="Label" parent="."]
+layout_mode = 2
+text = "[E] Tương tác — Đối tượng"
+horizontal_alignment = 1

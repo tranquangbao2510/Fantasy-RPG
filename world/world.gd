@@ -1,11 +1,14 @@
 extends Node2D
 ## Gốc của môi trường game.
-## Cung cấp các container và nối camera với target / vùng bản đồ; không chứa logic gameplay.
+## Cung cấp các container và nối các module (camera, interaction UI) với nhau; không chứa logic gameplay.
 ## Các module khác thêm node vào container qua các hàm public bên dưới.
 
 @export var camera: GameCamera
 @export var camera_target: Node2D
 @export var map_bounds: MapBounds
+@export var interaction_detector: InteractionDetector
+@export var interaction_prompt: InteractionPrompt
+@export var interaction_feedback: InteractionFeedback
 
 @onready var _environment: Node2D = $Environment
 @onready var _map_container: Node2D = $MapContainer
@@ -14,11 +17,8 @@ extends Node2D
 
 
 func _ready() -> void:
-	if camera == null:
-		return
-	if map_bounds != null:
-		camera.set_map_rect(get_map_rect())
-	camera.set_target(camera_target)
+	_setup_camera()
+	_setup_interaction_ui()
 
 
 func get_environment_container() -> Node2D:
@@ -42,3 +42,24 @@ func get_map_rect() -> Rect2:
 	if map_bounds == null:
 		return Rect2()
 	return map_bounds.global_transform * map_bounds.get_map_rect()
+
+
+func _setup_camera() -> void:
+	if camera == null:
+		return
+	if map_bounds != null:
+		camera.set_map_rect(get_map_rect())
+	camera.set_target(camera_target)
+
+
+func _setup_interaction_ui() -> void:
+	if interaction_detector == null:
+		return
+	if interaction_prompt != null:
+		interaction_detector.target_changed.connect(interaction_prompt.show_target)
+	if interaction_feedback != null:
+		interaction_detector.interacted.connect(_on_interacted)
+
+
+func _on_interacted(_target: Interactable, message: String) -> void:
+	interaction_feedback.show_message(message)

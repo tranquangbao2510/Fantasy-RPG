@@ -19,10 +19,10 @@ Mã nguồn được tổ chức theo **tính năng** (feature) thay vì theo lo
 | `app/` | Main scene, khởi động và vòng đời ứng dụng | Đã triển khai (`main.tscn`, `main.gd` — màn hình tạm) |
 | `docs/` | Tài liệu kỹ thuật | Đã triển khai |
 | `core/` | Thành phần kỹ thuật dùng chung, không phụ thuộc gameplay cụ thể | Chưa triển khai |
-| `features/` | Module gameplay (mỗi tính năng một thư mục con, vd. `features/combat/`) | Chưa triển khai |
+| `features/` | Module gameplay (mỗi tính năng một thư mục con, vd. `features/combat/`) | Đã triển khai (`interaction/`) |
 | `entities/` | Player, NPC, enemy (scene ghép từ component) | Đã triển khai (`player/` — placeholder) |
 | `world/` | Bản đồ, môi trường, camera | Đã triển khai (`world.tscn`, `world.gd`, `maps/test_map/`, `camera/`) |
-| `ui/` | Thành phần giao diện | Chưa triển khai |
+| `ui/` | Thành phần giao diện | Đã triển khai (`interaction/`) |
 | `data/` | Dữ liệu game dùng chung (`.tres` Resource) | Chưa triển khai |
 | `assets/` | Tài nguyên dùng chung (sprite, âm thanh, font) | Chưa triển khai |
 | `save/` | Logic lưu / tải game | Chưa triển khai |
@@ -49,20 +49,26 @@ World (Node2D) ── world.gd
 ├── MapContainer (Node2D)       — bản đồ / TileMapLayer
 │   └── TestMap (instance world/maps/test_map/test_map.tscn)
 ├── EntityContainer (Node2D, y_sort_enabled) — player, NPC, enemy
-│   └── Player (instance entities/player/player.tscn, spawn (480, 320))
-└── CameraContainer (Node2D)    — camera
-    └── GameCamera (instance world/camera/game_camera.tscn)
+│   ├── Player (instance entities/player/player.tscn, spawn (480, 320))
+│   └── NoticeBoard (400, 256), TestChest (528, 392), TestCrystal (576, 392) — vật thể tương tác thử nghiệm
+├── CameraContainer (Node2D)    — camera
+│   └── GameCamera (instance world/camera/game_camera.tscn)
+└── UILayer (CanvasLayer)     — UI cố định trên màn hình
+    ├── InteractionPrompt
+    └── InteractionFeedback
 ```
 
 - **Main Scene** là entry point: màn hình khởi động tạm và chuyển vào World. Không giữ trạng thái game.
 - **World Scene** là gốc của môi trường game. Không phụ thuộc Main Scene, mở và chạy độc lập bằng F6.
-- `world.gd` cung cấp public API trả về các container (`get_map_container()`, `get_entity_container()`, ...) và `get_map_rect()`; nối camera với target/map lúc `_ready`. Không chứa logic gameplay.
+- `world.gd` cung cấp public API trả về các container (`get_map_container()`, `get_entity_container()`, ...) và `get_map_rect()`; nối camera với target/map và InteractionDetector với UI lúc `_ready` (qua các export trong `world.tscn`). Không chứa logic gameplay.
 - Chuyển scene dùng trực tiếp `change_scene_to_file()`; chưa có SceneManager, loading screen hay hiệu ứng chuyển cảnh.
 
 Nguyên tắc đặt node vào World:
 
 - Bản đồ → `MapContainer`; entity → `EntityContainer`; camera → `CameraContainer`; phần môi trường không thuộc bản đồ (nền, thời tiết, ánh sáng) → `Environment`.
 - Không đặt node gameplay trực tiếp dưới `World`.
+- Vật thể **đứng** cần Y-sort cùng entity (rương, bảng, ...) cũng đặt trong `EntityContainer`, origin tại chân.
+- UI cố định trên màn hình đặt trong `UILayer` (CanvasLayer), không bị camera zoom/di chuyển.
 
 Chưa triển khai: NPC, enemy.
 
@@ -93,10 +99,12 @@ world/maps/test_map/
 |---|---|---|
 | 1 | `world` | Vật cản tĩnh của bản đồ (tile ObstacleLayer, MapBounds) |
 | 2 | `player` | Player |
+| 3 | `interaction` | Vùng Area2D của Interactable (InteractionDetector dò layer này) |
 
 - TileSet physics layer 0: `collision_layer = 1`, `collision_mask = 0` (vật cản tĩnh không cần dò).
 - Chỉ tile đá `(2,1)` và bụi `(3,1)` có polygon (24×24, lệch xuống dưới theo chân vật). Ground và Detail tắt `collision_enabled`.
 - Player: `collision_layer = 2`, `collision_mask = 1`.
+- Interactable: Area2D `layer = 3`, `mask = 0`, `monitoring = false`. InteractionDetector: `layer = 0`, `mask = 3`, `monitorable = false`. Area2D không chặn chuyển động; vật cản của đối tượng là `BlockingBody` (StaticBody2D, layer 1) riêng.
 
 ### Ranh giới bản đồ
 
@@ -151,6 +159,59 @@ Hạn chế pixel-art hiện tại:
 
 - Stretch `canvas_items` + `expand` (từ TASK 01) giữ nguyên. Khi cửa sổ khác 1152×648 theo tỉ lệ không nguyên (vd. 1920×1080 = 1.67×), một pixel nghệ thuật không còn là số nguyên pixel màn hình → kích thước pixel có thể không đều. Sẽ xử lý khi chốt độ phân giải thiết kế.
 - Vị trí camera khi smoothing là số thực; chưa bật pixel snap toàn cục (`snap_2d_transforms_to_pixel`) vì có thể gây rung player so với camera. Ưu tiên chuyển động mượt.
+
+## 2e. Interaction System [Đã triển khai]
+
+```
+features/interaction/
+├── interactable.gd               — class_name Interactable (extends Area2D): base class mỏng
+├── interaction_detector.gd/.tscn — class_name InteractionDetector (Area2D): component gắn vào Player
+└── examples/                     — đối tượng thử nghiệm (placeholder, không phải nội dung chính thức)
+    ├── notice_board.gd/.tscn     — trả về đoạn thông báo (export `message`)
+    ├── test_chest.gd/.tscn       — đóng → mở một lần; tương tác lại báo "đã mở"
+    └── test_crystal.gd/.tscn     — đổi qua lại hai màu
+ui/interaction/
+├── interaction_prompt.gd/.tscn   — "[E] Đọc — Bảng thông báo", ẩn khi không có mục tiêu
+└── interaction_feedback.gd/.tscn — thông báo kết quả, tự ẩn sau 2.5 s
+```
+
+Luồng: Player → `InteractionDetector` → `Interactable.interact()` → chuỗi kết quả → signal `interacted` → `World` → `InteractionFeedback`.
+
+**Public API của Interactable** (đối tượng không tự đọc input):
+
+| Method | Ý nghĩa |
+|---|---|
+| `can_interact(actor: Node2D) -> bool` | Mặc định trả `interaction_enabled` |
+| `get_interaction_name() -> String` | Tên hiển thị (export `interaction_name`) |
+| `get_interaction_prompt() -> String` | Động từ hiển thị (export `interaction_prompt`), có thể override theo trạng thái |
+| `get_interaction_position() -> Vector2` | Điểm tương tác = `global_position` (origin tại chân) |
+| `interact(actor: Node2D) -> String` | Kiểm tra `can_interact` rồi gọi `_perform_interaction()`; trả thông báo kết quả |
+
+**InteractionDetector:**
+
+- Cập nhật danh sách ứng viên qua `area_entered` / `area_exited`, chỉ nhận `Interactable`. Không quét scene tree. Mỗi physics tick loại bỏ tham chiếu đã free, bỏ qua ứng viên `can_interact() == false`, chọn ứng viên gần nhất.
+- Chống nhảy mục tiêu: chỉ đổi khi ứng viên khác gần hơn mục tiêu hiện tại > 1 px (`SWITCH_MARGIN`).
+- Phạm vi: `@export detection_radius = 48` + bán kính vùng của Interactable (8) → khoảng **56 px** tính từ chân Player tới điểm tương tác.
+- Input: action `interact` = **E** (physical keycode), xử lý trong `_unhandled_input` với `is_action_pressed` (bỏ echo → giữ phím chỉ tương tác 1 lần).
+- Signal: `target_changed(target)` (null = không có; phát lại sau mỗi lần tương tác vì prompt có thể đổi) và `interacted(target, message)`.
+- API: `get_target()`, `try_interact()`.
+
+**UI:** `World._ready()` nối `target_changed` → `InteractionPrompt.show_target()` và `interacted` → `InteractionFeedback.show_message()`. UI chỉ đọc public API của Interactable, không gọi `interact()` và không đọc trạng thái nội bộ. Prompt lấy tên phím từ Input Map.
+
+**Tạo đối tượng tương tác mới:**
+
+1. Scene có gốc là `Area2D` với script `extends Interactable`; đặt `collision_layer = 3` (giá trị 4), `collision_mask = 0`, `monitoring = false`.
+2. Thêm `CollisionShape2D` nhỏ (vd. hình tròn r=8) tại origin làm điểm tương tác.
+3. Override `_perform_interaction(actor) -> String` (và `get_interaction_prompt()` / `can_interact()` nếu cần).
+4. Nếu cần chặn đường: thêm `StaticBody2D` con (layer 1 `world`) riêng, không dùng Area2D để chặn.
+5. Instance vào `EntityContainer` (để Y-sort cùng Player).
+
+Giới hạn prototype:
+
+- Không raycast kiểm tra vật cản → có thể tương tác xuyên vật cản mỏng nếu nằm trong phạm vi.
+- Kết quả tương tác chỉ là chuỗi thông báo; chưa có kiểu kết quả có cấu trúc.
+- Trạng thái rương/tinh thể chỉ tồn tại lúc chạy, không lưu.
+- Văn bản thử nghiệm viết trực tiếp trong scene/script, chưa có hệ thống bản địa hóa.
 
 ## 3. Quy ước đặt tên [Đã quyết định]
 

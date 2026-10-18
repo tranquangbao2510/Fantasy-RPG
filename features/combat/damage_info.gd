@@ -8,6 +8,9 @@ var amount: int = 0
 var source: Node
 ## Vận tốc đẩy lùi ban đầu (px/s, đã gồm hướng). ZERO = không đẩy.
 var knockback: Vector2 = Vector2.ZERO
+## Tầng của nguồn gây sát thương (bit mask: tầng t = 1 << t). 0 = không lọc theo tầng (map không có elevation).
+## Hurtbox chỉ nhận đòn nếu mask hai bên giao nhau (xem Hurtbox.can_receive).
+var tier_mask: int = 0
 
 
 func _init(p_amount: int = 0, p_source: Node = null) -> void:

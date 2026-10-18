@@ -1,19 +1,44 @@
 class_name IsoActorAdapter
 extends Node
-## Chỉnh phần hiển thị của actor placeholder (Player, enemy) cho map isometric, lúc _ready, không sửa scene gốc:
-## - Bóng đổ: ellipse 2:1 lệch nhẹ về dưới-phải (nguồn sáng trên-trái).
-## - Marker hướng nhìn: đặt lên mặt phẳng đất (nén dọc 0.5) tại chân, vẫn xoay theo hướng màn hình như cũ.
-## - Collision thân: ellipse dẹt 2:1 thay cho hình tròn (footprint đúng trên mặt đất iso).
-## Không đổi logic di chuyển/combat; hướng nhìn và đòn đánh vẫn theo con trỏ chuột trên màn hình.
+## Cấu hình một actor placeholder (Player, enemy, bù nhìn) cho map isometric, lúc _ready, không sửa scene gốc:
+## - Di chuyển: đặt `vertical_speed_scale` của actor (nếu có) — 0.5 = tốc độ đều trên mặt đất 2:1. Chỉnh ở đây
+##   (hoặc ô debug trên EnvironmentDebugHud lúc chạy) để thử cảm giác.
+## - Combat: gọi set_ground_squash(GROUND_SQUASH) trên mọi node con có hàm này (đòn đánh, enemy AI, kỹ năng) →
+##   tầm đánh/hitbox/đạn/vùng kỹ năng tính trên mặt phẳng đất, gốc dời về chân; Hurtbox đổi sang ellipse 2:1 tại chân.
+## - Hiển thị: bóng ellipse 2:1 lệch nhẹ về dưới-phải; marker hướng nhìn nằm trên mặt đất.
+## - Collision thân: ellipse dẹt 2:1.
+## Hướng nhìn và đòn đánh vẫn theo con trỏ chuột trên màn hình.
 
 @export var shadow: Polygon2D
 @export var facing_pivot: Node2D
 @export var body_shape: CollisionShape2D
 @export var shadow_radius: float = 11.0
 @export var body_radius: float = 7.0
+## Bán kính (trên mặt đất) của vùng nhận đòn tại chân.
+@export var hurtbox_radius: float = 10.0
+## Hệ số vận tốc dọc áp cho actor (Player/Enemy.vertical_speed_scale). Mặc định 0.5 cho map isometric 2:1.
+@export var vertical_speed_scale: float = 0.5
 
 
 func _ready() -> void:
+	var actor: Node = get_parent()
+	if &"vertical_speed_scale" in actor:
+		actor.set(&"vertical_speed_scale", vertical_speed_scale)
+	for node: Node in actor.find_children("*", "", true, false):
+		if node.has_method(&"set_ground_squash"):
+			node.call(&"set_ground_squash", IsoProjection.GROUND_SQUASH)
+			# Hình học combat nằm trên mặt đất → gốc tại chân (scene gốc đặt ngang ngực cho map top-down).
+			if node is Node2D and node.get_parent() == actor:
+				(node as Node2D).position = Vector2.ZERO
+		if node is Hurtbox:
+			(node as Node2D).position = Vector2.ZERO
+			for child: Node in node.get_children():
+				var hurt_shape: CollisionShape2D = child as CollisionShape2D
+				if hurt_shape != null:
+					hurt_shape.shape = GroundSpace.polygon_shape(IsoProjection.ground_ellipse(Vector2.ZERO, hurtbox_radius, 12))
+					hurt_shape.position = Vector2(0, -1)
+	if actor.has_method(&"set_ground_squash"):
+		actor.call(&"set_ground_squash", IsoProjection.GROUND_SQUASH)
 	if shadow != null:
 		shadow.polygon = IsoProjection.ground_ellipse(Vector2(2, 1), shadow_radius)
 	if facing_pivot != null:

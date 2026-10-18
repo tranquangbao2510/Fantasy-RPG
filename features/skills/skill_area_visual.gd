@@ -2,6 +2,8 @@ class_name SkillAreaVisual
 extends Node2D
 ## Vẽ vùng của một kỹ năng trong world coordinates (indicator khi ngắm, flash khi thi triển).
 ## Chỉ hiển thị: không có collision, không gây damage. Hình dạng lấy từ cùng SkillDefinition + SkillTarget với effect.
+## Map isometric (target.ground_squash < 1): vẽ hình trên mặt phẳng đất (ellipse 2:1, hình bình hành, quạt nén dọc).
+## Vì top_level, z_index là tuyệt đối: hệ thống elevation đặt z theo tầng của người cast (SkillCastingController.set_elevation).
 
 const ARC_SEGMENTS: int = 24
 
@@ -51,6 +53,9 @@ func _draw() -> void:
 	if _definition == null or _target == null:
 		return
 	var outline: Color = Color(_color, minf(1.0, _color.a * 2.5))
+	if _target.ground_squash != 1.0:
+		_draw_ground(outline)
+		return
 	match _definition.targeting_type:
 		SkillDefinition.TargetingType.SELF:
 			var r: float = _definition.radius if _definition.radius > 0.0 else 14.0
@@ -78,6 +83,31 @@ func _draw() -> void:
 			draw_colored_polygon(points, _color)
 			points.append(_target.origin)
 			draw_polyline(points, outline, 1.0)
+
+
+func _draw_ground(outline: Color) -> void:
+	var s: float = _target.ground_squash
+	var shape: PackedVector2Array
+	match _definition.targeting_type:
+		SkillDefinition.TargetingType.SELF:
+			shape = GroundSpace.circle(_target.origin, _definition.radius if _definition.radius > 0.0 else 14.0, s, ARC_SEGMENTS * 2)
+		SkillDefinition.TargetingType.GROUND_CIRCLE:
+			var range_ring: PackedVector2Array = GroundSpace.circle(_target.origin, _definition.cast_range, s, ARC_SEGMENTS * 2)
+			range_ring.append(range_ring[0])
+			draw_polyline(range_ring, Color(outline, 0.25), 1.0)
+			shape = GroundSpace.circle(_target.point, _definition.radius, s, ARC_SEGMENTS * 2)
+		SkillDefinition.TargetingType.LINE:
+			shape = GroundSpace.rect(GroundSpace.direction(_target.direction, s), _definition.cast_range, _definition.width, s)
+			for i: int in shape.size():
+				shape[i] += _target.origin
+		SkillDefinition.TargetingType.CONE:
+			shape = GroundSpace.cone(_target.origin, GroundSpace.direction(_target.direction, s), _definition.cast_range,
+				deg_to_rad(_definition.angle_degrees) / 2.0, s, ARC_SEGMENTS)
+	if shape.size() < 3:
+		return
+	draw_colored_polygon(shape, _color)
+	shape.append(shape[0])
+	draw_polyline(shape, outline, 1.0)
 
 
 func _kill_tween() -> void:

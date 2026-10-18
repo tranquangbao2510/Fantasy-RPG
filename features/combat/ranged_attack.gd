@@ -27,6 +27,13 @@ func get_last_projectile() -> Projectile:
 	return _last_projectile if is_instance_valid(_last_projectile) else null
 
 
+func _apply_direction() -> void:
+	if ground_squash == 1.0:
+		return
+	# Tầm bay đo trên mặt đất → đường telegraph là đoạn thẳng màn hình có độ dài mặt đất = projectile_range.
+	_telegraph.points = PackedVector2Array([Vector2.ZERO, GroundSpace.to_screen(get_ground_direction() * projectile_range, ground_squash)])
+
+
 func _on_windup_started() -> void:
 	_telegraph.default_color = windup_color
 	_telegraph.show()
@@ -37,8 +44,8 @@ func _on_active_started() -> void:
 	var container: Node = owner.get_parent() if owner != null and owner.get_parent() != null else get_parent()
 	var projectile: Projectile = PROJECTILE_SCENE.instantiate()
 	projectile.color = active_color
-	projectile.launch(DamageInfo.new(damage, owner), Vector2.from_angle(global_rotation), projectile_speed,
-		projectile_range, target_layers)
+	var direction: Vector2 = Vector2.from_angle(global_rotation) if ground_squash == 1.0 else _direction
+	projectile.launch(_make_damage(), direction, projectile_speed, projectile_range, target_layers, ground_squash, obstacle_mask)
 	container.add_child(projectile)
 	projectile.global_position = global_position
 	_last_projectile = projectile

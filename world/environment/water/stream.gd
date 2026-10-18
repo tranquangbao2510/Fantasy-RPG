@@ -26,6 +26,8 @@ func _ready() -> void:
 			cutters.append(node.call(&"get_walkable_polygon"))
 	var body: StaticBody2D = StaticBody2D.new()
 	body.name = "WaterCollision"
+	# Nước chặn người đi nhưng đạn bay qua được.
+	body.add_to_group(&"projectile_passable")
 	body.collision_layer = ElevationMap.tier_bit(elevation_tier)
 	body.collision_mask = 0
 	add_child(body)

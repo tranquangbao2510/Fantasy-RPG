@@ -8,6 +8,8 @@ signal hit_received(info: DamageInfo, applied: int)
 const GROUP: StringName = &"hurtboxes"
 
 @export var health: HealthComponent
+## Tầng hiện tại của thực thể (bit mask, xem DamageInfo.tier_mask). 0 = không lọc. Map có elevation đặt qua set_elevation().
+var tier_mask: int = 0
 
 
 func _ready() -> void:
@@ -29,7 +31,13 @@ func get_hit_position() -> Vector2:
 
 
 func can_receive(info: DamageInfo) -> bool:
-	return info != null and info.is_valid() and health != null and not health.is_dead() and info.source != owner
+	return info != null and info.is_valid() and health != null and not health.is_dead() and info.source != owner \
+		and (info.tier_mask == 0 or tier_mask == 0 or (info.tier_mask & tier_mask) != 0)
+
+
+## Cấu hình từ hệ thống elevation (duck-typing, không phụ thuộc module world). obstacle_mask, ground_z không dùng ở đây.
+func set_elevation(p_tier_mask: int, _obstacle_mask: int, _ground_z: int) -> void:
+	tier_mask = p_tier_mask
 
 
 ## Nhận sát thương. Trả về lượng HP thực sự bị trừ.

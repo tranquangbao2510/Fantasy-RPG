@@ -8,6 +8,8 @@ extends Node2D
 ## - Nhấn khi đang đánh: chỉ ghi nhớ (1 lần) nếu còn ≤ input_buffer giây tới hết recovery; nếu sớm hơn thì bỏ qua.
 ##   Lần nhấn được ghi nhớ chạy ngay khi recovery kết thúc (không bỏ qua recovery).
 ## - Hướng đánh chốt lúc bắt đầu mỗi bước; chỉ xoay node này (Hitbox + visual), không xoay thực thể.
+## - Map isometric (ground_squash < 1, đặt qua set_ground_squash()): không xoay node; hitbox/visual là hình chữ nhật
+##   trên mặt phẳng đất theo hướng đòn (tầm/bề rộng đo trên mặt đất). Lọc tầng qua set_elevation().
 
 signal step_started(step_index: int, step_count: int, direction: Vector2)
 signal phase_changed(phase: Phase, step_index: int, step_count: int)
@@ -32,6 +34,10 @@ var _direction: Vector2 = Vector2.DOWN
 var _aim_provider: Callable
 var _shape: RectangleShape2D = RectangleShape2D.new()
 var _swing_tween: Tween
+## Tỉ lệ dọc của mặt đất (1 = map cũ, 0.5 = isometric). Xem GroundSpace.
+var _ground_squash: float = 1.0
+var _tier_mask: int = 0
+var _weapon_length: float = 0.0
 
 @onready var _hitbox: Hitbox = $Hitbox
 @onready var _collision: CollisionShape2D = $Hitbox/CollisionShape2D
@@ -146,12 +152,21 @@ func _start_step(index: int) -> void:
 	var aim: Vector2 = _aim_provider.call() if _aim_provider.is_valid() else _direction
 	if not aim.is_zero_approx():
 		_direction = aim.normalized()
-	rotation = _direction.angle()
-	_shape.size = Vector2(step.attack_range, step.attack_width)
-	_collision.position = Vector2(step.attack_range / 2.0, 0.0)
-	var half: float = step.attack_width / 2.0
-	_swing_visual.polygon = PackedVector2Array([
-		Vector2(0, -half), Vector2(step.attack_range, -half), Vector2(step.attack_range, half), Vector2(0, half)])
+	if _ground_squash == 1.0:
+		rotation = _direction.angle()
+		_shape.size = Vector2(step.attack_range, step.attack_width)
+		_collision.shape = _shape
+		_collision.position = Vector2(step.attack_range / 2.0, 0.0)
+		var half: float = step.attack_width / 2.0
+		_swing_visual.polygon = PackedVector2Array([
+			Vector2(0, -half), Vector2(step.attack_range, -half), Vector2(step.attack_range, half), Vector2(0, half)])
+	else:
+		rotation = 0.0
+		var points: PackedVector2Array = GroundSpace.rect(_ground_direction(), step.attack_range, step.attack_width, _ground_squash)
+		_collision.shape = GroundSpace.polygon_shape(points)
+		_collision.position = Vector2.ZERO
+		_swing_visual.polygon = points
+		_update_weapon_visual()
 	_show_swing(Color(step.effect_color, step.effect_color.a * 0.35))
 	step_started.emit(_step_index, get_step_count(), _direction)
 	_time_left = step.windup
@@ -162,7 +177,9 @@ func _start_step(index: int) -> void:
 
 func _enter_active(step: ComboStepDefinition) -> void:
 	var info: DamageInfo = DamageInfo.new(step.damage, owner)
-	info.knockback = _direction * step.knockback
+	info.tier_mask = _tier_mask
+	info.knockback = _direction * step.knockback if _ground_squash == 1.0 \
+		else GroundSpace.to_screen(_ground_direction() * step.knockback, _ground_squash)
 	_hitbox.activate(info)
 	_show_swing(step.effect_color)
 	_time_left = step.active
@@ -219,7 +236,31 @@ func _on_weapon_changed(weapon: WeaponDefinition) -> void:
 	if weapon != null:
 		_weapon_visual.default_color = weapon.visual_color
 		_weapon_visual.width = weapon.visual_width
-		_weapon_visual.points = PackedVector2Array([Vector2(4, 0), Vector2(4.0 + weapon.visual_length, 0)])
+		_weapon_length = weapon.visual_length
+		_update_weapon_visual()
+
+
+func set_ground_squash(squash: float) -> void:
+	_ground_squash = squash
+	rotation = _direction.angle() if _ground_squash == 1.0 else 0.0
+	_update_weapon_visual()
+
+
+func set_elevation(tier_mask: int, _obstacle_mask: int, _ground_z: int) -> void:
+	_tier_mask = tier_mask
+
+
+func _ground_direction() -> Vector2:
+	return GroundSpace.direction(_direction, _ground_squash)
+
+
+## Vạch vũ khí: map cũ nằm dọc trục x của node đã xoay; map iso vẽ theo hướng đòn trên mặt đất.
+func _update_weapon_visual() -> void:
+	if _ground_squash == 1.0:
+		_weapon_visual.points = PackedVector2Array([Vector2(4, 0), Vector2(4.0 + _weapon_length, 0)])
+	else:
+		var g: Vector2 = _ground_direction()
+		_weapon_visual.points = PackedVector2Array([GroundSpace.to_screen(g * 4.0, _ground_squash), GroundSpace.to_screen(g * (4.0 + _weapon_length), _ground_squash)])
 
 
 func _on_hit_landed(hurtbox: Hurtbox, applied: int) -> void:

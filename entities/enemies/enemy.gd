@@ -18,6 +18,9 @@ enum MovementMode {
 @export var target: Node2D
 @export var movement_mode: MovementMode = MovementMode.CHASE
 @export var move_speed: float = 70.0
+## Hệ số vận tốc theo trục dọc màn hình (cùng cơ chế với Player.vertical_speed_scale): 1 = map top-down cũ;
+## map isometric 2:1 dùng 0.5 (IsoActorAdapter đặt) để tốc độ đều trên mặt đất.
+@export var vertical_speed_scale: float = 1.0
 ## Chỉ phát hiện target trong khoảng này (px, từ chân tới chân).
 @export var detection_range: float = 150.0
 ## Tỉ lệ của attack.attack_range dùng làm khoảng cách bắt đầu tấn công.
@@ -29,6 +32,8 @@ enum MovementMode {
 
 var _state: State = State.IDLE
 var _spawn_position: Vector2
+## Tỉ lệ dọc của mặt đất cho khoảng cách AI (detection, tầm đánh, giữ khoảng cách). 1 = map cũ. Xem GroundSpace.
+var _ground_squash: float = 1.0
 
 @onready var _health: HealthComponent = $HealthComponent
 @onready var _knockback: KnockbackComponent = $KnockbackComponent
@@ -79,12 +84,14 @@ func _think() -> State:
 	if attack.is_attacking():
 		return State.ATTACK
 	var to_target: Vector2 = target.global_position - global_position
-	var distance: float = to_target.length()
+	# Khoảng cách và hướng đo trên mặt đất; vận tốc màn hình = hướng mặt đất × (1, vertical_speed_scale).
+	var ground: Vector2 = GroundSpace.to_ground(to_target, _ground_squash)
+	var distance: float = ground.length()
 	if distance > detection_range:
 		return State.IDLE
 	var in_range: bool = distance <= attack.attack_range * attack_trigger_ratio
 	if movement_mode == MovementMode.KEEP_DISTANCE and distance < preferred_distance * retreat_ratio:
-		velocity = -to_target / distance * move_speed
+		velocity = -_move_velocity(ground / distance)
 		return State.CHASE
 	if in_range:
 		if attack.attack(to_target):
@@ -92,8 +99,16 @@ func _think() -> State:
 		return State.RECOVERY if attack.is_recovering() else State.ATTACK
 	if movement_mode == MovementMode.STATIONARY:
 		return State.IDLE
-	velocity = to_target / distance * move_speed
+	velocity = _move_velocity(ground / distance)
 	return State.CHASE
+
+
+func set_ground_squash(squash: float) -> void:
+	_ground_squash = squash
+
+
+func _move_velocity(ground_dir: Vector2) -> Vector2:
+	return ground_dir * Vector2(1.0, vertical_speed_scale) * move_speed
 
 
 func _set_state(state: State) -> void:

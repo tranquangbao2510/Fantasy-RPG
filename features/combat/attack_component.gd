@@ -3,6 +3,8 @@ extends Node2D
 ## Base class mỏng cho đòn tấn công đơn của enemy (cận chiến, tầm xa).
 ## Nhịp chung: attack(direction) → xoay theo hướng → WINDUP (telegraph) → ACTIVE → COOLDOWN (hồi) → READY.
 ## Hướng được chốt lúc gọi attack(); chỉ xoay node này, không xoay thực thể.
+## Map isometric (ground_squash < 1, đặt qua set_ground_squash()): không xoay node; lớp con dựng hình học trên mặt
+## phẳng đất theo get_ground_direction() (tầm đánh = độ dài trên mặt đất). Lọc tầng qua set_elevation().
 ## Lớp con override _on_windup_started / _on_active_started / _on_active_ended / _on_cancelled.
 ## Mọi thông số là placeholder, chỉnh trong Inspector của từng instance.
 
@@ -27,8 +29,15 @@ enum Phase { READY, WINDUP, ACTIVE, COOLDOWN }
 @export var windup_color: Color = Color(1, 0.6, 0.2, 0.35)
 @export var active_color: Color = Color(1, 1, 0.8, 0.6)
 
+## Tỉ lệ dọc của mặt đất (1 = map cũ, 0.5 = isometric). Xem GroundSpace.
+var ground_squash: float = 1.0
+## Tầng của chủ thể (DamageInfo.tier_mask) và layer vật cản thêm cho đạn (vách tầng). 0 = không dùng.
+var tier_mask: int = 0
+var obstacle_mask: int = 0
+
 var _phase: Phase = Phase.READY
 var _time_left: float = 0.0
+var _direction: Vector2 = Vector2.RIGHT
 
 
 func get_phase() -> Phase:
@@ -52,8 +61,10 @@ func is_recovering() -> bool:
 func attack(direction: Vector2) -> bool:
 	if not can_attack() or direction.is_zero_approx():
 		return false
-	rotation = direction.angle()
-	attack_started.emit(direction.normalized())
+	_direction = direction.normalized()
+	rotation = direction.angle() if ground_squash == 1.0 else 0.0
+	_apply_direction()
+	attack_started.emit(_direction)
 	if windup > 0.0:
 		_phase = Phase.WINDUP
 		_time_left = windup
@@ -95,6 +106,32 @@ func _start_active() -> void:
 	_phase = Phase.ACTIVE
 	_time_left = duration
 	_on_active_started()
+
+
+func set_ground_squash(squash: float) -> void:
+	ground_squash = squash
+
+
+func set_elevation(p_tier_mask: int, p_obstacle_mask: int, _ground_z: int) -> void:
+	tier_mask = p_tier_mask
+	obstacle_mask = p_obstacle_mask
+
+
+## Hướng đòn trên mặt phẳng đất (chuẩn hóa).
+func get_ground_direction() -> Vector2:
+	return GroundSpace.direction(_direction, ground_squash)
+
+
+## DamageInfo của đòn này (gắn tầng của chủ thể).
+func _make_damage() -> DamageInfo:
+	var info: DamageInfo = DamageInfo.new(damage, owner)
+	info.tier_mask = tier_mask
+	return info
+
+
+## Gọi sau khi chốt hướng trong attack(); lớp con dựng lại hình học nếu cần (map iso).
+func _apply_direction() -> void:
+	pass
 
 
 func _on_windup_started() -> void:

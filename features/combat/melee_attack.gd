@@ -1,6 +1,7 @@
 class_name MeleeAttack
 extends AttackComponent
 ## Đòn cận chiến hình chữ nhật (attack_range × attack_width) dùng Hitbox; telegraph = chính vùng đó khi windup.
+## Map isometric: hình chữ nhật nằm trên mặt phẳng đất (hình bình hành trên màn hình) theo hướng đòn.
 ## Mỗi lần ACTIVE là một Hitbox.activate() mới → mỗi mục tiêu trúng tối đa một lần/đòn.
 
 @export var attack_width: float = 24.0
@@ -27,6 +28,15 @@ func get_hitbox() -> Hitbox:
 	return _hitbox
 
 
+func _apply_direction() -> void:
+	if ground_squash == 1.0:
+		return
+	var points: PackedVector2Array = GroundSpace.rect(get_ground_direction(), attack_range, attack_width, ground_squash)
+	_shape.shape = GroundSpace.polygon_shape(points)
+	_shape.position = Vector2.ZERO
+	_visual.polygon = points
+
+
 func _on_windup_started() -> void:
 	_visual.color = windup_color
 	_visual.show()
@@ -35,7 +45,7 @@ func _on_windup_started() -> void:
 func _on_active_started() -> void:
 	_visual.color = active_color
 	_visual.show()
-	_hitbox.activate(DamageInfo.new(damage, owner))
+	_hitbox.activate(_make_damage())
 
 
 func _on_active_ended() -> void:

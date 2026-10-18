@@ -1,2 +1,17 @@
-Thư mục công cụ (bị Godot bỏ qua nhờ .gdignore). Chạy bằng:
-  Godot_v4.7.2-stable_win64_console.exe --headless --path . --script tools/placeholder_art/generate_environment_art.gd
+Công cụ phát triển chạy ngoài game. Thư mục có .gdignore nên Godot không import/không đóng gói khi export.
+Chạy từ thư mục gốc project (Godot 4.7.2 console):
+
+1. Sinh lại placeholder art môi trường (world/environment/art/):
+     Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tools/placeholder_art/generate_environment_art.gd
+   Chỉ sinh một nhóm: đặt biến môi trường ART_ONLY=ground,cliff,trees,plants,rocks,ruins,structures,decals,fx,scenery,logic
+   Sau đó import lại:  Godot_v4.7.2-stable_win64_console.exe --headless --path . --import
+
+2. Dựng lại scene Environment Prototype isometric (khu Glade):
+     Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tools/glade/build_glade_prototype.gd
+   CẢNH BÁO: ghi đè world/environment_prototype/environment_prototype.tscn, các scene prop trong
+   world/environment/props/, tileset logic và material .tres. Chỉnh sửa tay trên các file đó sẽ mất — commit trước.
+   Bố cục (toạ độ lưới i, j) nằm ở đầu script. Cần chạy bước 1 + import trước nếu art chưa có.
+
+3. Kiểm tra sau khi dựng lại:
+     Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/environment/test_environment_prototype.gd
+     Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/environment/test_iso_combat.gd

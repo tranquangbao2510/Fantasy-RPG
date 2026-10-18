@@ -41,6 +41,9 @@ var _cast_total: float = 0.0
 var _aim_provider: Callable
 ## Runtime đang vận sức (giữ tham chiếu vì ô có thể bị gỡ/đổi trong lúc vận sức).
 var _cast_runtime: SkillRuntime
+## Map isometric: tỉ lệ dọc mặt đất (vùng kỹ năng đo trên mặt đất) và tầng của người cast. Xem set_ground_squash / set_elevation.
+var _ground_squash: float = 1.0
+var _tier_mask: int = 0
 
 @onready var _indicator: SkillAreaVisual = $Indicator
 @onready var _effect_flash: SkillAreaVisual = $EffectFlash
@@ -263,14 +266,25 @@ func _execute() -> void:
 	runtime.is_casting = false
 	var definition: SkillDefinition = runtime.definition
 	var result: int = SkillEffectExecutor.execute(definition, target, owner, health,
-		get_world_2d().direct_space_state, target_layers)
+		get_world_2d().direct_space_state, target_layers, _tier_mask)
 	_effect_flash.flash(definition, target, Color(definition.indicator_color, 0.6))
 	cast_finished.emit(slot, result)
 
 
 func _resolve_target(definition: SkillDefinition) -> SkillTarget:
 	var aim: Vector2 = _aim_provider.call() if _aim_provider.is_valid() else global_position + fallback_direction
-	return SkillTarget.resolve(definition, global_position, aim, fallback_direction)
+	return SkillTarget.resolve(definition, global_position, aim, fallback_direction, _ground_squash)
+
+
+func set_ground_squash(squash: float) -> void:
+	_ground_squash = squash
+
+
+## Cấu hình từ hệ thống elevation: kỹ năng chỉ trúng mục tiêu cùng tầng; indicator/flash (top_level) vẽ ở z của tầng.
+func set_elevation(tier_mask: int, _obstacle_mask: int, ground_z: int) -> void:
+	_tier_mask = tier_mask
+	_indicator.z_index = ground_z
+	_effect_flash.z_index = ground_z
 
 
 func _on_slot_changed(slot: int, _definition: SkillDefinition) -> void:

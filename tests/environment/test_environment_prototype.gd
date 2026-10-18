@@ -33,8 +33,9 @@ func _init() -> void:
 		return _agent.get_tier() == 1 and not _agent.is_transitioning() and _inside(_plateau.get_walkable_polygon()))
 	_case("stairs_down", Vector2(10.75, 15.9), 1, -stairs_dir, 150, func() -> bool:
 		return _agent.get_tier() == 0 and not _inside(_plateau.get_blocking_polygon()) and _grid().y > 18.5)
-	_case("cliff_blocks_low_sw", Vector2(15.0, 21.5), 0, -along_j, 120, func() -> bool:
-		return _agent.get_tier() == 0 and not _inside(_plateau.get_blocking_polygon()))
+	# Làn i = 12 trống tới chân vách SW (j = 17): Player phải dừng ngay trước chân vách, không lọt vào khối.
+	_case("cliff_blocks_low_sw", Vector2(12.0, 21.0), 0, -along_j, 160, func() -> bool:
+		return _agent.get_tier() == 0 and not _inside(_plateau.get_blocking_polygon()) and _grid().y < 17.6)
 	_case("cliff_blocks_low_se", Vector2(23.0, 13.0), 0, -along_i, 120, func() -> bool:
 		return _agent.get_tier() == 0 and not _inside(_plateau.get_blocking_polygon()))
 	_case("cliff_blocks_high_sw", Vector2(14.5, 15.0), 1, along_j, 120, func() -> bool:

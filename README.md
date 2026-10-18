@@ -40,6 +40,7 @@ Quy ước commit: [docs/git_conventions.md](docs/git_conventions.md).
 
   ```sh
   Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/environment/test_environment_prototype.gd
+  Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/environment/test_iso_combat.gd
   ```
 
 ## Trạng thái hiện tại
@@ -67,5 +68,7 @@ Quy ước commit: [docs/git_conventions.md](docs/git_conventions.md).
 - TASK VISUAL 01 — Environment Visual Foundation (`world/environment/`, `world/environment_prototype/`, [style guide](docs/visual/environment-style-guide.md)): ở màn hình chính chọn **Environment Prototype (Visual 01)**. Khu rừng "Glade" với nền cỏ, đường đất, suối + cầu gỗ, thác nước, vách đá hai tầng (lên bằng **cầu thang đá**), cầu đá tầng cao bắc qua đường mòn (đi trên cầu hoặc dưới gầm), tàn tích cổ, nền thung lũng xa, ánh sáng/sương nhẹ. Zoom lẻ 1×–3× bằng con lăn. Nút góc phải trên bật lưới Terrain Logic. **Art là placeholder sinh bằng code**, chưa phải production art.
 
 - TASK VISUAL-02 — Chuyển Environment Prototype sang **isometric 2:1** (tile thoi 64×32, tầng 64 px): vách hai mặt, quảng trường đá lát thoi, cầu thang chéo, lối đi trên vòm (đi trên hoặc chui dưới), cầu gỗ chéo, thác đổ xuống vực, phông núi + lâu đài mờ. WASD theo hướng màn hình. Thông số + hướng dẫn gen art bằng AI: [style guide](docs/visual/environment-style-guide.md). `test_map` và Combat Sandbox vẫn giữ góc cũ.
+
+- TASK VISUAL-02.1 — Combat theo mặt đất isometric trong Environment Prototype: tầm đánh, hitbox/hurtbox, đạn, vùng chỉ báo/tác dụng kỹ năng đo trên mặt phẳng đất (tròn = ellipse 2:1); đòn/đạn/kỹ năng chỉ trúng cùng tầng; đạn bị vách chặn; enemy cùng tỉ lệ tốc độ dọc với Player. Thanh trượt **[Debug] Tốc độ dọc** trên bảng góc phải trên. Map cũ giữ nguyên hành vi.
 
 Chưa có ultimate, mana/stamina, animation, inventory, hội thoại, quest hay save. Mọi chỉ số combat, vũ khí, kỹ năng, class và EXP là placeholder.

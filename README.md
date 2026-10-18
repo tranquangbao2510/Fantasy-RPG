@@ -43,4 +43,6 @@ Quy tắc cộng tác cho AI agent: [docs/agent_rules.md](docs/agent_rules.md).
 
 - TASK 04 — Player placeholder (`entities/player/`), di chuyển 8 hướng bằng **WASD** hoặc **phím mũi tên**, bị chặn bởi vật cản và mép bản đồ.
 
-Chưa có camera, animation, combat, menu hay hệ thống nào khác.
+- TASK 05 — Camera (`world/camera/`): theo player, smoothing, **lăn chuột** để zoom 2×–4× (mức nguyên), không nhìn ra ngoài bản đồ.
+
+Chưa có animation, combat, menu hay hệ thống nào khác.

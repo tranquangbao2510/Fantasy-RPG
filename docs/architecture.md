@@ -21,7 +21,7 @@ Mã nguồn được tổ chức theo **tính năng** (feature) thay vì theo lo
 | `core/` | Thành phần kỹ thuật dùng chung, không phụ thuộc gameplay cụ thể | Chưa triển khai |
 | `features/` | Module gameplay (mỗi tính năng một thư mục con, vd. `features/combat/`) | Chưa triển khai |
 | `entities/` | Player, NPC, enemy (scene ghép từ component) | Đã triển khai (`player/` — placeholder) |
-| `world/` | Bản đồ, môi trường, camera | Đã triển khai (`world.tscn`, `world.gd`, `maps/test_map/`) |
+| `world/` | Bản đồ, môi trường, camera | Đã triển khai (`world.tscn`, `world.gd`, `maps/test_map/`, `camera/`) |
 | `ui/` | Thành phần giao diện | Chưa triển khai |
 | `data/` | Dữ liệu game dùng chung (`.tres` Resource) | Chưa triển khai |
 | `assets/` | Tài nguyên dùng chung (sprite, âm thanh, font) | Chưa triển khai |
@@ -51,11 +51,12 @@ World (Node2D) ── world.gd
 ├── EntityContainer (Node2D, y_sort_enabled) — player, NPC, enemy
 │   └── Player (instance entities/player/player.tscn, spawn (480, 320))
 └── CameraContainer (Node2D)    — camera
+    └── GameCamera (instance world/camera/game_camera.tscn)
 ```
 
 - **Main Scene** là entry point: màn hình khởi động tạm và chuyển vào World. Không giữ trạng thái game.
 - **World Scene** là gốc của môi trường game. Không phụ thuộc Main Scene, mở và chạy độc lập bằng F6.
-- `world.gd` chỉ cung cấp public API trả về các container (`get_map_container()`, `get_entity_container()`, ...). Không chứa logic gameplay.
+- `world.gd` cung cấp public API trả về các container (`get_map_container()`, `get_entity_container()`, ...) và `get_map_rect()`; nối camera với target/map lúc `_ready`. Không chứa logic gameplay.
 - Chuyển scene dùng trực tiếp `change_scene_to_file()`; chưa có SceneManager, loading screen hay hiệu ứng chuyển cảnh.
 
 Nguyên tắc đặt node vào World:
@@ -63,7 +64,7 @@ Nguyên tắc đặt node vào World:
 - Bản đồ → `MapContainer`; entity → `EntityContainer`; camera → `CameraContainer`; phần môi trường không thuộc bản đồ (nền, thời tiết, ánh sáng) → `Environment`.
 - Không đặt node gameplay trực tiếp dưới `World`.
 
-Chưa triển khai: NPC, enemy, camera.
+Chưa triển khai: NPC, enemy.
 
 ## 2b. Bản đồ thử nghiệm — TestMap [Đã triển khai, placeholder]
 
@@ -78,7 +79,7 @@ world/maps/test_map/
 └── assets/test_tiles.png       — atlas placeholder 128×64 (4×2 ô)
 ```
 
-- **Tile size:** 32×32 (thử nghiệm, chưa phải quyết định chính thức). Map 30×20 ô = 960×640 px, đặt tại gốc tọa độ, nằm gọn trong viewport mặc định 1152×648 (chưa có camera).
+- **Tile size:** 32×32 (thử nghiệm, chưa phải quyết định chính thức). Map 30×20 ô = 960×640 px, đặt tại gốc tọa độ.
 - **Atlas (source 0):** hàng 0 — `(0,0)` cỏ, `(1,0)` cỏ biến thể, `(2,0)` đất, `(3,0)` đá lát; hàng 1 — `(0,1)` hoa, `(1,1)` sỏi, `(2,1)` đá cản, `(3,1)` bụi cây cản.
 - **Lọc texture:** đặt `texture_filter = Nearest` trên node `TestMap` (không đổi cấu hình toàn project). Thiết lập pixel-art toàn cục sẽ quyết định cùng độ phân giải chính thức.
 - Dữ liệu tile lưu trực tiếp trong `test_map.tscn`; không có script sinh map lúc chạy.
@@ -129,6 +130,27 @@ Player (CharacterBody2D, motion_mode = Floating) ── player.gd
 - `move_speed` (`@export`, mặc định **160 px/s**) — giá trị thử nghiệm.
 - **Spawn:** đặt trực tiếp trong `world.tscn` tại (480, 320), giữa quảng trường đá. Chưa có SpawnManager/checkpoint.
 - Placeholder: toàn bộ visual, kích thước collision, tốc độ, vị trí spawn.
+
+## 2d. Camera — GameCamera [Đã triển khai]
+
+```
+world/camera/game_camera.tscn
+GameCamera (Camera2D, class_name GameCamera) ── game_camera.gd
+  process_callback = Physics, position_smoothing_enabled = true, speed = 8
+```
+
+- **Target:** `set_target(node: Node2D)`. Camera nhảy ngay tới target và gọi `reset_smoothing()` (không trượt từ (0,0)). Target null/đã free: cảnh báo một lần, camera đứng yên, không crash. Camera không biết Player; không xoay (`ignore_rotation` mặc định).
+- **Map:** `set_map_rect(rect: Rect2)` (world coordinates) đặt `limit_*` của Camera2D và tính lại zoom.
+- **Nối trong World:** `world.tscn` gán 3 export của `world.gd`: `camera`, `camera_target` (Player), `map_bounds` (`TestMap/MapBounds`). `World._ready()` gọi `camera.set_map_rect(get_map_rect())` rồi `camera.set_target(camera_target)`. Camera ↔ Player không phụ thuộc nhau.
+- **Dùng cho map khác:** instance `game_camera.tscn`, gọi `set_map_rect()` với vùng map mới và `set_target()` với node cần theo. Đổi map lúc chạy: gọi lại `set_map_rect()`.
+- **Smoothing:** dùng thuộc tính có sẵn `position_smoothing_enabled` / `position_smoothing_speed` (chỉnh trong Inspector). Vị trí theo dõi được kẹp vào vùng hợp lệ *trước* khi smoothing, nên camera dừng êm ở mép và không bị trễ khi quay lại.
+- **Zoom:** chỉ dùng mức nguyên. `@export default_zoom = 2`, `min_zoom = 1`, `max_zoom = 4`. Input Map: `camera_zoom_in` = lăn chuột lên, `camera_zoom_out` = lăn chuột xuống; mỗi nấc ±1, đổi tức thì (không tween).
+- **Zoom tối thiểu hợp lệ** = `ceil(max(viewport.w / map.w, viewport.h / map.h))`, tính lại khi viewport đổi kích thước. Với viewport mặc định 1152×648 và map 960×640, 1× không hợp lệ → thấp nhất là **2×**. Nếu mức tối thiểu > `max_zoom` (cửa sổ rất rộng), camera dùng mức tối thiểu đó (vượt 4×) và cảnh báo một lần, thay vì để lộ vùng ngoài map.
+
+Hạn chế pixel-art hiện tại:
+
+- Stretch `canvas_items` + `expand` (từ TASK 01) giữ nguyên. Khi cửa sổ khác 1152×648 theo tỉ lệ không nguyên (vd. 1920×1080 = 1.67×), một pixel nghệ thuật không còn là số nguyên pixel màn hình → kích thước pixel có thể không đều. Sẽ xử lý khi chốt độ phân giải thiết kế.
+- Vị trí camera khi smoothing là số thực; chưa bật pixel snap toàn cục (`snap_2d_transforms_to_pixel`) vì có thể gây rung player so với camera. Ưu tiên chuyển động mượt.
 
 ## 3. Quy ước đặt tên [Đã quyết định]
 
@@ -194,7 +216,7 @@ Resource dùng chung giữa nhiều instance **không được** bị sửa tron
 Các mục sau sẽ quyết định trong task riêng, không tự chọn trước:
 
 - Độ phân giải pixel-art gốc, viewport scale, chế độ stretch cuối cùng.
-- Hệ thống camera.
+- Độ phân giải thiết kế / stretch mode cuối cùng (ảnh hưởng zoom và pixel-perfect).
 - Điều khiển nhân vật chính thức (animation, dodge, gamepad, remapping). Input Map di chuyển cơ bản đã có (mục 2c).
 - Luồng chuyển scene / menu.
 - Công cụ kiểm thử.

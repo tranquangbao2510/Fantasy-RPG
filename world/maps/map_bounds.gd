@@ -1,3 +1,4 @@
+class_name MapBounds
 extends StaticBody2D
 ## Ranh giới bản đồ: 4 WorldBoundaryShape2D bao quanh vùng đã vẽ của `source_layer`.
 ## Kích thước map lấy từ TileMapLayer, không hardcode. Dùng chung collision layer với vật cản (`world`).

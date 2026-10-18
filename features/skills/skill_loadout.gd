@@ -1,7 +1,8 @@
 class_name SkillLoadout
 extends Node
 ## Đúng 4 ô kỹ năng chủ động đang trang bị (ultimate, nếu có, dùng một trong 4 ô này).
-## Mỗi ô giữ một SkillRuntime riêng. Không biết gì về vũ khí hay class: luật class đi qua set_equip_validator().
+## Mỗi ô giữ một SkillRuntime: tự tạo (equip_skill) hoặc nhận từ bên ngoài (equip_runtime, vd. ClassManager giữ
+## runtime theo class + kỹ năng để cooldown không bị làm mới khi đổi ô/class). Không biết gì về vũ khí hay class: luật class đi qua set_equip_validator().
 ##
 ## Quy tắc prototype: một kỹ năng chỉ được nằm ở một ô (trang bị trùng bị từ chối). Đổi trong get_equip_block_reason().
 
@@ -19,10 +20,13 @@ const SLOT_COUNT: int = 4
 
 var _runtimes: Array[SkillRuntime] = []
 var _equip_validator: Callable
+## true = runtime do loadout tạo (equip_skill) và tự tick; false = runtime bên ngoài (equip_runtime), chủ sở hữu tự tick.
+var _owned: Array[bool] = []
 
 
 func _ready() -> void:
 	_runtimes.resize(SLOT_COUNT)
+	_owned.resize(SLOT_COUNT)
 	for slot: int in mini(starting_skills.size(), SLOT_COUNT):
 		if starting_skills[slot] != null:
 			equip_skill(slot, starting_skills[slot])
@@ -31,9 +35,9 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	for runtime: SkillRuntime in _runtimes:
-		if runtime != null:
-			runtime.tick(delta)
+	for slot: int in SLOT_COUNT:
+		if _runtimes[slot] != null and _owned[slot]:
+			_runtimes[slot].tick(delta)
 
 
 func is_valid_slot(slot: int) -> bool:
@@ -79,6 +83,21 @@ func equip_skill(slot: int, definition: SkillDefinition) -> bool:
 		equip_rejected.emit(slot, definition, reason)
 		return false
 	_runtimes[slot] = SkillRuntime.new(definition, definition.default_cast_mode)
+	_owned[slot] = true
+	slot_changed.emit(slot, definition)
+	return true
+
+
+## Trang bị một SkillRuntime có sẵn (do chủ sở hữu bên ngoài giữ và tick, vd. ClassManager), nên cooldown,
+## charges và cast mode đi theo runtime chứ không theo ô: gỡ rồi trang bị lại không làm mới charges.
+func equip_runtime(slot: int, runtime: SkillRuntime) -> bool:
+	var definition: SkillDefinition = runtime.definition if runtime != null else null
+	var reason: String = get_equip_block_reason(slot, definition)
+	if not reason.is_empty():
+		equip_rejected.emit(slot, definition, reason)
+		return false
+	_runtimes[slot] = runtime
+	_owned[slot] = false
 	slot_changed.emit(slot, definition)
 	return true
 
@@ -105,6 +124,7 @@ func unequip_skill(slot: int) -> void:
 	if not is_valid_slot(slot) or _runtimes[slot] == null:
 		return
 	_runtimes[slot] = null
+	_owned[slot] = false
 	slot_changed.emit(slot, null)
 
 

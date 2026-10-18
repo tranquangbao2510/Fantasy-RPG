@@ -16,6 +16,7 @@ var _combat_input_blocked: bool = false
 
 @onready var _facing_pivot: Node2D = $Visual/FacingPivot
 @onready var _passives: PassiveController = $PassiveController
+@onready var _classes: ClassManager = $ClassManager
 @onready var _health: HealthComponent = $HealthComponent
 @onready var _attack: BasicAttackController = $BasicAttackController
 @onready var _interaction_detector: InteractionDetector = $InteractionDetector
@@ -81,9 +82,19 @@ func reset_state() -> void:
 	_attack.cancel()
 	_skills.cancel_all()
 	_skill_loadout.reset_runtimes()
+	_classes.reset_skill_runtimes()
 	_health.reset()
 	_interaction_detector.set_enabled(true)
 	_set_facing(Vector2.DOWN)
+
+
+func get_health() -> HealthComponent:
+	return _health
+
+
+## Đặt điểm spawn mới (vd. tình huống sandbox) rồi reset_state() để đưa Player về đó an toàn.
+func set_spawn_position(spawn: Vector2) -> void:
+	_spawn_position = spawn
 
 
 ## Hướng tấn công từ điểm đánh tới world_point; điểm quá gần thì dùng hướng nhìn hiện tại.

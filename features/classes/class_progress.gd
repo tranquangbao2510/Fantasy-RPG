@@ -12,6 +12,8 @@ var unlocked_passive_ids: Array[StringName] = []
 var equipped_passive_ids: Array[StringName] = []
 ## skill_id theo 4 ô (&"" = trống), khôi phục khi quay lại class.
 var loadout: Array[StringName] = []
+## skill_id → SkillRuntime (cooldown/charges/cast mode) của kỹ năng đã học. Runtime state thuần, không lưu vào save.
+var runtimes: Dictionary[StringName, SkillRuntime] = {}
 
 
 func _init(p_class_id: StringName, mastery_curve: LevelCurve) -> void:

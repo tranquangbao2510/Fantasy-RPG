@@ -39,6 +39,8 @@ var _target: SkillTarget
 var _cast_left: float = 0.0
 var _cast_total: float = 0.0
 var _aim_provider: Callable
+## Runtime đang vận sức (giữ tham chiếu vì ô có thể bị gỡ/đổi trong lúc vận sức).
+var _cast_runtime: SkillRuntime
 
 @onready var _indicator: SkillAreaVisual = $Indicator
 @onready var _effect_flash: SkillAreaVisual = $EffectFlash
@@ -145,13 +147,14 @@ func cancel_cast() -> void:
 	if _state != State.CASTING:
 		return
 	var slot: int = _slot
-	var runtime: SkillRuntime = loadout.get_runtime(slot)
+	var runtime: SkillRuntime = _cast_runtime
 	if runtime != null:
 		runtime.is_casting = false
 	_indicator.clear()
 	_state = State.IDLE
 	_slot = -1
 	_target = null
+	_cast_runtime = null
 	cast_cancelled.emit(slot)
 
 
@@ -235,6 +238,7 @@ func _begin_cast(slot: int, target: SkillTarget) -> void:
 		cast_rejected.emit(slot, runtime.get_block_reason() if runtime != null else "Ô trống")
 		return
 	runtime.is_casting = true
+	_cast_runtime = runtime
 	_state = State.CASTING
 	_slot = slot
 	_target = target
@@ -247,12 +251,13 @@ func _begin_cast(slot: int, target: SkillTarget) -> void:
 
 func _execute() -> void:
 	var slot: int = _slot
-	var runtime: SkillRuntime = loadout.get_runtime(slot)
+	var runtime: SkillRuntime = _cast_runtime
 	var target: SkillTarget = _target
 	_indicator.clear()
 	_state = State.IDLE
 	_slot = -1
 	_target = null
+	_cast_runtime = null
 	if runtime == null:
 		return
 	runtime.is_casting = false

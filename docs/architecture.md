@@ -21,8 +21,8 @@ Mã nguồn được tổ chức theo **tính năng** (feature) thay vì theo lo
 | `core/` | Thành phần kỹ thuật dùng chung, không phụ thuộc gameplay cụ thể | Chưa triển khai |
 | `features/` | Module gameplay (mỗi tính năng một thư mục con, vd. `features/combat/`) | Đã triển khai (`interaction/`, `combat/`, `character/`, `skills/`, `classes/`) |
 | `entities/` | Player, NPC, enemy (scene ghép từ component) | Đã triển khai (`player/`, `enemies/` — placeholder) |
-| `world/` | Bản đồ, môi trường, camera | Đã triển khai (`world.tscn`, `world.gd`, `maps/test_map/`, `camera/`) |
-| `ui/` | Thành phần giao diện | Đã triển khai (`interaction/`, `combat/`, `skills/`, `progression/`, `common/`) |
+| `world/` | Bản đồ, môi trường, camera | Đã triển khai (`world.tscn`, `world.gd`, `maps/test_map/`, `camera/`, `sandbox/`) |
+| `ui/` | Thành phần giao diện | Đã triển khai (`interaction/`, `combat/`, `skills/`, `progression/`, `debug/`, `common/`) |
 | `data/` | Dữ liệu game dùng chung (`.tres` Resource) | Chưa triển khai |
 | `assets/` | Tài nguyên dùng chung (sprite, âm thanh, font) | Chưa triển khai |
 | `save/` | Logic lưu / tải game | Chưa triển khai |
@@ -40,7 +40,8 @@ Main (Control) ── main.gd
 └── Center (CenterContainer)
     └── Layout (VBoxContainer)
         ├── StatusLabel (Label)
-        └── EnterButton (Button "Vào game")
+        ├── EnterButton (Button "Vào game")
+        └── SandboxButton (Button "Combat Sandbox (thử nghiệm)") → world/sandbox/combat_sandbox.tscn (2j)
             └─ nhấn → SceneTree.change_scene_to_file("res://world/world.tscn")
 
 world/world.tscn  (World Scene, mở độc lập được)
@@ -75,7 +76,7 @@ Nguyên tắc đặt node vào World:
 - Vật thể **đứng** cần Y-sort cùng entity (rương, bảng, ...) cũng đặt trong `EntityContainer`, origin tại chân.
 - UI cố định trên màn hình đặt trong `UILayer` (CanvasLayer), không bị camera zoom/di chuyển.
 
-Chưa triển khai: NPC, enemy chính thức.
+Chưa triển khai: NPC, enemy chính thức. Combat Sandbox (scene thử nghiệm thứ hai, dùng chung world.gd): xem 2j.
 
 ## 2b. Bản đồ thử nghiệm — TestMap [Đã triển khai, placeholder]
 
@@ -231,12 +232,16 @@ features/combat/
 ├── damage_info.gd        — class_name DamageInfo (RefCounted): amount, source
 ├── hitbox.gd             — class_name Hitbox (Area2D): vùng gây đòn, bật/tắt theo đòn
 ├── hurtbox.gd            — class_name Hurtbox (Area2D): vùng nhận đòn → HealthComponent
-├── melee_attack.gd/.tscn — class_name MeleeAttack (Node2D): đòn đơn dùng cho enemy (Player dùng BasicAttackController, xem 2g)
+├── attack_component.gd   — class_name AttackComponent (Node2D): base mỏng cho đòn enemy (WINDUP → ACTIVE → COOLDOWN)
+├── melee_attack.gd/.tscn — class_name MeleeAttack (AttackComponent): đòn chữ nhật bằng Hitbox (Player dùng BasicAttackController, xem 2g)
+├── ranged_attack.gd/.tscn, projectile.gd/.tscn — đòn tầm xa + đạn tối giản (xem 2j)
+├── feedback/hit_spark.gd — class_name HitSpark: hiệu ứng trúng đòn placeholder (chỉ hiển thị)
 ├── knockback_component.gd — class_name KnockbackComponent (Node): đẩy lùi cho CharacterBody2D
 └── hit_flash.gd          — class_name HitFlash (Node): nháy màu / tô xám theo HP (chỉ visual)
 entities/enemies/
 ├── training_dummy/       — Node2D đứng yên, HP 60, không AI
-└── simple_enemy/         — CharacterBody2D, HP 40, AI đơn giản (IDLE / CHASE / ATTACK / DEAD)
+├── enemy.gd, enemy_base.tscn — class_name Enemy (CharacterBody2D): AI dùng chung (xem 2j); scene gốc cho mọi enemy prototype
+└── simple_enemy/, stationary_attacker/, ranged_enemy/ — scene kế thừa enemy_base + AttackComponent
 ui/combat/
 ├── combat_hud.gd/.tscn   — HP Player, thông báo bị hạ gục, gợi ý phím
 ├── damage_numbers.gd     — số sát thương neo vào vị trí world, vẽ trên màn hình
@@ -255,7 +260,7 @@ ui/combat/
 - Hurtbox: `health` (export); bỏ qua đòn có `source == owner` (tự đánh mình), amount không hợp lệ, hoặc mục tiêu đã chết. Phát `hit_received(info, applied)`. Tự vào group `hurtboxes`.
 - Phe = collision layer: Player Hurtbox layer 5, enemy/dummy Hurtbox layer 6. Hitbox `layer = 0`; Player Hitbox mask 6, enemy Hitbox mask 5 → không tự đánh, dummy/enemy không đánh lẫn nhau. Hitbox/Hurtbox là Area2D, không chặn chuyển động, không dùng layer `interaction`.
 
-**MeleeAttack** (enemy; export, mọi giá trị là placeholder):
+**MeleeAttack** (enemy; export của AttackComponent + `attack_width`, mọi giá trị là placeholder; các enemy khác xem 2j):
 
 | | damage | attack_range | attack_width | windup | duration | cooldown | target_layers |
 |---|---|---|---|---|---|---|---|
@@ -263,7 +268,7 @@ ui/combat/
 
 API: `attack(direction) -> bool`, `can_attack()`, `is_attacking()`, `cancel()`, `get_hitbox()`; signal `attack_started(direction)`, `attack_finished`. Chỉ xoay node MeleeAttack (Hitbox + visual), không xoay thực thể. Đang đánh/nghỉ thì bỏ qua. Không đánh khi `health` của chủ thể đã chết.
 
-**SimpleEnemy** — export `target` (World gán Player), `move_speed` 70, `detection_range` 150, `attack_trigger_ratio` 0.8 × `MeleeAttack.attack_range`. Ngoài tầm: đứng yên; trong tầm: đi thẳng tới target (`move_and_slide`, mask `world`, có thể kẹt sau vật cản, không pathfinding); đủ gần: đứng lại và đánh. Chỉ đọc vị trí và `is_dead()` của target (nếu có), không đọc HP. Chết: dừng AI, hủy đòn. Thân enemy layer 4, mask 1; Player và enemy không chặn nhau.
+**SimpleEnemy** (= Melee Chaser, `Enemy` với `movement_mode = CHASE`) — export `target` (World gán Player), `move_speed` 70, `detection_range` 150, `attack_trigger_ratio` 0.8 × `attack.attack_range`. Ngoài tầm: đứng yên; trong tầm: đi thẳng tới target (`move_and_slide`, mask `world`, có thể kẹt sau vật cản, không pathfinding); đủ gần: đứng lại và đánh. Chỉ đọc vị trí và `is_dead()` của target (nếu có), không đọc HP. Chết: dừng AI, hủy đòn. Thân enemy layer 4, mask 1; Player và enemy không chặn nhau.
 
 **Chết / reset (thử nghiệm):**
 
@@ -278,7 +283,7 @@ API: `attack(direction) -> bool`, `can_attack()`, `is_attacking()`, `cancel()`, 
 
 Giới hạn prototype:
 
-- Hurtbox chỉ được nối vào HUD lúc `World._ready()`; thực thể sinh ra sau này cần được nối thêm.
+- Hurtbox được nối vào HUD lúc `World._ready()`; thực thể sinh ra lúc chạy gọi `World.register_entity(node)` (không nối trùng).
 - Không i-frame: enemy đánh trúng mỗi lần hết cooldown. Knockback chỉ có ở SimpleEnemy (Player và dummy không bị đẩy).
 - Enemy không pathfinding, không tránh vật cản; Player và enemy có thể chồng lên nhau.
 - Vùng tấn công là hình chữ nhật; chưa có animation chính thức.
@@ -447,7 +452,7 @@ ui/progression/progression_panel.gd/.tscn — ProgressionPanel
 - Class: `get_current_class()`, `get_current_class_id()`, `get_class_definition(id)`, `get_class_ids()`, `is_class_unlocked(id)`, `get_unlocked_class_ids()`, `unlock_class(id)` (API chung cho quest/NPC/khám phá sau này; không mở lặp), `can_switch_class(id)`, `get_switch_block_reason(id)`, `switch_class(id)`.
 - Phiên đổi class: `open_switch_session(station, max_distance)`, `close_switch_session()`, `has_switch_session()`, `get_switch_station()`.
 - Mastery: `get_mastery(id)` (null nếu chưa mở khóa), `add_mastery_exp(id, n)` — chỉ cộng cho đúng class đó.
-- Kỹ năng: `learn_skill`, `is_skill_learned`, `get_skill_level`, `can_level_up_skill`, `level_up_skill`, `get_skill_branch`, `select_evolution_branch`, `get_skill_cast_mode`, `get_effective_skill`, `equip_skill(slot, skill_id)`, `unequip_skill(slot)`, `get_saved_loadout(id)`.
+- Kỹ năng: `learn_skill`, `is_skill_learned`, `get_skill_level`, `can_level_up_skill`, `level_up_skill`, `get_skill_branch`, `select_evolution_branch`, `get_skill_cast_mode`, `get_effective_skill`, `equip_skill(slot, skill_id)` (kỹ năng đang ở ô khác được chuyển ô), `unequip_skill(slot)`, `get_saved_loadout(id)`, `get_skill_runtime(id, skill_id)`, `reset_skill_runtimes()`.
 - Passive: `get_signature_passive`, `unlock_passive`, `is_passive_unlocked`, `equip_passive`, `unequip_passive`, `get_equipped_passive_ids`, `get_passive_equip_block_reason`; export `additional_passive_limit` = **2** (thông số prototype).
 - Signal: `class_unlocked`, `class_switched`, `mastery_changed`, `skill_learned`, `skill_level_changed`, `skill_evolved`, `passives_changed`, `switch_session_started/ended`, `progression_changed` (sau mọi thay đổi).
 - `ClassManager.find_in(actor)` tìm component trên actor (không Autoload, không đường dẫn cứng).
@@ -456,7 +461,7 @@ ui/progression/progression_panel.gd/.tscn — ProgressionPanel
 
 **Khi đổi class** (`_activate`): hủy ngắm/vận sức (`cancel_all`) và combo → gỡ 4 ô → đổi active class → tính lại passive (signature mới + passive bổ sung đã lưu của class mới) → khôi phục loadout đã lưu (bỏ ô không còn hợp lệ) với cast mode đã lưu theo kỹ năng → gỡ vũ khí không hợp lệ (không cấp vũ khí mới; Player hoạt động được khi không có vũ khí). Character level, mastery và tiến trình kỹ năng của mọi class giữ nguyên.
 
-**Cooldown khi đổi class (quy tắc prototype, có thể đổi):** runtime gắn với ô trang bị; đổi class tạo runtime mới cho class mới (charges đầy, cooldown không được bảo toàn) — không bao giờ dùng chung runtime giữa hai class. Lên level/tiến hóa kỹ năng đang trang bị thì giữ charges/hồi chiêu (`SkillLoadout.update_definition`).
+**Cooldown khi đổi class / đổi ô:** xem "Runtime integrity" ở 2j (từ TASK 11 runtime gắn với class + kỹ năng, không gắn với ô).
 
 **Weapon compatibility:** `WeaponEquipment.set_equip_validator()` ← ClassManager: `weapon_type_id` phải thuộc `allowed_weapon_type_ids` của class đang dùng. Mọi đường trang bị (kể cả debug 1/2/3) đều qua `equip_weapon()` → bị từ chối, phát `equip_rejected` (World hiện thông báo). Không sửa WeaponDefinition / BasicAttackController.
 
@@ -477,7 +482,61 @@ Level kỹ năng: Arc (max 3: +4 dmg; +4 dmg & −0.5 s hồi), Burst (max 3: +5
 
 **Thêm class mới bằng dữ liệu:** New Resource → `PassiveDefinition` (signature + passive bổ sung) → New Resource → `ClassDefinition`, đặt `class_id`, loại vũ khí, `skills` / `starting_skills`, passive → thêm vào `ClassManager.classes` trên Player (và `debug_unlockable_classes` của một trạm nếu muốn mở khóa thử). Không cần sửa code. Kỹ năng có level/nhánh: điền nhóm *Progression* trong SkillDefinition.
 
-**Chưa chốt / chưa triển khai:** điều kiện mở khóa class/kỹ năng/passive, nguồn EXP & mastery (chỉ có debug), công thức level, tài nguyên nâng cấp, quy tắc đổi/reset nhánh, bảo toàn cooldown khi đổi class, số ô passive, ultimate, cây kỹ năng, NPC/quest, Save/Load. Debug reset **R** không đụng tới progression; chưa có nút reset progression.
+**Chưa chốt / chưa triển khai:** điều kiện mở khóa class/kỹ năng/passive, nguồn EXP & mastery (chỉ có debug), công thức level, tài nguyên nâng cấp, quy tắc đổi/reset nhánh, quy tắc cooldown chính thức khi đổi class, số ô passive, ultimate, cây kỹ năng, NPC/quest, Save/Load. Debug reset **R** không đụng tới progression; chưa có nút reset progression.
+
+## 2j. Combat Sandbox, enemy prototype & runtime integrity [Đã triển khai, thử nghiệm]
+
+```
+world/sandbox/
+├── combat_sandbox.tscn     — World thứ hai (script world.gd, cùng cấu trúc container) dùng lại Player/Camera/UI
+├── sandbox_map.tscn        — map 60×40 ô (TileSet + MapBounds có sẵn), sinh một lần bằng script ngoài project
+├── scenario_controller.gd  — ScenarioController (Node cục bộ của scene, không phải manager toàn cục)
+├── combat_scenario.gd      — CombatScenario (Node2D): vị trí = spawn Player; display_name, description, player_health_ratio
+└── scenario_spawn.gd       — ScenarioSpawn (Marker2D): `scene` sinh ra khi tình huống bắt đầu
+ui/debug/combat_debug_panel.gd/.tscn — CombatDebugPanel (F3)
+```
+
+**Truy cập:** Main Scene → nút **Combat Sandbox (thử nghiệm)**, hoặc mở `combat_sandbox.tscn` + F6. "Vào game" vẫn vào Test World. Sandbox không phải map chính thức.
+
+**Bản đồ** (1920×1280 px; kích thước chỉ lấy từ MapBounds/GroundLayer → camera limit, zoom tối thiểu 1×): A. *Training* (trên trái, 4 bù nhìn: 1 đơn + 3 sát nhau); B. *Obstacle* (dưới trái, ba hàng đá/bụi có khe hở); C. *Enemy Arena* (phải, nền đất, viền bụi, lối vào ở đường ngang, vài cột đá); D. *Class Training* (quảng trường đá giữa: trạm class, bảng thông báo, spawn Player). Đường đất nối các khu.
+
+**Enemy prototype** — một script `Enemy` (state IDLE / CHASE / ATTACK / RECOVERY / DEAD), khác nhau bằng dữ liệu + `AttackComponent`; mọi scene kế thừa `enemy_base.tscn` (Health, Hurtbox layer 6, HitFlash, HealthBar, Knockback, DebugView). Không phát hiện ngoài `detection_range`; di chuyển và knockback luôn qua `move_and_slide()` (bị vật cản chặn, có thể kẹt, không pathfinding); AI không sửa HP; chết → hủy đòn.
+
+| Scene | movement_mode | HP | Đòn | Detection | Ghi chú |
+|---|---|---|---|---|---|
+| `simple_enemy` (Melee Chaser) | CHASE | 40 | Melee 10 dmg, tầm 26, windup 0.35 s, hồi 1.0 s | 150 | knockback bình thường |
+| `stationary_attacker` | STATIONARY | 70 | Melee 14 dmg, 64×30, windup 0.7 s (telegraph tím), hồi 1.4 s | 120 | `strength_multiplier = 0` (không bị đẩy) |
+| `ranged_enemy` | KEEP_DISTANCE | 30 | Ranged 8 dmg, tầm 170, windup 0.6 s, hồi 1.6 s, đạn 200 px/s, bay tối đa 230 | 220 | lùi khi Player gần hơn 130 × 0.75 |
+
+- `AttackComponent` (base): `attack(direction)`, `can_attack()`, `is_attacking()`, `is_recovering()`, `cancel()`, `get_phase()`; hook `_on_windup_started/_on_active_started/_on_active_ended/_on_cancelled`. Hướng chốt lúc bắt đầu.
+- Telegraph = đúng vùng tác động: MeleeAttack hiện chữ nhật của Hitbox khi windup; RangedAttack hiện đường bắn dài `projectile_range` × `telegraph_width`.
+- `Projectile` (Area2D): bay thẳng, `collision_mask` = phe đối địch; trúng Hurtbox **một lần** qua `receive_damage(DamageInfo)` rồi biến mất; raycast layer `world` mỗi tick (không xuyên vật cản); tự hủy khi hết tầm; thuộc group `test_resettable` nên reset xóa đạn đang bay. Được thêm vào container của người bắn (EntityContainer).
+- Phe giữ nguyên: Hitbox/đạn enemy chỉ dò layer 5 → enemy không đánh nhau.
+
+**Tình huống thử nghiệm** (`Scenarios` trong sandbox; chọn trong Debug Panel): Tự do (5 enemy), Một mục tiêu đứng yên, Nhiều mục tiêu sát nhau, Một enemy cận chiến, Enemy đứng yên, Một enemy tầm xa, Nhiều enemy, Enemy gần vật cản, Bị hạ gục khi đang dùng kỹ năng (HP 15%), Đổi vũ khí giữa combo, Đổi class sau khi dùng kỹ năng. `start_scenario(i)`: xóa thực thể của tình huống cũ (giải phóng, không giữ tham chiếu) → `Player.set_spawn_position()` → `World.reset_test_state()` (Player, dummy, đạn) → sinh ScenarioSpawn vào EntityContainer (đặt vị trí trước `add_child`, gán `target`) → `entity_spawned` → `World.register_entity()` nối số sát thương/HitSpark. API: `restart()`, `reset_enemies()`, `get_active_enemy_count()`, `get_current_scenario()`.
+
+**Thêm tình huống:** trong `combat_sandbox.tscn`, thêm Node2D con của `Scenarios` với script `combat_scenario.gd`, đặt vị trí (spawn Player), điền tên/mô tả; thêm con Marker2D với script `scenario_spawn.gd` và gán `scene` (vd. `ranged_enemy.tscn`). Không cần sửa code; nút xuất hiện tự động trong Debug Panel.
+
+**Reset:** R / nút Reset = `World.reset_test_state()` (Player về spawn của tình huống, HP đầy, hủy đòn/cast, hồi đầy runtime kỹ năng; enemy về điểm sinh; đạn bị xóa; camera nhảy về Player). "Chạy lại tình huống" sinh lại enemy. Không reset character level, mastery, class đã mở khóa, tiến trình kỹ năng.
+
+**Runtime integrity (quy tắc kỹ thuật tạm, chưa phải quyết định gameplay):**
+
+- Mỗi class + kỹ năng đã học có **đúng một** `SkillRuntime`, tạo lúc học và lưu trong `ClassProgress.runtimes` (tách khỏi `SkillProgress` là level/nhánh/cast mode).
+- `SkillLoadout.equip_runtime(slot, runtime)` cắm runtime có sẵn vào ô (không tạo mới). Gỡ/trang bị lại/chuyển ô hay đổi class qua lại **không** hồi charges hay xóa cooldown; cast mode đi theo runtime.
+- `ClassManager._physics_process` tick mọi runtime của mọi class (SkillLoadout chỉ tick runtime tự tạo bằng `equip_skill`) → cooldown của class không hoạt động vẫn giảm theo thời gian gameplay, charges hồi theo quy tắc hiện có, không nhận thêm ngoài tiến trình đó.
+- Đổi class vẫn hủy ngắm/vận sức (`SkillCastingController` giữ tham chiếu runtime đang vận sức nên `is_casting` không bị treo khi ô bị gỡ).
+- Lên level/tiến hóa/đổi passive chỉ thay definition (`set_definition`), giữ cooldown/charges. Không có global cooldown.
+- Reset thử nghiệm (R, chạy lại tình huống) hồi đầy runtime — chỉ là công cụ debug.
+
+**Feedback:** HitSpark (vòng + 4 tia, 0.22 s, tự giải phóng) tại điểm trúng, vòng lớn màu cam khi bị hạ gục; telegraph enemy; state RECOVERY. `EnemyDebugView` (bật bằng Debug Panel): vòng `detection_range`, vòng tầm đánh, vòng lùi (ranged), tên state.
+
+**Combat Debug Panel** (F3, `debug_combat_panel`; bên trái, dưới HUD; ẩn mặc định): HP, class, vũ khí (+ type), 4 ô (mode, charges, cooldown), số enemy còn sống / đã sinh, số đạn, FPS (làm mới 5 lần/giây); nút Hồi đầy HP (`heal()`), Reset enemy, Chạy lại tình huống, Reset (R), danh sách tình huống, công tắc debug info. Chỉ gọi public API, không sửa HP trực tiếp.
+
+**Điều phối input/UI:** Progression Panel (P, phải) chặn input combat khi mở (là menu). Debug Panel **không** chặn — để vừa đánh vừa quan sát; click trên panel do GUI nhận (không xuyên thành đòn đánh/xác nhận ngắm), F3 không phải phím kỹ năng. Hai bảng ở hai bên màn hình, không chồng nhau. Esc/chuột phải đóng Progression; F3 đóng Debug.
+
+**Hiệu năng:** không duyệt scene tree mỗi frame (Debug Panel đếm đạn 5 lần/giây; ScenarioController giữ danh sách thực thể đã sinh); đạn và HitSpark có thời gian sống giới hạn. Đo trong tình huống "Nhiều enemy" (windowed, máy dev): 60 FPS.
+
+**Giới hạn:** không pathfinding (enemy kẹt sau vật cản); ranged chỉ lùi thẳng, có thể lùi vào tường; đạn không có hiệu ứng nổ; knockback Player chưa có; reset thử nghiệm hồi cooldown; tình huống "bị hạ gục khi vận sức" phụ thuộc nhịp enemy (thao tác thủ công); Debug Panel và sandbox chỉ dành cho kiểm thử.
 
 ## 3. Quy ước đặt tên [Đã quyết định]
 

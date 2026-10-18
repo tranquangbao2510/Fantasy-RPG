@@ -70,6 +70,8 @@ target = NodePath("../Player")
 position = Vector2(560, 256)
 debug_unlockable_classes = Array[ExtResource("17_class_def")]([ExtResource("16_caster_class")])
 
+[node name="EffectContainer" type="Node2D" parent="."]
+
 [node name="CameraContainer" type="Node2D" parent="."]
 
 [node name="GameCamera" parent="CameraContainer" instance=ExtResource("4_camera")]

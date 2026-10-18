@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://features/combat/ranged_attack.gd" id="1_ranged"]
+
+[node name="RangedAttack" type="Node2D"]
+script = ExtResource("1_ranged")
+
+[node name="Telegraph" type="Line2D" parent="."]
+visible = false
+width = 8.0
+default_color = Color(1, 0.6, 0.2, 0.35)

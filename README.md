@@ -56,4 +56,6 @@ Quy ước commit: [docs/git_conventions.md](docs/git_conventions.md).
 
 - TASK 10 — Class & progression prototype (`features/classes/`, `features/character/`, `ui/progression/`): class **Test Fighter** (khởi đầu) / **Test Caster**, character level dùng chung, mastery theo class, signature + passive bổ sung, học / nâng level / tiến hóa kỹ năng, loadout riêng từng class, luật vũ khí theo class. Đến **Trạm huấn luyện** (cột cờ tím phía trên phải quảng trường) và nhấn **E** để mở khóa (debug) / đổi class. **P** mở bảng Class/Progression (nút **[Debug]** để cộng EXP, mastery, học/nâng/tiến hóa kỹ năng); **Esc** đóng.
 
+- TASK 11 — Combat Sandbox (`world/sandbox/`, `ui/debug/`): ở màn hình chính chọn **Combat Sandbox (thử nghiệm)**. Map 60×40 với khu bù nhìn, khu vật cản, đấu trường enemy (Melee Chaser / Stationary Attacker / Ranged) và trạm class. **F3** mở Combat Debug Panel (trạng thái, hồi HP, reset enemy, chọn/chạy lại tình huống, debug info). Cooldown/charges kỹ năng giờ được giữ khi đổi ô hoặc đổi class.
+
 Chưa có ultimate, mana/stamina, animation, inventory, hội thoại, quest hay save. Mọi chỉ số combat, vũ khí, kỹ năng, class và EXP là placeholder.

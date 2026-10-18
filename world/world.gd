@@ -1,7 +1,9 @@
+class_name World
 extends Node2D
 ## Gốc của môi trường game.
 ## Cung cấp các container và nối các module (camera, interaction UI) với nhau; không chứa logic gameplay.
-## Các module khác thêm node vào container qua các hàm public bên dưới.
+## Các module khác thêm node vào container qua các hàm public bên dưới; thực thể sinh ra lúc chạy gọi register_entity().
+## Dùng chung cho Test World và Combat Sandbox (các export tùy chọn: thiếu thì bỏ qua phần tương ứng).
 
 @export var camera: GameCamera
 @export var camera_target: Node2D
@@ -20,11 +22,16 @@ extends Node2D
 @export var player_classes: ClassManager
 @export var player_level: CharacterLevel
 @export var progression_panel: ProgressionPanel
+## Tùy chọn (Combat Sandbox): bảng debug combat và điều phối tình huống thử nghiệm.
+@export var debug_panel: CombatDebugPanel
+@export var scenario_controller: ScenarioController
 
 @onready var _environment: Node2D = $Environment
 @onready var _map_container: Node2D = $MapContainer
 @onready var _entity_container: Node2D = $EntityContainer
 @onready var _camera_container: Node2D = $CameraContainer
+## Hiệu ứng ngắn hạn (HitSpark) vẽ trên entity; nếu scene không có thì dùng EntityContainer.
+@onready var _effect_container: Node2D = get_node_or_null(^"EffectContainer") as Node2D
 
 
 func _ready() -> void:
@@ -34,6 +41,7 @@ func _ready() -> void:
 	if skill_bar != null and player_skills != null and player_caster != null:
 		skill_bar.bind(player_skills, player_caster)
 	_setup_progression()
+	_setup_sandbox()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -111,7 +119,35 @@ func _setup_combat_hud() -> void:
 	for node: Node in get_tree().get_nodes_in_group(Hurtbox.GROUP):
 		var hurtbox: Hurtbox = node as Hurtbox
 		if hurtbox != null and is_ancestor_of(hurtbox):
-			hurtbox.hit_received.connect(_on_hit_received.bind(hurtbox))
+			_connect_hurtbox(hurtbox)
+
+
+## Nối thực thể sinh ra lúc chạy (vd. enemy của tình huống sandbox) vào số sát thương / hiệu ứng trúng đòn.
+## Gọi nhiều lần cho cùng thực thể không tạo kết nối trùng.
+func register_entity(entity: Node) -> void:
+	if combat_hud == null:
+		return
+	for node: Node in entity.find_children("*", "Hurtbox", true, false):
+		_connect_hurtbox(node as Hurtbox)
+
+
+func _connect_hurtbox(hurtbox: Hurtbox) -> void:
+	# Callable đã bind không so bằng được với _on_hit_received, nên kiểm tra theo object + tên hàm.
+	for connection: Dictionary in hurtbox.hit_received.get_connections():
+		var callable: Callable = connection["callable"]
+		if callable.get_object() == self and callable.get_method() == &"_on_hit_received":
+			return
+	hurtbox.hit_received.connect(_on_hit_received.bind(hurtbox))
+
+
+## Combat Sandbox: bảng debug + tình huống mặc định. Bỏ qua nếu scene không có.
+func _setup_sandbox() -> void:
+	if scenario_controller != null:
+		scenario_controller.entity_spawned.connect(register_entity)
+	if debug_panel != null:
+		debug_panel.bind(self)
+	if scenario_controller != null:
+		scenario_controller.start_scenario(scenario_controller.start_index)
 
 
 ## Nối Class/Progression vào UI: bảng progression, thông báo unlock/đổi class/từ chối trang bị, chặn input combat khi bảng mở.
@@ -141,11 +177,18 @@ func _setup_progression() -> void:
 
 
 func _on_player_healed(amount: int) -> void:
-	var player: Node2D = player_health.get_parent() as Node2D
-	if player != null:
-		combat_hud.show_heal(player.global_position + Vector2(0, -30), amount)
+	var body: Node2D = player_health.get_parent() as Node2D
+	if body != null:
+		combat_hud.show_heal(body.global_position + Vector2(0, -30), amount)
 
 
+## Phản hồi trúng đòn (chỉ hiển thị): số sát thương + HitSpark; mục tiêu bị hạ gục có vòng lớn hơn.
 func _on_hit_received(_info: DamageInfo, applied: int, hurtbox: Hurtbox) -> void:
 	var defeated: bool = hurtbox.health != null and hurtbox.health.is_dead()
-	combat_hud.show_damage(hurtbox.get_hit_position(), applied, hurtbox.health == player_health, defeated)
+	var is_player: bool = hurtbox.health == player_health
+	var position_on_hit: Vector2 = hurtbox.get_hit_position()
+	combat_hud.show_damage(position_on_hit, applied, is_player, defeated)
+	var effects: Node2D = _effect_container if _effect_container != null else _entity_container
+	HitSpark.spawn(effects, position_on_hit, Color(1, 0.45, 0.4) if is_player else Color(1, 1, 0.85), 7.0)
+	if defeated:
+		HitSpark.spawn(effects, position_on_hit, Color(1, 0.6, 0.2), 18.0)

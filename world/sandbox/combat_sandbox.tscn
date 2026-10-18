@@ -1,0 +1,240 @@
+[gd_scene load_steps=24 format=3]
+
+[ext_resource type="Script" path="res://world/world.gd" id="1_world"]
+[ext_resource type="PackedScene" path="res://world/sandbox/sandbox_map.tscn" id="2_map"]
+[ext_resource type="PackedScene" path="res://entities/player/player.tscn" id="3_player"]
+[ext_resource type="PackedScene" path="res://world/camera/game_camera.tscn" id="4_camera"]
+[ext_resource type="PackedScene" path="res://features/interaction/examples/notice_board.tscn" id="5_board"]
+[ext_resource type="PackedScene" path="res://features/classes/station/class_training_station.tscn" id="6_station"]
+[ext_resource type="Resource" path="res://features/classes/data/test_caster.tres" id="7_caster_class"]
+[ext_resource type="Script" path="res://features/classes/class_definition.gd" id="8_class_def"]
+[ext_resource type="PackedScene" path="res://entities/enemies/training_dummy/training_dummy.tscn" id="9_dummy"]
+[ext_resource type="PackedScene" path="res://entities/enemies/simple_enemy/simple_enemy.tscn" id="10_melee"]
+[ext_resource type="PackedScene" path="res://entities/enemies/stationary_attacker/stationary_attacker.tscn" id="11_stationary"]
+[ext_resource type="PackedScene" path="res://entities/enemies/ranged_enemy/ranged_enemy.tscn" id="12_ranged"]
+[ext_resource type="Script" path="res://world/sandbox/scenario_controller.gd" id="13_controller"]
+[ext_resource type="Script" path="res://world/sandbox/combat_scenario.gd" id="14_scenario"]
+[ext_resource type="Script" path="res://world/sandbox/scenario_spawn.gd" id="15_spawn"]
+[ext_resource type="PackedScene" path="res://ui/combat/combat_hud.tscn" id="16_hud"]
+[ext_resource type="PackedScene" path="res://ui/skills/skill_bar.tscn" id="17_skill_bar"]
+[ext_resource type="PackedScene" path="res://ui/interaction/interaction_prompt.tscn" id="18_prompt"]
+[ext_resource type="PackedScene" path="res://ui/interaction/interaction_feedback.tscn" id="19_feedback"]
+[ext_resource type="PackedScene" path="res://ui/progression/progression_panel.tscn" id="20_progression"]
+[ext_resource type="PackedScene" path="res://ui/debug/combat_debug_panel.tscn" id="21_debug"]
+
+[node name="CombatSandbox" type="Node2D" node_paths=PackedStringArray("camera", "camera_target", "map_bounds", "interaction_detector", "interaction_prompt", "interaction_feedback", "player_health", "combat_hud", "player_weapon", "player_attack", "player_skills", "player_caster", "skill_bar", "player", "player_classes", "player_level", "progression_panel", "debug_panel", "scenario_controller")]
+script = ExtResource("1_world")
+camera = NodePath("CameraContainer/GameCamera")
+camera_target = NodePath("EntityContainer/Player")
+map_bounds = NodePath("MapContainer/SandboxMap/MapBounds")
+interaction_detector = NodePath("EntityContainer/Player/InteractionDetector")
+interaction_prompt = NodePath("UILayer/InteractionPrompt")
+interaction_feedback = NodePath("UILayer/InteractionFeedback")
+player_health = NodePath("EntityContainer/Player/HealthComponent")
+combat_hud = NodePath("UILayer/CombatHUD")
+player_weapon = NodePath("EntityContainer/Player/WeaponEquipment")
+player_attack = NodePath("EntityContainer/Player/BasicAttackController")
+player_skills = NodePath("EntityContainer/Player/SkillLoadout")
+player_caster = NodePath("EntityContainer/Player/SkillCastingController")
+skill_bar = NodePath("UILayer/SkillBar")
+player = NodePath("EntityContainer/Player")
+player_classes = NodePath("EntityContainer/Player/ClassManager")
+player_level = NodePath("EntityContainer/Player/CharacterLevel")
+progression_panel = NodePath("UILayer/ProgressionPanel")
+debug_panel = NodePath("UILayer/CombatDebugPanel")
+scenario_controller = NodePath("Scenarios")
+
+[node name="Environment" type="Node2D" parent="."]
+
+[node name="MapContainer" type="Node2D" parent="."]
+
+[node name="SandboxMap" parent="MapContainer" instance=ExtResource("2_map")]
+
+[node name="EntityContainer" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Player" parent="EntityContainer" instance=ExtResource("3_player")]
+position = Vector2(960, 672)
+
+[node name="ClassTrainingStation" parent="EntityContainer" instance=ExtResource("6_station")]
+position = Vector2(896, 560)
+debug_unlockable_classes = Array[ExtResource("8_class_def")]([ExtResource("7_caster_class")])
+
+[node name="NoticeBoard" parent="EntityContainer" instance=ExtResource("5_board")]
+position = Vector2(1024, 560)
+message = "Combat Sandbox (thử nghiệm): F3 mở bảng debug và chọn tình huống. Trái trên: bù nhìn · Dưới trái: vật cản · Phải: đấu trường enemy · Giữa: trạm class."
+
+[node name="DummySingle" parent="EntityContainer" instance=ExtResource("9_dummy")]
+position = Vector2(256, 224)
+
+[node name="DummyA" parent="EntityContainer" instance=ExtResource("9_dummy")]
+position = Vector2(440, 288)
+
+[node name="DummyB" parent="EntityContainer" instance=ExtResource("9_dummy")]
+position = Vector2(488, 288)
+
+[node name="DummyC" parent="EntityContainer" instance=ExtResource("9_dummy")]
+position = Vector2(464, 322)
+
+[node name="EffectContainer" type="Node2D" parent="."]
+
+[node name="Scenarios" type="Node" parent="." node_paths=PackedStringArray("world", "player", "spawn_parent")]
+script = ExtResource("13_controller")
+world = NodePath("..")
+player = NodePath("../EntityContainer/Player")
+spawn_parent = NodePath("../EntityContainer")
+
+[node name="FreePlay" type="Node2D" parent="Scenarios"]
+position = Vector2(960, 672)
+script = ExtResource("14_scenario")
+display_name = "Tự do: mọi khu vực"
+description = "Nhiều enemy cùng hoạt động trong đấu trường (phải) và một enemy ở khu vật cản (dưới trái)."
+
+[node name="Melee1" type="Marker2D" parent="Scenarios/FreePlay"]
+position = Vector2(440, -172)
+script = ExtResource("15_spawn")
+scene = ExtResource("10_melee")
+
+[node name="Melee2" type="Marker2D" parent="Scenarios/FreePlay"]
+position = Vector2(640, 128)
+script = ExtResource("15_spawn")
+scene = ExtResource("10_melee")
+
+[node name="Stationary" type="Marker2D" parent="Scenarios/FreePlay"]
+position = Vector2(540, -32)
+script = ExtResource("15_spawn")
+scene = ExtResource("11_stationary")
+
+[node name="Ranged" type="Marker2D" parent="Scenarios/FreePlay"]
+position = Vector2(740, -172)
+script = ExtResource("15_spawn")
+scene = ExtResource("12_ranged")
+
+[node name="ObstacleMelee" type="Marker2D" parent="Scenarios/FreePlay"]
+position = Vector2(-560, 384)
+script = ExtResource("15_spawn")
+scene = ExtResource("10_melee")
+
+[node name="SingleTarget" type="Node2D" parent="Scenarios"]
+position = Vector2(256, 290)
+script = ExtResource("14_scenario")
+display_name = "Một mục tiêu đứng yên"
+description = "Bù nhìn đơn ở khu Training: thử combo, cast Normal/Quick/Instant."
+
+[node name="MultiTarget" type="Node2D" parent="Scenarios"]
+position = Vector2(464, 392)
+script = ExtResource("14_scenario")
+display_name = "Nhiều mục tiêu đứng gần nhau"
+description = "Ba bù nhìn sát nhau: thử kỹ năng vùng / nhiều mục tiêu (mỗi mục tiêu trúng 1 lần)."
+
+[node name="MeleeChaser" type="Node2D" parent="Scenarios"]
+position = Vector2(1300, 640)
+script = ExtResource("14_scenario")
+display_name = "Một enemy cận chiến"
+description = "Melee Chaser: đuổi theo, windup 0.35 s rồi chém; có knockback."
+
+[node name="Melee" type="Marker2D" parent="Scenarios/MeleeChaser"]
+position = Vector2(200, 0)
+script = ExtResource("15_spawn")
+scene = ExtResource("10_melee")
+
+[node name="Stationary" type="Node2D" parent="Scenarios"]
+position = Vector2(1380, 640)
+script = ExtResource("14_scenario")
+display_name = "Enemy đứng yên tấn công"
+description = "Stationary Attacker: không di chuyển, telegraph tím 0.7 s rồi đánh theo nhịp khi Player trong tầm."
+
+[node name="Attacker" type="Marker2D" parent="Scenarios/Stationary"]
+position = Vector2(120, 0)
+script = ExtResource("15_spawn")
+scene = ExtResource("11_stationary")
+
+[node name="Ranged" type="Node2D" parent="Scenarios"]
+position = Vector2(1300, 640)
+script = ExtResource("14_scenario")
+display_name = "Một enemy tầm xa"
+description = "Ranged Enemy: giữ khoảng cách, telegraph đường bắn 0.6 s rồi bắn đạn; di chuyển ngang để né."
+
+[node name="Shooter" type="Marker2D" parent="Scenarios/Ranged"]
+position = Vector2(260, 0)
+script = ExtResource("15_spawn")
+scene = ExtResource("12_ranged")
+
+[node name="Horde" type="Node2D" parent="Scenarios"]
+position = Vector2(1300, 640)
+script = ExtResource("14_scenario")
+display_name = "Nhiều enemy cùng lúc"
+description = "Hai cận chiến, một tầm xa, một đứng yên trong đấu trường."
+
+[node name="Melee1" type="Marker2D" parent="Scenarios/Horde"]
+position = Vector2(200, -80)
+script = ExtResource("15_spawn")
+scene = ExtResource("10_melee")
+
+[node name="Melee2" type="Marker2D" parent="Scenarios/Horde"]
+position = Vector2(200, 80)
+script = ExtResource("15_spawn")
+scene = ExtResource("10_melee")
+
+[node name="Shooter" type="Marker2D" parent="Scenarios/Horde"]
+position = Vector2(400, 0)
+script = ExtResource("15_spawn")
+scene = ExtResource("12_ranged")
+
+[node name="Attacker" type="Marker2D" parent="Scenarios/Horde"]
+position = Vector2(300, -190)
+script = ExtResource("15_spawn")
+scene = ExtResource("11_stationary")
+
+[node name="ObstacleEnemy" type="Node2D" parent="Scenarios"]
+position = Vector2(480, 928)
+script = ExtResource("14_scenario")
+display_name = "Enemy gần vật cản"
+description = "Khu vật cản: enemy phía sau hàng bụi có thể bị kẹt (không pathfinding); thử knockback vào đá."
+
+[node name="Melee" type="Marker2D" parent="Scenarios/ObstacleEnemy"]
+position = Vector2(0, 128)
+script = ExtResource("15_spawn")
+scene = ExtResource("10_melee")
+
+[node name="LowHealthCast" type="Node2D" parent="Scenarios"]
+position = Vector2(1300, 640)
+script = ExtResource("14_scenario")
+display_name = "Bị hạ gục khi đang dùng kỹ năng"
+description = "HP 15% và một enemy cận chiến sát bên: vận sức kỹ năng (vd. Self Heal) và quan sát hủy cast khi bị hạ gục."
+player_health_ratio = 0.15
+
+[node name="Melee" type="Marker2D" parent="Scenarios/LowHealthCast"]
+position = Vector2(40, 0)
+script = ExtResource("15_spawn")
+scene = ExtResource("10_melee")
+
+[node name="WeaponSwap" type="Node2D" parent="Scenarios"]
+position = Vector2(464, 392)
+script = ExtResource("14_scenario")
+display_name = "Đổi vũ khí giữa combo"
+description = "Đánh combo vào bù nhìn rồi nhấn 1/2/3 giữa chừng: combo bị hủy, vũ khí sai class bị từ chối."
+
+[node name="ClassSwap" type="Node2D" parent="Scenarios"]
+position = Vector2(896, 600)
+script = ExtResource("14_scenario")
+display_name = "Đổi class sau khi dùng kỹ năng"
+description = "Dùng kỹ năng (đang hồi) rồi nhấn E ở trạm để đổi class và quay lại: cooldown/charges được giữ."
+
+[node name="CameraContainer" type="Node2D" parent="."]
+
+[node name="GameCamera" parent="CameraContainer" instance=ExtResource("4_camera")]
+
+[node name="UILayer" type="CanvasLayer" parent="."]
+
+[node name="CombatHUD" parent="UILayer" instance=ExtResource("16_hud")]
+
+[node name="SkillBar" parent="UILayer" instance=ExtResource("17_skill_bar")]
+
+[node name="InteractionPrompt" parent="UILayer" instance=ExtResource("18_prompt")]
+
+[node name="InteractionFeedback" parent="UILayer" instance=ExtResource("19_feedback")]
+
+[node name="ProgressionPanel" parent="UILayer" instance=ExtResource("20_progression")]
+
+[node name="CombatDebugPanel" parent="UILayer" instance=ExtResource("21_debug")]

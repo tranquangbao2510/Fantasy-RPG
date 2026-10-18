@@ -8,7 +8,9 @@ extends Node
 ## Đổi class chỉ được phép trong một "phiên đổi class" do điểm hợp lệ (ClassTrainingStation) mở:
 ## phiên kết thúc khi đóng giao diện (close_switch_session), rời khỏi phạm vi, station bị xóa hoặc chủ thể chết.
 ## Quy tắc prototype khi đổi class: hủy ngắm/vận sức/combo, gỡ kỹ năng class cũ, khôi phục loadout đã lưu của
-## class mới với runtime mới (charges đầy, cooldown không được bảo toàn), gỡ vũ khí không hợp lệ (không cấp vũ khí mới).
+## class mới (runtime của từng kỹ năng được giữ nguyên, xem _physics_process), gỡ vũ khí không hợp lệ (không cấp vũ khí mới).
+## Runtime integrity: mỗi class + kỹ năng có đúng một SkillRuntime, sống suốt vòng đời class (không theo ô);
+## mọi runtime được tick liên tục nên cooldown/charges không reset khi gỡ/đổi ô hay đổi class qua lại.
 
 signal class_unlocked(class_id: StringName)
 signal class_switched(previous_id: StringName, class_id: StringName)
@@ -76,9 +78,14 @@ func _ready() -> void:
 		_activate(starting_class.class_id)
 
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	if _session_station != null and not _is_session_valid():
 		close_switch_session()
+	# Mọi SkillRuntime của mọi class được tick ở đây (kể cả đang trang bị: SkillLoadout không tick runtime bên ngoài),
+	# nên cooldown/charges của class không hoạt động vẫn hồi theo thời gian gameplay.
+	for progress: ClassProgress in _progress.values():
+		for runtime: SkillRuntime in progress.runtimes.values():
+			runtime.tick(delta)
 
 
 # --- Class ---------------------------------------------------------------------------------------
@@ -116,11 +123,11 @@ func unlock_class(class_id: StringName) -> bool:
 		return false
 	var progress: ClassProgress = ClassProgress.new(class_id, mastery_curve)
 	for slot: int in definition.starting_skills.size():
-		var skill: SkillDefinition = definition.starting_skills[slot]
-		progress.skills[skill.skill_id] = SkillProgress.new(skill.skill_id, skill.default_cast_mode)
-		progress.loadout[slot] = skill.skill_id
+		progress.loadout[slot] = definition.starting_skills[slot].skill_id
 	progress.mastery.changed.connect(_on_mastery_changed.bind(class_id))
 	_progress[class_id] = progress
+	for skill: SkillDefinition in definition.starting_skills:
+		_add_learned_skill(class_id, skill)
 	class_unlocked.emit(class_id)
 	progression_changed.emit()
 	return true
@@ -219,7 +226,7 @@ func learn_skill(class_id: StringName, skill_id: StringName) -> bool:
 	var skill: SkillDefinition = definition.get_skill(skill_id)
 	if skill == null:
 		return false
-	progress.skills[skill_id] = SkillProgress.new(skill_id, skill.default_cast_mode)
+	_add_learned_skill(class_id, skill)
 	skill_learned.emit(class_id, skill_id)
 	progression_changed.emit()
 	return true
@@ -242,7 +249,7 @@ func level_up_skill(class_id: StringName, skill_id: StringName) -> bool:
 		return false
 	var skill_progress: SkillProgress = _get_skill_progress(class_id, skill_id)
 	skill_progress.level += 1
-	_refresh_equipped_skill(class_id, skill_id)
+	_refresh_runtime(class_id, skill_id)
 	skill_level_changed.emit(class_id, skill_id, skill_progress.level)
 	progression_changed.emit()
 	return true
@@ -262,7 +269,7 @@ func select_evolution_branch(class_id: StringName, skill_id: StringName, branch_
 	if branch_id != &"" and _get_base_skill(class_id, skill_id).get_evolution_branch(branch_id) == null:
 		return false
 	skill_progress.branch_id = branch_id
-	_refresh_equipped_skill(class_id, skill_id)
+	_refresh_runtime(class_id, skill_id)
 	skill_evolved.emit(class_id, skill_id, branch_id)
 	progression_changed.emit()
 	return true
@@ -284,17 +291,38 @@ func get_effective_skill(class_id: StringName, skill_id: StringName) -> SkillDef
 	return _build_skill(class_id, skill_id)
 
 
+## SkillRuntime (cooldown/charges/cast mode) của kỹ năng đã học; null nếu chưa học. Mỗi class + kỹ năng đúng một runtime.
+func get_skill_runtime(class_id: StringName, skill_id: StringName) -> SkillRuntime:
+	var progress: ClassProgress = _progress.get(class_id)
+	return progress.runtimes.get(skill_id) if progress != null else null
+
+
+## Hồi đầy charges / xóa cooldown của mọi runtime mọi class (chỉ dùng cho reset thử nghiệm).
+func reset_skill_runtimes() -> void:
+	for progress: ClassProgress in _progress.values():
+		for runtime: SkillRuntime in progress.runtimes.values():
+			runtime.reset()
+
+
 ## Trang bị kỹ năng của class đang dùng vào ô; luật class (đã học, thuộc class) do validator của SkillLoadout kiểm tra.
+## Kỹ năng đang ở ô khác được chuyển sang ô mới. Runtime đi theo kỹ năng nên cooldown/charges không bị làm mới.
 func equip_skill(slot: int, skill_id: StringName) -> bool:
 	var definition: ClassDefinition = get_current_class()
-	if definition == null or loadout == null:
+	if definition == null or loadout == null or not loadout.is_valid_slot(slot):
 		return false
-	var skill: SkillDefinition = definition.get_skill(skill_id)
-	if skill == null:
+	var runtime: SkillRuntime = get_skill_runtime(_current_id, skill_id)
+	if runtime == null:
+		# Chưa học / không thuộc class: đưa definition gốc qua SkillLoadout để validator từ chối và phát equip_rejected.
+		var skill: SkillDefinition = definition.get_skill(skill_id)
+		if skill != null:
+			loadout.equip_skill(slot, skill)
 		return false
-	if is_skill_learned(_current_id, skill_id):
-		skill = _build_skill(_current_id, skill_id)
-	if not _equip_into_loadout(slot, skill):
+	var previous_slot: int = loadout.find_slot(skill_id)
+	if previous_slot == slot:
+		return true
+	if previous_slot >= 0:
+		unequip_skill(previous_slot)
+	if not loadout.equip_runtime(slot, runtime):
 		return false
 	_progress[_current_id].loadout[slot] = skill_id
 	progression_changed.emit()
@@ -432,17 +460,16 @@ func _restore_loadout() -> void:
 		var skill_id: StringName = progress.loadout[slot]
 		if skill_id == &"":
 			continue
-		if not is_skill_learned(_current_id, skill_id) or not _equip_into_loadout(slot, _build_skill(_current_id, skill_id)):
+		var runtime: SkillRuntime = progress.runtimes.get(skill_id)
+		if runtime == null or not loadout.equip_runtime(slot, runtime):
 			progress.loadout[slot] = &""
 
 
-func _equip_into_loadout(slot: int, skill: SkillDefinition) -> bool:
-	if not loadout.equip_skill(slot, skill):
-		return false
-	var skill_progress: SkillProgress = _get_skill_progress(_current_id, skill.skill_id)
-	if skill_progress != null:
-		loadout.set_cast_mode(slot, skill_progress.cast_mode)
-	return true
+## Ghi nhận kỹ năng đã học: tiến trình (SkillProgress) + đúng một runtime (SkillRuntime) cho class này.
+func _add_learned_skill(class_id: StringName, skill: SkillDefinition) -> void:
+	var progress: ClassProgress = _progress[class_id]
+	progress.skills[skill.skill_id] = SkillProgress.new(skill.skill_id, skill.default_cast_mode)
+	progress.runtimes[skill.skill_id] = SkillRuntime.new(_build_skill(class_id, skill.skill_id), skill.default_cast_mode)
 
 
 func _validate_weapon() -> void:
@@ -464,7 +491,9 @@ func _apply_passives() -> void:
 		for passive_id: StringName in _progress[_current_id].equipped_passive_ids:
 			active.append(definition.get_additional_passive(passive_id))
 	passives.set_active_passives(active)
-	_refresh_all_equipped_skills()
+	if _current_id != &"":
+		for skill_id: StringName in _progress[_current_id].runtimes:
+			_refresh_runtime(_current_id, skill_id)
 
 
 func _on_passive_config_changed(class_id: StringName) -> void:
@@ -485,21 +514,17 @@ func _build_skill(class_id: StringName, skill_id: StringName) -> SkillDefinition
 	return variant
 
 
-func _refresh_equipped_skill(class_id: StringName, skill_id: StringName) -> void:
-	if class_id != _current_id or loadout == null:
+## Dựng lại definition hiệu lực của runtime (level / nhánh / passive), giữ charges và thời gian hồi.
+func _refresh_runtime(class_id: StringName, skill_id: StringName) -> void:
+	var runtime: SkillRuntime = get_skill_runtime(class_id, skill_id)
+	if runtime == null:
 		return
-	var slot: int = loadout.find_slot(skill_id)
-	if slot >= 0:
-		loadout.update_definition(slot, _build_skill(class_id, skill_id))
-
-
-func _refresh_all_equipped_skills() -> void:
-	if loadout == null:
-		return
-	for slot: int in SkillLoadout.SLOT_COUNT:
-		var skill: SkillDefinition = loadout.get_skill(slot)
-		if skill != null:
-			loadout.update_definition(slot, _build_skill(_current_id, skill.skill_id))
+	var skill: SkillDefinition = _build_skill(class_id, skill_id)
+	var slot: int = loadout.find_slot(skill_id) if loadout != null and class_id == _current_id else -1
+	if slot >= 0 and loadout.get_runtime(slot) == runtime:
+		loadout.update_definition(slot, skill)
+	else:
+		runtime.set_definition(skill)
 
 
 func _get_base_skill(class_id: StringName, skill_id: StringName) -> SkillDefinition:

@@ -34,6 +34,8 @@
 - Không xóa file của người dùng; bảo toàn thay đổi chưa commit.
 - Không thực hiện thao tác Git phá hủy (reset --hard, force push, ...).
 - Không commit, tạo remote hoặc push khi chưa được yêu cầu.
+- Commit dưới danh tính Git của người dùng; **không** thêm `Co-Authored-By` hay dòng attribution của AI agent.
+- Commit message theo [git_conventions.md](git_conventions.md).
 
 ## Kiểm thử
 

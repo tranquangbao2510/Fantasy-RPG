@@ -18,6 +18,7 @@ Game Fantasy Action RPG 2D, phong cách Detailed Pixel Art, góc nhìn three-qua
 
 Chi tiết kiến trúc: [docs/architecture.md](docs/architecture.md).
 Quy tắc cộng tác cho AI agent: [docs/agent_rules.md](docs/agent_rules.md).
+Quy ước commit: [docs/git_conventions.md](docs/git_conventions.md).
 
 ## Mở project
 

@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" uid="uid://ddak435txd5d4" path="res://world/world.gd" id="1_world"]
 [ext_resource type="PackedScene" path="res://world/maps/test_map/test_map.tscn" id="2_test_map"]
+[ext_resource type="PackedScene" path="res://entities/player/player.tscn" id="3_player"]
 
 [node name="World" type="Node2D"]
 script = ExtResource("1_world")
@@ -14,5 +15,8 @@ script = ExtResource("1_world")
 
 [node name="EntityContainer" type="Node2D" parent="."]
 y_sort_enabled = true
+
+[node name="Player" parent="EntityContainer" instance=ExtResource("3_player")]
+position = Vector2(480, 320)
 
 [node name="CameraContainer" type="Node2D" parent="."]

@@ -41,4 +41,6 @@ Quy tắc cộng tác cho AI agent: [docs/agent_rules.md](docs/agent_rules.md).
 - TASK 02 — World Scene với các container (Environment, Map, Entity, Camera) và nút "Vào game" từ Main Scene.
 - TASK 03 — Bản đồ thử nghiệm `world/maps/test_map/` (TileMapLayer, tile 32×32, collision vật cản). Mở `test_map.tscn` để chỉnh sửa map.
 
-Chưa có gameplay, player, camera, menu hay hệ thống nào khác.
+- TASK 04 — Player placeholder (`entities/player/`), di chuyển 8 hướng bằng **WASD** hoặc **phím mũi tên**, bị chặn bởi vật cản và mép bản đồ.
+
+Chưa có camera, animation, combat, menu hay hệ thống nào khác.

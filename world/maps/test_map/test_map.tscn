@@ -1,6 +1,7 @@
 [gd_scene format=4]
 
 [ext_resource type="TileSet" path="res://world/maps/test_map/tileset/test_tileset.tres" id="1_8bgx2"]
+[ext_resource type="Script" path="res://world/maps/map_bounds.gd" id="2_bounds"]
 
 [node name="TestMap" type="Node2D" unique_id=444545502]
 texture_filter = 1
@@ -18,3 +19,8 @@ collision_enabled = false
 [node name="ObstacleLayer" type="TileMapLayer" parent="." unique_id=22588086]
 tile_map_data = PackedByteArray("AAAZAAIAAAACAAEAAAAaAAIAAAACAAEAAAADAAMAAAACAAEAAAAEAAMAAAACAAEAAAADAAQAAAACAAEAAAAJAAUAAAACAAEAAAAYAAYAAAADAAEAAAAbAA0AAAACAAEAAAAGAA4AAAADAAEAAAAHAA4AAAADAAEAAAAHAA8AAAADAAEAAAAVAA8AAAADAAEAAAAWAA8AAAADAAEAAAAXAA8AAAADAAEAAAAWABAAAAADAAEAAAAFABEAAAACAAEAAAA=")
 tile_set = ExtResource("1_8bgx2")
+
+[node name="MapBounds" type="StaticBody2D" parent="." node_paths=PackedStringArray("source_layer")]
+collision_mask = 0
+script = ExtResource("2_bounds")
+source_layer = NodePath("../GroundLayer")

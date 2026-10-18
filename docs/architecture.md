@@ -20,7 +20,7 @@ Mã nguồn được tổ chức theo **tính năng** (feature) thay vì theo lo
 | `docs/` | Tài liệu kỹ thuật | Đã triển khai |
 | `core/` | Thành phần kỹ thuật dùng chung, không phụ thuộc gameplay cụ thể | Chưa triển khai |
 | `features/` | Module gameplay (mỗi tính năng một thư mục con, vd. `features/combat/`) | Chưa triển khai |
-| `entities/` | Player, NPC, enemy (scene ghép từ component) | Chưa triển khai |
+| `entities/` | Player, NPC, enemy (scene ghép từ component) | Đã triển khai (`player/` — placeholder) |
 | `world/` | Bản đồ, môi trường, camera | Đã triển khai (`world.tscn`, `world.gd`, `maps/test_map/`) |
 | `ui/` | Thành phần giao diện | Chưa triển khai |
 | `data/` | Dữ liệu game dùng chung (`.tres` Resource) | Chưa triển khai |
@@ -49,6 +49,7 @@ World (Node2D) ── world.gd
 ├── MapContainer (Node2D)       — bản đồ / TileMapLayer
 │   └── TestMap (instance world/maps/test_map/test_map.tscn)
 ├── EntityContainer (Node2D, y_sort_enabled) — player, NPC, enemy
+│   └── Player (instance entities/player/player.tscn, spawn (480, 320))
 └── CameraContainer (Node2D)    — camera
 ```
 
@@ -62,7 +63,7 @@ Nguyên tắc đặt node vào World:
 - Bản đồ → `MapContainer`; entity → `EntityContainer`; camera → `CameraContainer`; phần môi trường không thuộc bản đồ (nền, thời tiết, ánh sáng) → `Environment`.
 - Không đặt node gameplay trực tiếp dưới `World`.
 
-Chưa triển khai: entity, camera.
+Chưa triển khai: NPC, enemy, camera.
 
 ## 2b. Bản đồ thử nghiệm — TestMap [Đã triển khai, placeholder]
 
@@ -71,7 +72,8 @@ world/maps/test_map/
 ├── test_map.tscn               — TestMap (Node2D, texture_filter = Nearest)
 │   ├── GroundLayer (TileMapLayer)   — cỏ, đường đất, nền đá; không collision
 │   ├── DetailLayer (TileMapLayer)   — hoa, sỏi (trang trí phẳng); không collision
-│   └── ObstacleLayer (TileMapLayer) — đá, bụi cây; có collision
+│   ├── ObstacleLayer (TileMapLayer) — đá, bụi cây; có collision
+│   └── MapBounds (StaticBody2D, world/maps/map_bounds.gd) — ranh giới bản đồ
 ├── tileset/test_tileset.tres   — TileSet dùng lại được (resource riêng)
 └── assets/test_tiles.png       — atlas placeholder 128×64 (4×2 ô)
 ```
@@ -88,11 +90,18 @@ world/maps/test_map/
 
 | Physics layer | Tên | Dùng cho |
 |---|---|---|
-| 1 | `world` | Vật cản tĩnh của bản đồ (tile trong ObstacleLayer) |
+| 1 | `world` | Vật cản tĩnh của bản đồ (tile ObstacleLayer, MapBounds) |
+| 2 | `player` | Player |
 
 - TileSet physics layer 0: `collision_layer = 1`, `collision_mask = 0` (vật cản tĩnh không cần dò).
 - Chỉ tile đá `(2,1)` và bụi `(3,1)` có polygon (24×24, lệch xuống dưới theo chân vật). Ground và Detail tắt `collision_enabled`.
-- **TASK 04:** player cần `collision_mask` chứa layer 1 để bị chặn bởi vật cản. Layer của player sẽ quyết định trong TASK 04.
+- Player: `collision_layer = 2`, `collision_mask = 1`.
+
+### Ranh giới bản đồ
+
+- `MapBounds` tạo 4 `WorldBoundaryShape2D` (layer `world`) lúc `_ready`, bao quanh `get_used_rect()` của `GroundLayer` × tile size. Kích thước map chỉ lấy từ đây, không hardcode.
+- Chọn collision thay vì clamp vị trí: `move_and_slide()` tự tính bán kính collision của player, trượt dọc mép được, và không có nguy cơ clamp đẩy player vào vật cản.
+- `get_map_rect()` là public, có thể dùng lại sau (vd. giới hạn camera). Thay thế: xóa node `MapBounds` khi map có tường/vật cản bao thật.
 
 ### Thứ tự hiển thị và Y-sort
 
@@ -100,6 +109,26 @@ world/maps/test_map/
 - `EntityContainer` bật Y-sort; entity sau này nên đặt origin ở chân (điểm tiếp xúc mặt đất).
 - Vật cản hiện tại **thấp**, không Y-sort; entity luôn vẽ đè lên vật cản. Đây là giới hạn được chấp nhận.
 - Hướng xử lý vật thể cao (cây, tường) cho task sau: đặt chúng chung một node cha có Y-sort với entity (vd. TileMapLayer có `y_sort_enabled` cùng cấp Y-sort với entity, hoặc scene vật thể riêng trong cùng cây Y-sort). Không dùng Z-index tùy tiện.
+
+## 2c. Player [Đã triển khai, placeholder]
+
+```
+entities/player/player.tscn
+Player (CharacterBody2D, motion_mode = Floating) ── player.gd
+├── Visual (Node2D)
+│   ├── Shadow (Polygon2D)        — bóng ellipse tại chân
+│   ├── Body (Polygon2D)          — khối xanh 16×26 phía trên chân
+│   └── FacingPivot (Node2D)      — xoay theo hướng di chuyển cuối
+│       └── Marker (Polygon2D)    — tam giác vàng chỉ hướng trước mặt
+└── CollisionShape2D              — CircleShape2D r=6, tâm (0,-6): chạm tới chân
+```
+
+- **Origin = chân nhân vật**, nên Y-sort trong `EntityContainer` dựa trên điểm tiếp xúc mặt đất. Visual vẽ phía trên origin. Không dùng Z-index.
+- **Input Map** (`project.godot`): `move_up` W/↑, `move_down` S/↓, `move_left` A/←, `move_right` D/→. Dùng physical keycode (đúng vị trí WASD trên mọi layout bàn phím). Script chỉ đọc action, không kiểm tra phím vật lý.
+- **Di chuyển:** `_physics_process` → `Input.get_vector()` → `velocity = direction * move_speed` → `move_and_slide()`. Liên tục, 8 hướng, chéo được chuẩn hóa (|v| ≤ `move_speed`), thả phím thì dừng ngay; không tăng tốc/quán tính.
+- `move_speed` (`@export`, mặc định **160 px/s**) — giá trị thử nghiệm.
+- **Spawn:** đặt trực tiếp trong `world.tscn` tại (480, 320), giữa quảng trường đá. Chưa có SpawnManager/checkpoint.
+- Placeholder: toàn bộ visual, kích thước collision, tốc độ, vị trí spawn.
 
 ## 3. Quy ước đặt tên [Đã quyết định]
 
@@ -166,6 +195,6 @@ Các mục sau sẽ quyết định trong task riêng, không tự chọn trư�
 
 - Độ phân giải pixel-art gốc, viewport scale, chế độ stretch cuối cùng.
 - Hệ thống camera.
-- Điều khiển nhân vật và Input Map.
+- Điều khiển nhân vật chính thức (animation, dodge, gamepad, remapping). Input Map di chuyển cơ bản đã có (mục 2c).
 - Luồng chuyển scene / menu.
 - Công cụ kiểm thử.

@@ -1,0 +1,52 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://world/environment/props/environment_prop.gd" id="1_xlw7i"]
+[ext_resource type="Texture2D" path="res://world/environment/art/decals/shadow_soft.png" id="2_hgf3f"]
+[ext_resource type="Texture2D" path="res://world/environment/art/props/rune_stone.png" id="3_ukg62"]
+[ext_resource type="Texture2D" path="res://world/environment/art/fx/glow.png" id="4_k6621"]
+[ext_resource type="Script" path="res://world/environment/atmosphere/ambient_drift.gd" id="5_aoudh"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_bedka"]
+radius = 13.0
+
+[sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_ieyp6"]
+blend_mode = 1
+
+[node name="RuneStone" type="Node2D" unique_id=573265930]
+script = ExtResource("1_xlw7i")
+
+[node name="Shadow" type="Sprite2D" parent="." unique_id=335326903]
+modulate = Color(1, 1, 1, 0.55)
+z_index = -1
+position = Vector2(5.76, 2)
+scale = Vector2(0.20625, 0.16875)
+texture = ExtResource("2_hgf3f")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=767822906]
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("3_ukg62")
+offset = Vector2(0, -81)
+
+[node name="Collision" type="StaticBody2D" parent="." unique_id=645669355]
+
+[node name="Shape0" type="CollisionShape2D" parent="Collision" unique_id=717939563]
+position = Vector2(0, -6)
+shape = SubResource("CircleShape2D_bedka")
+
+[node name="GlowLight" type="PointLight2D" parent="." unique_id=2113814582]
+position = Vector2(0, -40)
+color = Color(0.45, 0.9, 1, 1)
+energy = 0.85
+texture = ExtResource("4_k6621")
+texture_scale = 1.1
+
+[node name="GlowHalo" type="Sprite2D" parent="." unique_id=1791622212]
+modulate = Color(0.45, 0.95, 1, 0.35)
+material = SubResource("CanvasItemMaterial_ieyp6")
+position = Vector2(0, -44)
+scale = Vector2(0.32, 0.4)
+texture = ExtResource("4_k6621")
+script = ExtResource("5_aoudh")
+amplitude = Vector2(0, 0)
+period = 3.5
+alpha_range = Vector2(0.5, 1)

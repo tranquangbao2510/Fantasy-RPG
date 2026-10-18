@@ -1,0 +1,29 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://world/environment/props/environment_prop.gd" id="1_ov250"]
+[ext_resource type="Texture2D" path="res://world/environment/art/decals/shadow_soft.png" id="2_4d3fi"]
+[ext_resource type="Texture2D" path="res://world/environment/art/props/ruin_pillar_broken.png" id="3_2re6e"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_xun81"]
+radius = 14.0
+
+[node name="RuinPillarBroken" type="Node2D" unique_id=219463052]
+script = ExtResource("1_ov250")
+
+[node name="Shadow" type="Sprite2D" parent="." unique_id=1657412611]
+modulate = Color(1, 1, 1, 0.55)
+z_index = -1
+position = Vector2(5.04, 2)
+scale = Vector2(0.18046875, 0.14765625)
+texture = ExtResource("2_4d3fi")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1356974450]
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("3_2re6e")
+offset = Vector2(0, -86)
+
+[node name="Collision" type="StaticBody2D" parent="." unique_id=1558076353]
+
+[node name="Shape0" type="CollisionShape2D" parent="Collision" unique_id=1674441241]
+position = Vector2(0, -6)
+shape = SubResource("CircleShape2D_xun81")

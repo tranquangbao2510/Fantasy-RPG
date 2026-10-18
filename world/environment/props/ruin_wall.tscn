@@ -1,0 +1,29 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://world/environment/props/environment_prop.gd" id="1_2uk7d"]
+[ext_resource type="Texture2D" path="res://world/environment/art/decals/shadow_soft.png" id="2_uiy7h"]
+[ext_resource type="Texture2D" path="res://world/environment/art/props/ruin_wall.png" id="3_q2xak"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_2sy1c"]
+size = Vector2(119.6, 14)
+
+[node name="RuinWall" type="Node2D" unique_id=947383042]
+script = ExtResource("1_2uk7d")
+
+[node name="Shadow" type="Sprite2D" parent="." unique_id=1324567586]
+modulate = Color(1, 1, 1, 0.55)
+z_index = -1
+position = Vector2(15.6, 2)
+scale = Vector2(0.55859375, 0.45703125)
+texture = ExtResource("2_uiy7h")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=95655724]
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("3_q2xak")
+offset = Vector2(0, -71)
+
+[node name="Collision" type="StaticBody2D" parent="." unique_id=600818910]
+
+[node name="Shape0" type="CollisionShape2D" parent="Collision" unique_id=1229783220]
+position = Vector2(0, -7)
+shape = SubResource("RectangleShape2D_2sy1c")

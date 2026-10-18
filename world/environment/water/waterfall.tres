@@ -1,0 +1,11 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://world/environment/water/waterfall.gdshader" id="1_8r0je"]
+[ext_resource type="Texture2D" path="res://world/environment/art/fx/water_noise.png" id="2_scf6s"]
+
+[resource]
+shader = ExtResource("1_8r0je")
+shader_parameter/noise_tex = ExtResource("2_scf6s")
+shader_parameter/water_color = null
+shader_parameter/foam_color = null
+shader_parameter/speed = null

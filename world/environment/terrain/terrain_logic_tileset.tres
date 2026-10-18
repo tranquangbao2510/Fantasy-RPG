@@ -1,0 +1,28 @@
+[gd_resource type="TileSet" format=3]
+
+[ext_resource type="Texture2D" path="res://world/environment/art/terrain/terrain_logic_tiles.png" id="1_junat"]
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_6qoav"]
+texture = ExtResource("1_junat")
+texture_region_size = Vector2i(32, 32)
+0:0/0 = 0
+0:0/0/custom_data_0 = &"grass"
+1:0/0 = 0
+1:0/0/custom_data_0 = &"dirt"
+2:0/0 = 0
+2:0/0/custom_data_0 = &"water"
+3:0/0 = 0
+3:0/0/custom_data_0 = &"cliff"
+4:0/0 = 0
+4:0/0/custom_data_0 = &"high"
+4:0/0/custom_data_1 = 1
+5:0/0 = 0
+5:0/0/custom_data_0 = &"void"
+
+[resource]
+tile_size = Vector2i(32, 32)
+custom_data_layer_0/name = "terrain"
+custom_data_layer_0/type = 21
+custom_data_layer_1/name = "elevation"
+custom_data_layer_1/type = 2
+sources/0 = SubResource("TileSetAtlasSource_6qoav")

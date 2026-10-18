@@ -21,13 +21,14 @@ Mã nguồn được tổ chức theo **tính năng** (feature) thay vì theo lo
 | `core/` | Thành phần kỹ thuật dùng chung, không phụ thuộc gameplay cụ thể | Chưa triển khai |
 | `features/` | Module gameplay (mỗi tính năng một thư mục con, vd. `features/combat/`) | Đã triển khai (`interaction/`, `combat/`, `character/`, `skills/`, `classes/`) |
 | `entities/` | Player, NPC, enemy (scene ghép từ component) | Đã triển khai (`player/`, `enemies/` — placeholder) |
-| `world/` | Bản đồ, môi trường, camera | Đã triển khai (`world.tscn`, `world.gd`, `maps/test_map/`, `camera/`, `sandbox/`) |
+| `world/` | Bản đồ, môi trường, camera | Đã triển khai (`world.tscn`, `world.gd`, `maps/test_map/`, `camera/`, `sandbox/`, `environment/`, `environment_prototype/` — 2k) |
 | `ui/` | Thành phần giao diện | Đã triển khai (`interaction/`, `combat/`, `skills/`, `progression/`, `debug/`, `common/`) |
 | `data/` | Dữ liệu game dùng chung (`.tres` Resource) | Chưa triển khai |
 | `assets/` | Tài nguyên dùng chung (sprite, âm thanh, font) | Chưa triển khai |
 | `save/` | Logic lưu / tải game | Chưa triển khai |
 | `tests/` | Kiểm thử | Chưa triển khai |
 | `addons/` | Plugin bên thứ ba (chỉ khi thật sự cần) | Chưa triển khai |
+| `tools/` | Công cụ phát triển chạy ngoài game (có `.gdignore`), vd. sinh placeholder art | Đã triển khai (`placeholder_art/`, 2k) |
 
 Thư mục chỉ được tạo khi có nội dung thực tế. Không tạo thư mục, script hoặc class rỗng để "giữ chỗ".
 
@@ -42,6 +43,7 @@ Main (Control) ── main.gd
         ├── StatusLabel (Label)
         ├── EnterButton (Button "Vào game")
         └── SandboxButton (Button "Combat Sandbox (thử nghiệm)") → world/sandbox/combat_sandbox.tscn (2j)
+        └── EnvironmentButton (Button "Environment Prototype (Visual 01)") → world/environment_prototype/environment_prototype.tscn (2k)
             └─ nhấn → SceneTree.change_scene_to_file("res://world/world.tscn")
 
 world/world.tscn  (World Scene, mở độc lập được)
@@ -109,6 +111,8 @@ world/maps/test_map/
 | 4 | `enemy` | Thân CharacterBody2D của enemy (chưa layer nào dò) |
 | 5 | `player_hurtbox` | Hurtbox của Player (Hitbox của enemy dò layer này) |
 | 6 | `enemy_hurtbox` | Hurtbox của enemy/dummy (Hitbox của Player dò layer này) |
+| 7 | `terrain_tier_0` | Tường địa hình / nước / object của tầng 0 (map có ElevationMap, xem 2k) |
+| 8 | `terrain_tier_1` | Tường địa hình / object của tầng 1 |
 
 - TileSet physics layer 0: `collision_layer = 1`, `collision_mask = 0` (vật cản tĩnh không cần dò).
 - Chỉ tile đá `(2,1)` và bụi `(3,1)` có polygon (24×24, lệch xuống dưới theo chân vật). Ground và Detail tắt `collision_enabled`.
@@ -163,7 +167,7 @@ GameCamera (Camera2D, class_name GameCamera) ── game_camera.gd
 - **Nối trong World:** `world.tscn` gán 3 export của `world.gd`: `camera`, `camera_target` (Player), `map_bounds` (`TestMap/MapBounds`). `World._ready()` gọi `camera.set_map_rect(get_map_rect())` rồi `camera.set_target(camera_target)`. Camera ↔ Player không phụ thuộc nhau.
 - **Dùng cho map khác:** instance `game_camera.tscn`, gọi `set_map_rect()` với vùng map mới và `set_target()` với node cần theo. Đổi map lúc chạy: gọi lại `set_map_rect()`.
 - **Smoothing:** dùng thuộc tính có sẵn `position_smoothing_enabled` / `position_smoothing_speed` (chỉnh trong Inspector). Vị trí theo dõi được kẹp vào vùng hợp lệ *trước* khi smoothing, nên camera dừng êm ở mép và không bị trễ khi quay lại.
-- **Zoom:** chỉ dùng mức nguyên. `@export default_zoom = 2`, `min_zoom = 1`, `max_zoom = 4`. Input Map: `camera_zoom_in` = lăn chuột lên, `camera_zoom_out` = lăn chuột xuống; mỗi nấc ±1, đổi tức thì (không tween).
+- **Zoom:** theo bội số `zoom_step` (mặc định 1 = mức nguyên như trước; Environment Prototype dùng 0.25, 1×–3×, không ép integer scaling — TASK VISUAL 01). `@export default_zoom = 2`, `min_zoom = 1`, `max_zoom = 4`. Input Map: `camera_zoom_in` = lăn chuột lên, `camera_zoom_out` = lăn chuột xuống; mỗi nấc ±`zoom_step`, đổi tức thì (không tween).
 - **Zoom tối thiểu hợp lệ** = `ceil(max(viewport.w / map.w, viewport.h / map.h))`, tính lại khi viewport đổi kích thước. Với viewport mặc định 1152×648 và map 960×640, 1× không hợp lệ → thấp nhất là **2×**. Nếu mức tối thiểu > `max_zoom` (cửa sổ rất rộng), camera dùng mức tối thiểu đó (vượt 4×) và cảnh báo một lần, thay vì để lộ vùng ngoài map.
 
 Hạn chế pixel-art hiện tại:
@@ -538,6 +542,47 @@ ui/debug/combat_debug_panel.gd/.tscn — CombatDebugPanel (F3)
 
 **Giới hạn:** không pathfinding (enemy kẹt sau vật cản); ranged chỉ lùi thẳng, có thể lùi vào tường; đạn không có hiệu ứng nổ; knockback Player chưa có; reset thử nghiệm hồi cooldown; tình huống "bị hạ gục khi vận sức" phụ thuộc nhịp enemy (thao tác thủ công); Debug Panel và sandbox chỉ dành cho kiểm thử.
 
+## 2k. Environment Visual Foundation & Prototype [Đã triển khai, prototype — TASK VISUAL 01]
+
+Định hướng đồ họa môi trường: **High-Resolution Hand-Painted 2D** (thay cho pixel art ở môi trường mới). Quy ước art: [visual/environment-style-guide.md](visual/environment-style-guide.md). Art hiện tại là **placeholder sinh bằng code** (`tools/placeholder_art/`), chưa phải production art.
+
+```
+world/environment/                      — nền tảng tái sử dụng (không gắn với một map)
+├── elevation/  elevation_map.gd (ElevationMap), elevated_terrain.gd (@tool ElevatedTerrain),
+│               elevated_deck.gd (ElevatedDeck), elevation_connector.gd (ElevationConnector), elevation_agent.gd (ElevationAgent)
+├── props/      environment_prop.gd, occlusion_fader.gd + 15 scene: tree_oak_a/b, tree_pine, bush_a/b, fern,
+│               rock_large/small/flat, ruin_pillar(_broken), ruin_arch, ruin_wall, ruin_blocks, rune_stone
+├── terrain/    terrain_ground.gdshader, terrain_path.gdshader, decal_scatter.gd (@tool DecalScatter),
+│               terrain_logic.gd (TerrainLogic) + terrain_logic_tileset.tres, material ground_grass(_upper)/path_dirt/shore_mud.tres
+├── water/      stream.gd (Stream), footbridge.gd (Footbridge), water_surface/waterfall.gdshader + material
+├── atmosphere/ ambient_drift.gd (AmbientDrift: sương, tia nắng, lá foreground)
+└── art/        PNG placeholder (ground, cliff, props, structures, decals, fx, scenery, terrain)
+world/environment_prototype/environment_prototype.tscn — World thứ ba (script world.gd), khu "Glade" 64×44 ô
+ui/debug/environment_debug_hud.gd/.tscn — tầng hiện tại, loại địa hình (lưới logic), zoom, nút bật lưới Terrain Logic
+tools/placeholder_art/ (có .gdignore) — script sinh lại placeholder art
+```
+
+**Truy cập:** Main Scene → nút **Environment Prototype (Visual 01)**, hoặc mở `environment_prototype.tscn` + F6.
+
+**Cây scene (rút gọn):** `Environment` (SunTint CanvasModulate, ScenicBackground Parallax2D z −100, Atmosphere z 40, Foreground z 50) → `MapContainer/GladeMap` (z −20: TerrainLogic ẩn, MapBounds, NorthLedge, BaseGround, Transitions, Paths, Stream, Footbridge, bóng AO chân vách, Details/DecalScatter, LedgeLip) → `EntityContainer` (Y-sort: `Elevation` [ElevationMap: Plateau, Outcrop, StoneBridge, CliffStairs, Waterfall, UpperGroundDetail], `Props`, Player + ElevationAgent, NoticeBoard, TrainingDummy, SimpleEnemy + ElevationAgent) → EffectContainer, CameraContainer (GameCamera zoom 1–3×, bước 0.25), UILayer (layer 2).
+
+**Terrain logic vs visual:** tile logic 32×32 giữ nguyên; `TerrainLogic` (ẩn) phân loại grass/dirt/water/cliff/high/void và là nguồn kích thước map cho MapBounds/camera. Hình ảnh mặt đất là texture lớn theo tọa độ world + overlay Line2D/decal, không khớp 1:1 với tile. Collision lấy từ hình học logic (outline, đường tâm suối), không từ texture.
+
+**Elevation (Discrete Tiers):**
+
+- Physics layer 7 `terrain_tier_0`, 8 `terrain_tier_1` (layer = 7 + tier). `ElevationMap._build()` lúc `_ready`: tầng 1 → tường = đường bao hợp (mặt trên các `ElevatedTerrain` tầng 1 ∪ `ElevatedDeck` ∪ hành lang connector); tầng 0 → tường = đường bao hợp các khối (mặt trên ∪ vách đùn xuống 64 px) trừ hành lang connector. Tường là `CollisionPolygon2D` dạng SEGMENTS (chặn hai phía).
+- `ElevationAgent` (con của CharacterBody2D): `collision_mask` = mask gốc + bit tầng hiện tại; `z_index = tier × 10`. Tầng chỉ đổi qua `ElevationConnector`: trong hành lang, agent ở trạng thái chuyển tầng (chỉ layer `world` + lan can hai bên chặn, vẽ ở tầng cao); rời hành lang về phía −Y local → upper_tier, ngược lại lower_tier. Tầng ban đầu / sau reset: `ElevationMap.get_tier_at()` (hoặc `initial_tier`). Signal `tier_changed(tier, transitioning)`. Map không có ElevationMap: agent không làm gì.
+- **Rendering:** khối địa hình cao nằm trong Y-sort tầng 0 (mỗi đoạn vách neo tại chân vách → entity tầng 0 đứng trước vách vẽ đè lên vách, đứng sau bị che); occupant tầng 1 có z 10 nên luôn vẽ trên nội dung tầng 0 — không phụ thuộc hoàn toàn vào Y-sort khi hai mặt sàn chồng nhau (cầu đá: Player tầng 1 đi trên mặt cầu, Player tầng 0 đi dưới gầm, cầu mờ đi nhờ OcclusionFader).
+- Prop có `elevation_tier` → z_index và physics layer của `Collision`.
+
+**Object môi trường:** `EnvironmentProp` (origin = chân): Shadow (z −1), Visual (Sprite2D scale 0.5), Collision (StaticBody2D chỉ ở gốc/thân), OcclusionFader (vật cao: làm mờ khi thân layer `player` đứng sau và không ở tầng cao hơn).
+
+**Nước:** `Stream` sinh collision (layer tầng 0) từ Line2D `Water` (kể cả width_curve, 78% bề rộng), khoét các `crossings` (Footbridge). Shader mặt nước: sâu/nông theo bề ngang, gợn trôi theo `flow_direction`, bọt mép. Thác nước: Polygon2D + shader đơn giản (hoàn thiện ở VISUAL 03). Không có bơi/lặn/vật lý nước.
+
+**Kiểm thử đã chạy (headless, giả lập input):** lên/xuống cầu thang, vách chặn tầng 0 và mép plateau chặn tầng 1, qua cầu đá sang mỏm đá, đi dưới gầm cầu ở tầng 0, nước chặn, đi qua cầu gỗ, thân cây chặn, mép vực bắc, mép map — 13/13 đạt. Render: 60 FPS (vsync), ~95 draw call, ~24 MB texture ở zoom 1× (máy dev).
+
+**Giới hạn:** enemy không pathfinding nên kẹt ở chân vách khi đuổi Player lên tầng cao; Hitbox/Hurtbox/đạn chưa lọc theo tầng (đòn đánh có thể trúng mục tiêu khác tầng nếu chồng hình); đạn (raycast layer `world`) không bị vách chặn; vật cao tầng 0 có sprite chồng lên mặt đi được của tầng 1 sẽ vẽ sai thứ tự (quy tắc đặt object, xem style guide); mỗi khối địa hình cần cạnh trước "đơn điệu"; `get_tier_at()` dưới gầm cầu trả tầng cao (chỉ dùng khi spawn/reset); skill indicator (`top_level`) vẽ ở z 0.
+
 ## 3. Quy ước đặt tên [Đã quyết định]
 
 Theo [GDScript style guide](https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/gdscript_styleguide.html):
@@ -601,7 +646,7 @@ Resource dùng chung giữa nhiều instance **không được** bị sửa tron
 
 Các mục sau sẽ quyết định trong task riêng, không tự chọn trước:
 
-- Độ phân giải pixel-art gốc, viewport scale, chế độ stretch cuối cùng.
+- Độ phân giải pixel-art gốc, viewport scale, chế độ stretch cuối cùng. (Môi trường mới theo hướng hand-painted độ phân giải cao — 2k; độ phân giải thiết kế cuối cùng vẫn chưa chốt.)
 - Độ phân giải thiết kế / stretch mode cuối cùng (ảnh hưởng zoom và pixel-perfect).
 - Điều khiển nhân vật chính thức (animation, dodge, gamepad, remapping). Input Map di chuyển cơ bản đã có (mục 2c).
 - Luồng chuyển scene / menu.

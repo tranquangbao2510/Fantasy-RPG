@@ -1,0 +1,49 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://world/environment/props/environment_prop.gd" id="1_v2k6r"]
+[ext_resource type="Texture2D" path="res://world/environment/art/decals/shadow_soft.png" id="2_6hrve"]
+[ext_resource type="Texture2D" path="res://world/environment/art/props/ruin_arch.png" id="3_adgpa"]
+[ext_resource type="Script" path="res://world/environment/props/occlusion_fader.gd" id="4_jommp"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hi81a"]
+size = Vector2(28, 14)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_2dmkj"]
+size = Vector2(28, 14)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_nhv7w"]
+size = Vector2(144, 144)
+
+[node name="RuinArch" type="Node2D" unique_id=871202936]
+script = ExtResource("1_v2k6r")
+
+[node name="Shadow" type="Sprite2D" parent="." unique_id=647896235]
+modulate = Color(1, 1, 1, 0.55)
+z_index = -1
+position = Vector2(19.2, 2)
+scale = Vector2(0.6875, 0.5625)
+texture = ExtResource("2_6hrve")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1183595636]
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("3_adgpa")
+offset = Vector2(0, -146)
+
+[node name="Collision" type="StaticBody2D" parent="." unique_id=818308951]
+
+[node name="Shape0" type="CollisionShape2D" parent="Collision" unique_id=642210842]
+position = Vector2(-64, -7)
+shape = SubResource("RectangleShape2D_hi81a")
+
+[node name="Shape1" type="CollisionShape2D" parent="Collision" unique_id=801844422]
+position = Vector2(64, -7)
+shape = SubResource("RectangleShape2D_2dmkj")
+
+[node name="OcclusionFader" type="Area2D" parent="." unique_id=1494914941 node_paths=PackedStringArray("target")]
+collision_mask = 2
+script = ExtResource("4_jommp")
+target = NodePath("../Visual")
+
+[node name="Shape" type="CollisionShape2D" parent="OcclusionFader" unique_id=595671610]
+position = Vector2(0, -74)
+shape = SubResource("RectangleShape2D_nhv7w")

@@ -1,0 +1,42 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://world/environment/props/environment_prop.gd" id="1_jw8k4"]
+[ext_resource type="Texture2D" path="res://world/environment/art/decals/shadow_soft.png" id="2_q30q4"]
+[ext_resource type="Texture2D" path="res://world/environment/art/props/tree_pine.png" id="3_0x5ya"]
+[ext_resource type="Script" path="res://world/environment/props/occlusion_fader.gd" id="4_li8ia"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_jlhr3"]
+radius = 8.0
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_84q4j"]
+size = Vector2(88, 222)
+
+[node name="TreePine" type="Node2D" unique_id=2146963796]
+script = ExtResource("1_jw8k4")
+
+[node name="Shadow" type="Sprite2D" parent="." unique_id=1665058456]
+modulate = Color(1, 1, 1, 0.55)
+z_index = -1
+position = Vector2(13.2, 2)
+scale = Vector2(0.47265625, 0.38671875)
+texture = ExtResource("2_q30q4")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1725741401]
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("3_0x5ya")
+offset = Vector2(0, -220)
+
+[node name="Collision" type="StaticBody2D" parent="." unique_id=972130319]
+
+[node name="Shape0" type="CollisionShape2D" parent="Collision" unique_id=1302578105]
+position = Vector2(0, -4)
+shape = SubResource("CircleShape2D_jlhr3")
+
+[node name="OcclusionFader" type="Area2D" parent="." unique_id=1829493176 node_paths=PackedStringArray("target")]
+collision_mask = 2
+script = ExtResource("4_li8ia")
+target = NodePath("../Visual")
+
+[node name="Shape" type="CollisionShape2D" parent="OcclusionFader" unique_id=2056517367]
+position = Vector2(0, -113)
+shape = SubResource("RectangleShape2D_84q4j")

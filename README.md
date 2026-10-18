@@ -1,6 +1,6 @@
 # Fantasy RPG
 
-Game Fantasy Action RPG 2D, phong cách Detailed Pixel Art, góc nhìn three-quarter, chiến đấu thời gian thực.
+Game Fantasy Action RPG 2D, môi trường phong cách High-Resolution Hand-Painted (từ TASK VISUAL 01), góc nhìn three-quarter, chiến đấu thời gian thực.
 
 - Nền tảng chính: Windows Desktop (.exe)
 - Nền tảng phụ: Web
@@ -57,5 +57,7 @@ Quy ước commit: [docs/git_conventions.md](docs/git_conventions.md).
 - TASK 10 — Class & progression prototype (`features/classes/`, `features/character/`, `ui/progression/`): class **Test Fighter** (khởi đầu) / **Test Caster**, character level dùng chung, mastery theo class, signature + passive bổ sung, học / nâng level / tiến hóa kỹ năng, loadout riêng từng class, luật vũ khí theo class. Đến **Trạm huấn luyện** (cột cờ tím phía trên phải quảng trường) và nhấn **E** để mở khóa (debug) / đổi class. **P** mở bảng Class/Progression (nút **[Debug]** để cộng EXP, mastery, học/nâng/tiến hóa kỹ năng); **Esc** đóng.
 
 - TASK 11 — Combat Sandbox (`world/sandbox/`, `ui/debug/`): ở màn hình chính chọn **Combat Sandbox (thử nghiệm)**. Map 60×40 với khu bù nhìn, khu vật cản, đấu trường enemy (Melee Chaser / Stationary Attacker / Ranged) và trạm class. **F3** mở Combat Debug Panel (trạng thái, hồi HP, reset enemy, chọn/chạy lại tình huống, debug info). Cooldown/charges kỹ năng giờ được giữ khi đổi ô hoặc đổi class.
+
+- TASK VISUAL 01 — Environment Visual Foundation (`world/environment/`, `world/environment_prototype/`, [style guide](docs/visual/environment-style-guide.md)): ở màn hình chính chọn **Environment Prototype (Visual 01)**. Khu rừng "Glade" với nền cỏ, đường đất, suối + cầu gỗ, thác nước, vách đá hai tầng (lên bằng **cầu thang đá**), cầu đá tầng cao bắc qua đường mòn (đi trên cầu hoặc dưới gầm), tàn tích cổ, nền thung lũng xa, ánh sáng/sương nhẹ. Zoom lẻ 1×–3× bằng con lăn. Nút góc phải trên bật lưới Terrain Logic. **Art là placeholder sinh bằng code**, chưa phải production art.
 
 Chưa có ultimate, mana/stamina, animation, inventory, hội thoại, quest hay save. Mọi chỉ số combat, vũ khí, kỹ năng, class và EXP là placeholder.

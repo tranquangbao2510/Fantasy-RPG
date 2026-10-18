@@ -1,0 +1,15 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://world/environment/terrain/terrain_ground.gdshader" id="1_f1p0u"]
+[ext_resource type="Texture2D" path="res://world/environment/art/ground/grass_base.png" id="2_ba6ws"]
+[ext_resource type="Texture2D" path="res://world/environment/art/fx/water_noise.png" id="3_71ubb"]
+
+[resource]
+shader = ExtResource("1_f1p0u")
+shader_parameter/albedo = ExtResource("2_ba6ws")
+shader_parameter/macro_noise = ExtResource("3_71ubb")
+shader_parameter/texture_world_size = null
+shader_parameter/tint_a = Color(1, 1, 0.97, 1)
+shader_parameter/tint_b = Color(1.06, 1, 0.82, 1)
+shader_parameter/macro_scale = null
+shader_parameter/blend_scale = null

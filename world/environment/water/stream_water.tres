@@ -1,0 +1,15 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://world/environment/water/water_surface.gdshader" id="1_s3xx2"]
+[ext_resource type="Texture2D" path="res://world/environment/art/fx/water_noise.png" id="2_r22nl"]
+
+[resource]
+shader = ExtResource("1_s3xx2")
+shader_parameter/noise_tex = ExtResource("2_r22nl")
+shader_parameter/deep_color = null
+shader_parameter/shallow_color = null
+shader_parameter/foam_color = null
+shader_parameter/flow_direction = null
+shader_parameter/flow_speed = null
+shader_parameter/ripple_scale = null
+shader_parameter/edge_alpha_start = null

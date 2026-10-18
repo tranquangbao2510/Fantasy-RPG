@@ -136,6 +136,8 @@ skill_slot_4={
 2d_physics/layer_4="enemy"
 2d_physics/layer_5="player_hurtbox"
 2d_physics/layer_6="enemy_hurtbox"
+2d_physics/layer_7="terrain_tier_0"
+2d_physics/layer_8="terrain_tier_1"
 
 [physics]
 

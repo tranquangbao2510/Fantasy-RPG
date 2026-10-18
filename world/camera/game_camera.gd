@@ -1,17 +1,21 @@
 class_name GameCamera
 extends Camera2D
-## Camera theo target, zoom theo bậc nguyên, giới hạn trong vùng bản đồ (TASK 05).
+## Camera theo target, zoom theo bậc, giới hạn trong vùng bản đồ (TASK 05; zoom lẻ từ TASK VISUAL 01).
 ## Không biết gì về Player hay map cụ thể: bên ngoài gọi set_target() và set_map_rect().
 ## Smoothing dùng thuộc tính có sẵn của Camera2D (position_smoothing_enabled / _speed).
+## Mặc định zoom_step = 1 (mức nguyên như map pixel cũ). Map vẽ tay đặt zoom_step < 1 (vd. 0.25):
+## không ép integer scaling; texture dùng lọc tuyến tính + mipmap nên không vỡ hạt khi zoom lẻ.
 
-@export var default_zoom: int = 2
-@export var min_zoom: int = 1
-@export var max_zoom: int = 4
+@export var default_zoom: float = 2.0
+@export var min_zoom: float = 1.0
+@export var max_zoom: float = 4.0
+## Bước zoom mỗi nấc lăn chuột; zoom luôn là bội số của bước này.
+@export var zoom_step: float = 1.0
 
 var _target: Node2D
 var _map_rect: Rect2
 var _has_map_rect: bool = false
-var _requested_zoom: int = 2
+var _requested_zoom: float = 2.0
 var _fallback_warned: bool = false
 
 
@@ -55,36 +59,45 @@ func set_map_rect(rect: Rect2) -> void:
 	_apply_zoom()
 
 
+## Mức zoom hiện tại (số nguyên gần nhất; giữ cho code cũ).
 func get_zoom_level() -> int:
 	return roundi(zoom.x)
 
 
-func _change_zoom(step: int) -> void:
-	_requested_zoom = clampi(get_zoom_level() + step, min_zoom, max_zoom)
+func get_zoom_value() -> float:
+	return zoom.x
+
+
+func _change_zoom(direction: int) -> void:
+	_requested_zoom = clampf(_snap(zoom.x + direction * zoom_step), min_zoom, max_zoom)
 	_apply_zoom()
 
 
-## Zoom thực tế = mức người chơi chọn, nhưng không nhỏ hơn mức nguyên tối thiểu để vùng nhìn nằm gọn trong map.
+func _snap(value: float) -> float:
+	return roundf(value / zoom_step) * zoom_step
+
+
+## Zoom thực tế = mức người chơi chọn, nhưng không nhỏ hơn mức tối thiểu (bội số zoom_step) để vùng nhìn nằm gọn trong map.
 func _apply_zoom() -> void:
-	var lowest: int = maxi(min_zoom, _get_min_zoom_covering_map())
-	var level: int = clampi(_requested_zoom, lowest, max_zoom)
+	var lowest: float = maxf(min_zoom, _get_min_zoom_covering_map())
+	var level: float = clampf(_requested_zoom, lowest, max_zoom)
 	if lowest > max_zoom:
 		# Viewport quá lớn so với map: vượt max_zoom thay vì để lộ vùng ngoài bản đồ.
 		level = lowest
 		if not _fallback_warned:
-			push_warning("[GameCamera] Viewport quá lớn so với map; dùng zoom %dx (vượt max_zoom)." % level)
+			push_warning("[GameCamera] Viewport quá lớn so với map; dùng zoom %.2fx (vượt max_zoom)." % level)
 			_fallback_warned = true
 	zoom = Vector2(level, level)
 	if is_instance_valid(_target):
 		global_position = _get_follow_position()
 
 
-func _get_min_zoom_covering_map() -> int:
+func _get_min_zoom_covering_map() -> float:
 	if not _has_map_rect or _map_rect.size.x <= 0.0 or _map_rect.size.y <= 0.0:
-		return 1
+		return zoom_step
 	var view: Vector2 = get_viewport_rect().size
 	var ratio: float = maxf(view.x / _map_rect.size.x, view.y / _map_rect.size.y)
-	return maxi(1, ceili(ratio - 0.0001))
+	return maxf(zoom_step, ceilf(ratio / zoom_step - 0.0001) * zoom_step)
 
 
 ## Vị trí target, kẹp sao cho nửa vùng nhìn không vượt mép map.

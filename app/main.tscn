@@ -52,3 +52,10 @@ custom_minimum_size = Vector2(200, 40)
 layout_mode = 2
 size_flags_horizontal = 4
 text = "Combat Sandbox (thử nghiệm)"
+
+[node name="EnvironmentButton" type="Button" parent="Center/Layout"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(200, 40)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "Environment Prototype (Visual 01)"

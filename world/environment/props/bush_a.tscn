@@ -1,0 +1,30 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://world/environment/props/environment_prop.gd" id="1_f36s4"]
+[ext_resource type="Texture2D" path="res://world/environment/art/decals/shadow_soft.png" id="2_hysx4"]
+[ext_resource type="Texture2D" path="res://world/environment/art/props/bush_a.png" id="3_hqu0s"]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_xfe4k"]
+height = 67.5
+
+[node name="BushA" type="Node2D" unique_id=608257569]
+script = ExtResource("1_f36s4")
+
+[node name="Shadow" type="Sprite2D" parent="." unique_id=1298658032]
+modulate = Color(1, 1, 1, 0.55)
+z_index = -1
+position = Vector2(10.8, 2)
+scale = Vector2(0.38671875, 0.31640625)
+texture = ExtResource("2_hysx4")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=394576133]
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("3_hqu0s")
+offset = Vector2(0, -59)
+
+[node name="Collision" type="StaticBody2D" parent="." unique_id=1273954308]
+
+[node name="Shape0" type="CollisionShape2D" parent="Collision" unique_id=2062753374]
+position = Vector2(0, -8)
+rotation = 1.5707964
+shape = SubResource("CapsuleShape2D_xfe4k")

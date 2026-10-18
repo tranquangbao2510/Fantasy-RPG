@@ -6,6 +6,7 @@ extends Control
 @export var damage_color: Color = Color(1, 0.95, 0.6)
 @export var player_damage_color: Color = Color(1, 0.4, 0.4)
 @export var defeat_color: Color = Color(1, 0.6, 0.2)
+@export var heal_color: Color = Color(0.45, 1, 0.5)
 
 @onready var _hp_label: Label = %HPLabel
 @onready var _hp_bar: ProgressBar = %HPBar
@@ -20,11 +21,14 @@ extends Control
 func _ready() -> void:
 	_death_panel.hide()
 	_hint_label.text = "%s: tấn công · %s/%s/%s: đổi vũ khí (debug) · %s: tương tác · %s: reset thử nghiệm" % [
-		_action_text(&"basic_attack"), _action_text(&"debug_weapon_1"), _action_text(&"debug_weapon_2"),
-		_action_text(&"debug_weapon_3"), _action_text(&"interact"), _action_text(&"debug_reset")]
+		InputHint.action_text(&"basic_attack"), InputHint.action_text(&"debug_weapon_1"), InputHint.action_text(&"debug_weapon_2"),
+		InputHint.action_text(&"debug_weapon_3"), InputHint.action_text(&"interact"), InputHint.action_text(&"debug_reset")]
+	_hint_label.text += "\n%s/%s/%s/%s: kỹ năng · %s: hủy ngắm/vận sức" % [
+		InputHint.action_text(&"skill_slot_1"), InputHint.action_text(&"skill_slot_2"), InputHint.action_text(&"skill_slot_3"),
+		InputHint.action_text(&"skill_slot_4"), InputHint.action_text(&"skill_cancel")]
 	_weapon_label.text = "Vũ khí: —"
 	_combo_label.text = "Combo: —"
-	_death_label.text = "Bạn đã bị hạ gục\nNhấn [%s] để reset thử nghiệm" % _action_text(&"debug_reset")
+	_death_label.text = "Bạn đã bị hạ gục\nNhấn [%s] để reset thử nghiệm" % InputHint.action_text(&"debug_reset")
 
 
 func bind_player_health(health: HealthComponent) -> void:
@@ -53,6 +57,10 @@ func show_damage(world_position: Vector2, amount: int, is_player: bool, defeated
 		_damage_numbers.spawn(world_position + Vector2(0, -14), "Hạ gục!", defeat_color)
 
 
+func show_heal(world_position: Vector2, amount: int) -> void:
+	_damage_numbers.spawn(world_position, "+%d" % amount, heal_color)
+
+
 func _on_player_health_changed(current: int, maximum: int) -> void:
 	_hp_bar.max_value = maximum
 	_hp_bar.value = current
@@ -72,14 +80,3 @@ func _on_attack_phase_changed(phase: BasicAttackController.Phase, step_index: in
 
 func _on_combo_ended(completed: bool) -> void:
 	_combo_label.text = "Combo: hoàn thành" if completed else "Combo: —"
-
-
-func _action_text(action: StringName) -> String:
-	for event: InputEvent in InputMap.action_get_events(action):
-		var key: InputEventKey = event as InputEventKey
-		if key != null:
-			return key.as_text_physical_keycode() if key.physical_keycode != KEY_NONE else key.as_text_keycode()
-		var mouse: InputEventMouseButton = event as InputEventMouseButton
-		if mouse != null:
-			return "Chuột trái" if mouse.button_index == MOUSE_BUTTON_LEFT else "Chuột %d" % mouse.button_index
-	return "?"

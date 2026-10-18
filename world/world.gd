@@ -13,6 +13,9 @@ extends Node2D
 @export var combat_hud: CombatHUD
 @export var player_weapon: WeaponEquipment
 @export var player_attack: BasicAttackController
+@export var player_skills: SkillLoadout
+@export var player_caster: SkillCastingController
+@export var skill_bar: SkillBar
 
 @onready var _environment: Node2D = $Environment
 @onready var _map_container: Node2D = $MapContainer
@@ -24,6 +27,8 @@ func _ready() -> void:
 	_setup_camera()
 	_setup_interaction_ui()
 	_setup_combat_hud()
+	if skill_bar != null and player_skills != null and player_caster != null:
+		skill_bar.bind(player_skills, player_caster)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -93,6 +98,7 @@ func _setup_combat_hud() -> void:
 		return
 	if player_health != null:
 		combat_hud.bind_player_health(player_health)
+		player_health.healed.connect(_on_player_healed)
 	if player_weapon != null:
 		combat_hud.bind_weapon(player_weapon)
 	if player_attack != null:
@@ -101,6 +107,12 @@ func _setup_combat_hud() -> void:
 		var hurtbox: Hurtbox = node as Hurtbox
 		if hurtbox != null and is_ancestor_of(hurtbox):
 			hurtbox.hit_received.connect(_on_hit_received.bind(hurtbox))
+
+
+func _on_player_healed(amount: int) -> void:
+	var player: Node2D = player_health.get_parent() as Node2D
+	if player != null:
+		combat_hud.show_heal(player.global_position + Vector2(0, -30), amount)
 
 
 func _on_hit_received(_info: DamageInfo, applied: int, hurtbox: Hurtbox) -> void:

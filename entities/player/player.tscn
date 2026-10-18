@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3]
+[gd_scene load_steps=22 format=3]
 
 [ext_resource type="Script" path="res://entities/player/player.gd" id="1_player"]
 [ext_resource type="PackedScene" path="res://features/interaction/interaction_detector.tscn" id="2_detector"]
@@ -12,6 +12,13 @@
 [ext_resource type="Resource" path="res://features/combat/weapons/data/test_heavy.tres" id="11_heavy"]
 [ext_resource type="Script" path="res://features/combat/weapons/weapon_definition.gd" id="12_weapon_def"]
 [ext_resource type="Script" path="res://features/combat/hit_flash.gd" id="6_flash"]
+[ext_resource type="Script" path="res://features/skills/skill_loadout.gd" id="13_loadout"]
+[ext_resource type="Script" path="res://features/skills/skill_definition.gd" id="14_skill_def"]
+[ext_resource type="Resource" path="res://features/skills/data/test_arc_slash.tres" id="15_arc"]
+[ext_resource type="Resource" path="res://features/skills/data/test_ground_burst.tres" id="16_burst"]
+[ext_resource type="Resource" path="res://features/skills/data/test_linear_strike.tres" id="17_line"]
+[ext_resource type="Resource" path="res://features/skills/data/test_self_heal.tres" id="18_heal"]
+[ext_resource type="PackedScene" path="res://features/skills/skill_casting_controller.tscn" id="19_caster"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_feet"]
 radius = 6.0
@@ -81,3 +88,14 @@ target_layers = 32
 script = ExtResource("8_switcher")
 equipment = NodePath("../WeaponEquipment")
 weapons = Array[ExtResource("12_weapon_def")]([ExtResource("9_sword"), ExtResource("10_dagger"), ExtResource("11_heavy")])
+
+[node name="SkillLoadout" type="Node" parent="."]
+script = ExtResource("13_loadout")
+starting_skills = Array[ExtResource("14_skill_def")]([ExtResource("15_arc"), ExtResource("16_burst"), ExtResource("17_line"), ExtResource("18_heal")])
+starting_cast_modes = Array[int]([0, 1, 2, 2])
+
+[node name="SkillCastingController" parent="." node_paths=PackedStringArray("loadout", "health") instance=ExtResource("19_caster")]
+position = Vector2(0, -12)
+loadout = NodePath("../SkillLoadout")
+health = NodePath("../HealthComponent")
+target_layers = 32

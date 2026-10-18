@@ -19,10 +19,10 @@ Mã nguồn được tổ chức theo **tính năng** (feature) thay vì theo lo
 | `app/` | Main scene, khởi động và vòng đời ứng dụng | Đã triển khai (`main.tscn`, `main.gd` — màn hình tạm) |
 | `docs/` | Tài liệu kỹ thuật | Đã triển khai |
 | `core/` | Thành phần kỹ thuật dùng chung, không phụ thuộc gameplay cụ thể | Chưa triển khai |
-| `features/` | Module gameplay (mỗi tính năng một thư mục con, vd. `features/combat/`) | Đã triển khai (`interaction/`, `combat/`, `character/`) |
+| `features/` | Module gameplay (mỗi tính năng một thư mục con, vd. `features/combat/`) | Đã triển khai (`interaction/`, `combat/`, `character/`, `skills/`) |
 | `entities/` | Player, NPC, enemy (scene ghép từ component) | Đã triển khai (`player/`, `enemies/` — placeholder) |
 | `world/` | Bản đồ, môi trường, camera | Đã triển khai (`world.tscn`, `world.gd`, `maps/test_map/`, `camera/`) |
-| `ui/` | Thành phần giao diện | Đã triển khai (`interaction/`, `combat/`) |
+| `ui/` | Thành phần giao diện | Đã triển khai (`interaction/`, `combat/`, `skills/`, `common/`) |
 | `data/` | Dữ liệu game dùng chung (`.tres` Resource) | Chưa triển khai |
 | `assets/` | Tài nguyên dùng chung (sprite, âm thanh, font) | Chưa triển khai |
 | `save/` | Logic lưu / tải game | Chưa triển khai |
@@ -56,6 +56,7 @@ World (Node2D) ── world.gd
 │   └── GameCamera (instance world/camera/game_camera.tscn)
 └── UILayer (CanvasLayer)     — UI cố định trên màn hình
     ├── CombatHUD
+    ├── SkillBar
     ├── InteractionPrompt
     └── InteractionFeedback
 ```
@@ -135,7 +136,7 @@ Player (CharacterBody2D, motion_mode = Floating) ── player.gd
 │   └── FacingPivot (Node2D)      — xoay theo hướng di chuyển cuối
 │       └── Marker (Polygon2D)    — tam giác vàng chỉ hướng trước mặt
 ├── CollisionShape2D              — CircleShape2D r=6, tâm (0,-6): chạm tới chân
-└── InteractionDetector, HealthComponent, Hurtbox, HitFlash, WeaponEquipment, BasicAttackController, DebugWeaponSwitcher — xem 2e, 2f, 2g
+└── InteractionDetector, HealthComponent, Hurtbox, HitFlash, WeaponEquipment, BasicAttackController, DebugWeaponSwitcher, SkillLoadout, SkillCastingController — xem 2e–2h
 ```
 
 - **Origin = chân nhân vật**, nên Y-sort trong `EntityContainer` dựa trên điểm tiếp xúc mặt đất. Visual vẽ phía trên origin. Không dùng Z-index.
@@ -337,6 +338,67 @@ Runtime state (bước hiện tại, phase, thời gian, buffer, hướng, shape
 **Tạo vũ khí mới:** FileSystem → New Resource → `ComboStepDefinition`/`ComboDefinition` (hoặc nhân bản `combo_test_*.tres`) → chỉnh các bước; New Resource → `WeaponDefinition`, đặt `weapon_id`, `weapon_type_id`, gán `combo`. Gán vào `WeaponEquipment.starting_weapon` hoặc thêm vào mảng `DebugWeaponSwitcher.weapons`. Không cần sửa code.
 
 Giới hạn: hitbox mỗi bước là hình chữ nhật (chưa có arc thật); chưa có animation; enemy vẫn dùng MeleeAttack đơn (không combo); chưa có luật class ↔ vũ khí.
+
+## 2h. Active skill framework [Đã triển khai, placeholder]
+
+Quy tắc đã chốt: đúng **4 ô** kỹ năng chủ động (ultimate dùng một trong 4 ô, không có ô thứ 5); mỗi kỹ năng có cast mode **Normal / Quick / Instant** cấu hình riêng; kỹ năng thuộc **class**, không thuộc vũ khí. Chưa có class, skill level/evolution, passive, ultimate, mana/stamina/cost.
+
+```
+features/skills/
+├── skill_definition.gd          — class_name SkillDefinition (Resource) + enum TargetingType/CastMode/EffectType
+├── skill_runtime.gd             — class_name SkillRuntime (RefCounted): charges, hồi charge, recast delay, cast mode
+├── skill_loadout.gd             — class_name SkillLoadout (Node): 4 ô
+├── skill_target.gd              — class_name SkillTarget (RefCounted): origin/direction/point đã giải quyết
+├── skill_casting_controller.gd/.tscn — class_name SkillCastingController (Node2D): input + state machine
+├── skill_area_visual.gd         — class_name SkillAreaVisual (Node2D): vẽ indicator / flash (chỉ visual)
+├── skill_effect_executor.gd     — class_name SkillEffectExecutor (RefCounted, static): DAMAGE / HEAL
+└── data/                        — test_arc_slash, test_ground_burst, test_linear_strike, test_self_heal (.tres)
+ui/skills/  skill_bar.gd/.tscn, skill_slot_view.gd/.tscn      ui/common/input_hint.gd — tên phím từ Input Map
+```
+
+**SkillDefinition** (dữ liệu thiết kế, không chứa runtime state, không có field vũ khí): `skill_id` (ổn định), `display_name`, `short_name`, `description`, `default_cast_mode`; *Targeting*: `targeting_type` (SELF / LINE / GROUND_CIRCLE / CONE), `cast_range`, `radius`, `width`, `angle_degrees`; *Timing*: `cast_time`, `cooldown`, `max_charges`, `recast_delay`; *Effect*: `effect_type` (DAMAGE / HEAL), `effect_amount`, `knockback`; *Indicator*: `indicator_color`. `is_valid()` kiểm tra theo loại targeting.
+
+**Cooldown & charges (quy tắc prototype):** mỗi lần thi triển tiêu 1 charge; khi charges < max, hồi **lần lượt từng charge** sau mỗi `cooldown` giây (`max_charges = 1` → cooldown thông thường). `recast_delay` = khoảng nghỉ tối thiểu giữa 2 lần thi triển. Thi triển được khi charges > 0 và hết recast delay. Không có global cooldown.
+
+**SkillRuntime** — một instance cho mỗi ô; `can_cast()`, `consume()`, `tick(delta)`, `reset()`, `get_charges()`, `get_cooldown_remaining()`, `get_recharge_remaining()`, `get_block_reason()`, `cast_mode`, `is_casting`; signal `changed`. Không ghi vào Resource.
+
+**SkillLoadout** — `SLOT_COUNT = 4`; export `starting_skills`, `starting_cast_modes`; `equip_skill(slot, def) -> bool`, `unequip_skill(slot)`, `get_skill(slot)`, `get_runtime(slot)`, `set_cast_mode(slot, mode)`, `cycle_cast_mode(slot)`, `reset_runtimes()`, `can_equip(slot, def)` (điểm tích hợp Class System); signal `slot_changed`, `cast_mode_changed`. Ô ngoài [0, 3] bị từ chối. **Quy tắc prototype: một kỹ năng chỉ ở một ô** (trang bị trùng bị từ chối) — đổi trong `can_equip()`. Equip mới tạo runtime mới (charges đầy).
+
+**SkillCastingController** — export `loadout`, `health`, `target_layers` (Player: 6 `enemy_hurtbox`). State `IDLE → TARGETING → CASTING → IDLE`:
+
+| Mode | Bắt đầu | Xác nhận | Hủy |
+|---|---|---|---|
+| Normal | nhấn phím ô → TARGETING | click trái | `skill_cancel`, nhấn lại cùng phím |
+| Quick | giữ phím ô → TARGETING | thả **đúng phím đó** | `skill_cancel` khi đang giữ (thả sau đó không cast) |
+| Instant | nhấn phím ô → chốt điểm ngắm lúc nhấn | — | — |
+
+- Không vào TARGETING nếu kỹ năng chưa sẵn sàng (phát `cast_rejected(slot, reason)`). Charge chỉ bị tiêu khi bắt đầu CASTING, không tiêu lúc ngắm.
+- CASTING: chờ `cast_time` (có thể 0) rồi thực thi effect **đúng 1 lần trong physics tick**. Player vẫn di chuyển khi vận sức; chưa có interrupt-on-hit/stun/silence.
+- Đang CASTING: phím ô khác bị từ chối. Đang TARGETING: phím ô khác = hủy ngắm cũ rồi thử ô mới. Đổi/unequip ô hoặc đổi cast mode của ô đang dùng → hủy.
+- `skill_cancel` hủy theo mức: đang ngắm → hủy ngắm; đang vận sức → hủy vận sức (**charge đã tiêu không hoàn lại**, prototype). Không có gì để hủy thì event được chuyển tiếp.
+- Chết / reset → `cancel_all()`; reset còn gọi `SkillLoadout.reset_runtimes()` (charges đầy, cooldown 0). Chưa bảo toàn cooldown khi hồi sinh.
+- API: `handle_input(event) -> bool`, `confirm_targeting()`, `cancel_targeting()`, `cancel_cast()`, `cancel_all()`, `get_state()`, `get_active_slot()`, `is_busy()`, `get_cast_progress()`, `get_current_target()`, `set_aim_provider(callable)`, `fallback_direction`; signal `targeting_started/ended`, `cast_started/finished/cancelled`, `cast_rejected`.
+
+**Targeting** — `SkillTarget.resolve(def, origin, aim_point, fallback)`: origin = controller (Player + (0,−12)); LINE/CONE: hướng tới chuột; GROUND_CIRCLE: điểm chuột **kẹp về `cast_range`** (không từ chối); SELF: tại người thi triển. Indicator (`SkillAreaVisual`, `top_level`, vẽ bằng `_draw` theo world coordinates) dùng cùng `SkillTarget` + definition với effect → vùng hiển thị = vùng tác động; đúng ở mọi mức zoom; không collision, không damage. Khi vận sức có `cast_time`, vùng đã chốt hiện mờ; khi effect xảy ra có flash mờ dần.
+
+**Effect** — `SkillEffectExecutor.execute()` gọi trong physics tick: DAMAGE dùng `PhysicsDirectSpaceState2D.intersect_shape` (chỉ Area2D, `collision_mask = target_layers`; LINE = chữ nhật xoay, GROUND/SELF = tròn, CONE = tròn bán kính `cast_range` rồi lọc góc theo tâm Hurtbox), mỗi mục tiêu 1 lần (khóa `get_damage_key()`), gây sát thương qua `Hurtbox.receive_damage(DamageInfo)` — cùng Damage System, số sát thương/Hạ gục/knockback hoạt động như đánh thường. Player không bị trúng (layer phe + `source == owner`). HEAL: `HealthComponent.heal()` của người thi triển (không vượt max; HUD hiện số "+N").
+
+**Điều phối input** (`player.gd._unhandled_input`): `SkillCastingController.handle_input()` được hỏi trước; nếu đã dùng event → dừng. Click trái chỉ là đánh thường khi controller IDLE (đang ngắm: click thuộc về kỹ năng; đang vận sức: bị chặn). Phím mặc định (prototype, tránh xung đột WASD/E/1/2/3/R): **Q / C / V / X** = ô 1–4, `skill_cancel` = **chuột phải / Esc**. Nút GUI (đổi cast mode) dùng `focus_mode = None` nên không giữ phím.
+
+**Skill HUD** (`SkillBar`, góc dưới phải): 4 ô — phím, tên ngắn, nút cast mode (bấm để xoay Normal → Quick → Instant, chỉ đổi runtime), trạng thái "Sẵn sàng" / thời gian hồi / charges `x/y`, thanh tiến độ vận sức, tô sáng ô đang ngắm, mờ khi chưa thể dùng; dòng thông báo ngắn khi bị từ chối. Chỉ đọc SkillRuntime/controller, không tự tính.
+
+**Kỹ năng prototype** (placeholder; ô mặc định: 1 Normal, 2 Quick, 3 Instant, 4 Instant):
+
+| Ô | Kỹ năng | Targeting | Thông số | Effect | Hồi |
+|---|---|---|---|---|---|
+| Q | Test Arc Slash | CONE | range 64, 100° | 18 dmg, kb 160 | 3 s |
+| C | Test Ground Burst | GROUND_CIRCLE | range 160, r 40, cast 0.3 s | 22 dmg, kb 120 | 5 s |
+| V | Test Linear Strike | LINE | 150 × 22 | 12 dmg, nhiều mục tiêu | 2 charge, 4 s/charge, recast 0.5 s |
+| X | Test Self Heal | SELF | r 18, cast 0.8 s | hồi 25 HP | 8 s |
+
+**Tạo kỹ năng mới:** New Resource → `SkillDefinition`, đặt `skill_id`, targeting, timing, effect → gán vào `SkillLoadout.starting_skills` (hoặc `equip_skill()` lúc chạy). Không cần sửa controller; loại effect mới cần thêm nhánh trong `SkillEffectExecutor`.
+
+Giới hạn: chưa có projectile, buff/debuff, CC, interrupt; cone lọc theo tâm Hurtbox (mục tiêu sát mép góc có thể không trúng); hủy vận sức không hoàn charge; indicator vẽ cùng thứ tự Y-sort với Player; chỉ Player dùng skill.
 
 ## 3. Quy ước đặt tên [Đã quyết định]
 

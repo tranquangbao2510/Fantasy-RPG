@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene load_steps=14 format=3]
 
 [ext_resource type="Script" uid="uid://ddak435txd5d4" path="res://world/world.gd" id="1_world"]
 [ext_resource type="PackedScene" path="res://world/maps/test_map/test_map.tscn" id="2_test_map"]
@@ -12,8 +12,9 @@
 [ext_resource type="PackedScene" path="res://entities/enemies/training_dummy/training_dummy.tscn" id="10_dummy"]
 [ext_resource type="PackedScene" path="res://entities/enemies/simple_enemy/simple_enemy.tscn" id="11_enemy"]
 [ext_resource type="PackedScene" path="res://ui/combat/combat_hud.tscn" id="12_hud"]
+[ext_resource type="PackedScene" path="res://ui/skills/skill_bar.tscn" id="13_skill_bar"]
 
-[node name="World" type="Node2D" node_paths=PackedStringArray("camera", "camera_target", "map_bounds", "interaction_detector", "interaction_prompt", "interaction_feedback", "player_health", "combat_hud", "player_weapon", "player_attack")]
+[node name="World" type="Node2D" node_paths=PackedStringArray("camera", "camera_target", "map_bounds", "interaction_detector", "interaction_prompt", "interaction_feedback", "player_health", "combat_hud", "player_weapon", "player_attack", "player_skills", "player_caster", "skill_bar")]
 script = ExtResource("1_world")
 camera = NodePath("CameraContainer/GameCamera")
 camera_target = NodePath("EntityContainer/Player")
@@ -25,6 +26,9 @@ player_health = NodePath("EntityContainer/Player/HealthComponent")
 combat_hud = NodePath("UILayer/CombatHUD")
 player_weapon = NodePath("EntityContainer/Player/WeaponEquipment")
 player_attack = NodePath("EntityContainer/Player/BasicAttackController")
+player_skills = NodePath("EntityContainer/Player/SkillLoadout")
+player_caster = NodePath("EntityContainer/Player/SkillCastingController")
+skill_bar = NodePath("UILayer/SkillBar")
 
 [node name="Environment" type="Node2D" parent="."]
 
@@ -61,6 +65,8 @@ target = NodePath("../Player")
 [node name="UILayer" type="CanvasLayer" parent="."]
 
 [node name="CombatHUD" parent="UILayer" instance=ExtResource("12_hud")]
+
+[node name="SkillBar" parent="UILayer" instance=ExtResource("13_skill_bar")]
 
 [node name="InteractionPrompt" parent="UILayer" instance=ExtResource("8_prompt")]
 

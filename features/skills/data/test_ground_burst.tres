@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="SkillDefinition" format=3]
+
+[ext_resource type="Script" path="res://features/skills/skill_definition.gd" id="1_8uqe6"]
+
+[resource]
+script = ExtResource("1_8uqe6")
+skill_id = &"test_ground_burst"
+display_name = "Test Ground Burst"
+short_name = "Burst"
+description = "Prototype: sát thương vùng tròn tại điểm chọn."
+default_cast_mode = 1
+targeting_type = 2
+cast_range = 160.0
+radius = 40.0
+cast_time = 0.3
+cooldown = 5.0
+effect_amount = 22
+knockback = 120.0
+indicator_color = Color(1, 0.45, 0.35, 0.3)

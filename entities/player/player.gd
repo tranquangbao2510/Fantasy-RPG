@@ -14,6 +14,8 @@ var _spawn_position: Vector2
 @onready var _health: HealthComponent = $HealthComponent
 @onready var _attack: BasicAttackController = $BasicAttackController
 @onready var _interaction_detector: InteractionDetector = $InteractionDetector
+@onready var _skills: SkillCastingController = $SkillCastingController
+@onready var _skill_loadout: SkillLoadout = $SkillLoadout
 
 
 func _ready() -> void:
@@ -21,6 +23,8 @@ func _ready() -> void:
 	_health.died.connect(_on_died)
 	_attack.set_aim_provider(_get_attack_direction)
 	_attack.step_started.connect(_on_attack_step_started)
+	_skills.set_aim_provider(get_global_mouse_position)
+	_skills.cast_started.connect(_on_skill_cast_started)
 
 
 func _physics_process(_delta: float) -> void:
@@ -35,8 +39,13 @@ func _physics_process(_delta: float) -> void:
 		_set_facing(direction)
 
 
+## Đầu mối input combat: kỹ năng được hỏi trước (phím ô, xác nhận/hủy ngắm);
+## chỉ khi kỹ năng không dùng event và không đang ngắm/vận sức thì click trái mới là đánh thường.
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed(&"basic_attack") and not is_dead():
+	if _skills.handle_input(event):
+		get_viewport().set_input_as_handled()
+		return
+	if event.is_action_pressed(&"basic_attack") and not is_dead() and not _skills.is_busy():
 		_attack.request_attack()
 		get_viewport().set_input_as_handled()
 
@@ -50,6 +59,8 @@ func reset_state() -> void:
 	global_position = _spawn_position
 	velocity = Vector2.ZERO
 	_attack.cancel()
+	_skills.cancel_all()
+	_skill_loadout.reset_runtimes()
 	_health.reset()
 	_interaction_detector.set_enabled(true)
 	_set_facing(Vector2.DOWN)
@@ -68,6 +79,13 @@ func _get_attack_direction() -> Vector2:
 func _set_facing(direction: Vector2) -> void:
 	_facing = direction.normalized()
 	_facing_pivot.rotation = _facing.angle()
+	_skills.fallback_direction = _facing
+
+
+func _on_skill_cast_started(_slot: int, _cast_time: float) -> void:
+	var target: SkillTarget = _skills.get_current_target()
+	if target != null and not target.direction.is_zero_approx():
+		_set_facing(target.direction)
 
 
 func _on_attack_step_started(_step_index: int, _step_count: int, direction: Vector2) -> void:
@@ -77,4 +95,5 @@ func _on_attack_step_started(_step_index: int, _step_count: int, direction: Vect
 func _on_died() -> void:
 	velocity = Vector2.ZERO
 	_attack.cancel()
+	_skills.cancel_all()
 	_interaction_detector.set_enabled(false)

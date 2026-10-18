@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillDefinition" format=3]
+
+[ext_resource type="Script" path="res://features/skills/skill_definition.gd" id="1_l016u"]
+
+[resource]
+script = ExtResource("1_l016u")
+skill_id = &"test_linear_strike"
+display_name = "Test Linear Strike"
+short_name = "Line"
+description = "Prototype: sát thương theo đường thẳng, nhiều mục tiêu, 2 charge."
+default_cast_mode = 2
+targeting_type = 1
+cast_range = 150.0
+width = 22.0
+cooldown = 4.0
+max_charges = 2
+recast_delay = 0.5
+effect_amount = 12
+knockback = 100.0
+indicator_color = Color(0.5, 0.8, 1, 0.3)

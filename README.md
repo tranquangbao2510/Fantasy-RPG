@@ -52,4 +52,6 @@ Quy ước commit: [docs/git_conventions.md](docs/git_conventions.md).
 
 - TASK 08 — Vũ khí data-driven (`features/combat/weapons/`): combo đánh thường theo vũ khí, knockback enemy. Phím debug **1/2/3** đổi Test Sword / Dagger / Heavy Weapon.
 
-Chưa có class, kỹ năng, animation, inventory, hội thoại, menu hay hệ thống nào khác. Mọi chỉ số combat và vũ khí là placeholder.
+- TASK 09 — Active skill framework (`features/skills/`, `ui/skills/`): 4 ô kỹ năng **Q / C / V / X**, cast mode Normal / Quick / Instant (bấm nút trên Skill Bar để đổi), hủy ngắm bằng **chuột phải / Esc**.
+
+Chưa có class, skill level, passive, ultimate, mana/stamina, animation, inventory, hội thoại hay menu. Mọi chỉ số combat, vũ khí và kỹ năng là placeholder.

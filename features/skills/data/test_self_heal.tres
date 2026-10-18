@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="SkillDefinition" format=3]
+
+[ext_resource type="Script" path="res://features/skills/skill_definition.gd" id="1_56751"]
+
+[resource]
+script = ExtResource("1_56751")
+skill_id = &"test_self_heal"
+display_name = "Test Self Heal"
+short_name = "Heal"
+description = "Prototype: tự hồi HP sau thời gian vận sức."
+default_cast_mode = 2
+radius = 18.0
+cast_time = 0.8
+cooldown = 8.0
+effect_type = 1
+effect_amount = 25
+indicator_color = Color(0.45, 1, 0.5, 0.3)

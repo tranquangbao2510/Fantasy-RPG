@@ -16,6 +16,10 @@ extends Control
 @onready var _damage_numbers: DamageNumbers = %DamageNumbers
 @onready var _weapon_label: Label = %WeaponLabel
 @onready var _combo_label: Label = %ComboLabel
+@onready var _class_label: Label = %ClassLabel
+
+var _classes: ClassManager
+var _character: CharacterLevel
 
 
 func _ready() -> void:
@@ -23,9 +27,10 @@ func _ready() -> void:
 	_hint_label.text = "%s: tấn công · %s/%s/%s: đổi vũ khí (debug) · %s: tương tác · %s: reset thử nghiệm" % [
 		InputHint.action_text(&"basic_attack"), InputHint.action_text(&"debug_weapon_1"), InputHint.action_text(&"debug_weapon_2"),
 		InputHint.action_text(&"debug_weapon_3"), InputHint.action_text(&"interact"), InputHint.action_text(&"debug_reset")]
-	_hint_label.text += "\n%s/%s/%s/%s: kỹ năng · %s: hủy ngắm/vận sức" % [
+	_hint_label.text += "\n%s/%s/%s/%s: kỹ năng · %s: hủy ngắm/vận sức · %s: bảng class (debug)" % [
 		InputHint.action_text(&"skill_slot_1"), InputHint.action_text(&"skill_slot_2"), InputHint.action_text(&"skill_slot_3"),
-		InputHint.action_text(&"skill_slot_4"), InputHint.action_text(&"skill_cancel")]
+		InputHint.action_text(&"skill_slot_4"), InputHint.action_text(&"skill_cancel"), InputHint.action_text(&"debug_progression")]
+	_class_label.text = "Class: —"
 	_weapon_label.text = "Vũ khí: —"
 	_combo_label.text = "Combo: —"
 	_death_label.text = "Bạn đã bị hạ gục\nNhấn [%s] để reset thử nghiệm" % InputHint.action_text(&"debug_reset")
@@ -50,6 +55,16 @@ func bind_attack(controller: BasicAttackController) -> void:
 	controller.combo_ended.connect(_on_combo_ended)
 
 
+## Dòng "Class: Test Fighter · Lv 2" (class đang dùng + character level).
+func bind_progression(classes: ClassManager, character: CharacterLevel) -> void:
+	_classes = classes
+	_character = character
+	classes.class_switched.connect(func(_previous: StringName, _class_id: StringName) -> void: _update_class_label())
+	if character != null:
+		character.level_changed.connect(func(_level: int) -> void: _update_class_label())
+	_update_class_label()
+
+
 ## Hiện số sát thương tại vị trí world; thêm chữ "Hạ gục!" nếu mục tiêu vừa chết.
 func show_damage(world_position: Vector2, amount: int, is_player: bool, defeated: bool) -> void:
 	_damage_numbers.spawn(world_position, str(amount), player_damage_color if is_player else damage_color)
@@ -65,6 +80,13 @@ func _on_player_health_changed(current: int, maximum: int) -> void:
 	_hp_bar.max_value = maximum
 	_hp_bar.value = current
 	_hp_label.text = "HP %d / %d" % [current, maximum]
+
+
+func _update_class_label() -> void:
+	var current: ClassDefinition = _classes.get_current_class()
+	_class_label.text = "Class: %s" % (current.display_name if current != null else "—")
+	if _character != null:
+		_class_label.text += " · Lv %d" % _character.get_level()
 
 
 func _on_weapon_changed(weapon: WeaponDefinition) -> void:

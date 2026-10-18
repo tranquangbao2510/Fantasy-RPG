@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="PassiveDefinition" format=3]
+
+[ext_resource type="Script" path="res://features/classes/passives/passive_definition.gd" id="1_4vikx"]
+
+[resource]
+script = ExtResource("1_4vikx")
+passive_id = &"test_caster_focus"
+display_name = "Test Focus"
+description = "Prototype: +20% sức mạnh kỹ năng."
+effect_type = 1
+amount = 20.0

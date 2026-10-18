@@ -19,10 +19,10 @@ Mã nguồn được tổ chức theo **tính năng** (feature) thay vì theo lo
 | `app/` | Main scene, khởi động và vòng đời ứng dụng | Đã triển khai (`main.tscn`, `main.gd` — màn hình tạm) |
 | `docs/` | Tài liệu kỹ thuật | Đã triển khai |
 | `core/` | Thành phần kỹ thuật dùng chung, không phụ thuộc gameplay cụ thể | Chưa triển khai |
-| `features/` | Module gameplay (mỗi tính năng một thư mục con, vd. `features/combat/`) | Đã triển khai (`interaction/`, `combat/`, `character/`, `skills/`) |
+| `features/` | Module gameplay (mỗi tính năng một thư mục con, vd. `features/combat/`) | Đã triển khai (`interaction/`, `combat/`, `character/`, `skills/`, `classes/`) |
 | `entities/` | Player, NPC, enemy (scene ghép từ component) | Đã triển khai (`player/`, `enemies/` — placeholder) |
 | `world/` | Bản đồ, môi trường, camera | Đã triển khai (`world.tscn`, `world.gd`, `maps/test_map/`, `camera/`) |
-| `ui/` | Thành phần giao diện | Đã triển khai (`interaction/`, `combat/`, `skills/`, `common/`) |
+| `ui/` | Thành phần giao diện | Đã triển khai (`interaction/`, `combat/`, `skills/`, `progression/`, `common/`) |
 | `data/` | Dữ liệu game dùng chung (`.tres` Resource) | Chưa triển khai |
 | `assets/` | Tài nguyên dùng chung (sprite, âm thanh, font) | Chưa triển khai |
 | `save/` | Logic lưu / tải game | Chưa triển khai |
@@ -51,14 +51,16 @@ World (Node2D) ── world.gd
 ├── EntityContainer (Node2D, y_sort_enabled) — player, NPC, enemy
 │   ├── Player (instance entities/player/player.tscn, spawn (480, 320))
 │   ├── NoticeBoard (400, 256), TestChest (528, 392), TestCrystal (576, 392) — vật thể tương tác thử nghiệm
-│   └── TrainingDummy (656, 240), SimpleEnemy (300, 420) — mục tiêu combat thử nghiệm
+│   ├── TrainingDummy (656, 240), SimpleEnemy (300, 420) — mục tiêu combat thử nghiệm
+│   └── ClassTrainingStation (560, 256) — điểm đổi class thử nghiệm (2i)
 ├── CameraContainer (Node2D)    — camera
 │   └── GameCamera (instance world/camera/game_camera.tscn)
 └── UILayer (CanvasLayer)     — UI cố định trên màn hình
     ├── CombatHUD
     ├── SkillBar
     ├── InteractionPrompt
-    └── InteractionFeedback
+    ├── InteractionFeedback
+    └── ProgressionPanel        — bảng Class/Progression thử nghiệm (2i)
 ```
 
 - **Main Scene** là entry point: màn hình khởi động tạm và chuyển vào World. Không giữ trạng thái game.
@@ -136,7 +138,7 @@ Player (CharacterBody2D, motion_mode = Floating) ── player.gd
 │   └── FacingPivot (Node2D)      — xoay theo hướng di chuyển cuối
 │       └── Marker (Polygon2D)    — tam giác vàng chỉ hướng trước mặt
 ├── CollisionShape2D              — CircleShape2D r=6, tâm (0,-6): chạm tới chân
-└── InteractionDetector, HealthComponent, Hurtbox, HitFlash, WeaponEquipment, BasicAttackController, DebugWeaponSwitcher, SkillLoadout, SkillCastingController — xem 2e–2h
+└── InteractionDetector, HealthComponent, Hurtbox, HitFlash, WeaponEquipment, BasicAttackController, DebugWeaponSwitcher, SkillLoadout, SkillCastingController, PassiveController, ClassManager, CharacterLevel — xem 2e–2i
 ```
 
 - **Origin = chân nhân vật**, nên Y-sort trong `EntityContainer` dựa trên điểm tiếp xúc mặt đất. Visual vẽ phía trên origin. Không dùng Z-index.
@@ -145,7 +147,7 @@ Player (CharacterBody2D, motion_mode = Floating) ── player.gd
 - `move_speed` (`@export`, mặc định **160 px/s**) — giá trị thử nghiệm.
 - **Spawn:** đặt trực tiếp trong `world.tscn` tại (480, 320), giữa quảng trường đá. Chưa có SpawnManager/checkpoint.
 - Placeholder: toàn bộ visual, kích thước collision, tốc độ, vị trí spawn.
-- `player.gd` chỉ đọc input (`basic_attack` → `BasicAttackController.request_attack()`), chặn điều khiển khi chết và cung cấp `is_dead()`, `reset_state()`, `get_aim_direction(world_point)`. Logic HP/đòn đánh nằm trong component.
+- `player.gd` chỉ đọc input (`basic_attack` → `BasicAttackController.request_attack()`), chặn điều khiển khi chết và cung cấp `is_dead()`, `reset_state()`, `get_aim_direction(world_point)`, `set_combat_input_blocked(bool)` (UI đang mở: bỏ qua đánh thường/kỹ năng, hủy ngắm/vận sức/combo; di chuyển vẫn được). Tốc độ = `move_speed` × hệ số passive. Logic HP/đòn đánh/class nằm trong component.
 
 ## 2d. Camera — GameCamera [Đã triển khai]
 
@@ -307,7 +309,7 @@ features/combat/weapons/
 
 Runtime state (bước hiện tại, phase, thời gian, buffer, hướng, shape Hitbox) nằm trong `BasicAttackController` / `WeaponEquipment` của từng thực thể; không ghi vào Resource.
 
-**WeaponEquipment** — export `starting_weapon`; `get_weapon()`, `equip_weapon(w) -> bool` (definition không hợp lệ → cảnh báo, giữ vũ khí cũ), `unequip_weapon()`, `can_equip(w)` (điểm mở rộng cho luật class ↔ `weapon_type_id`; hiện chỉ kiểm tra dữ liệu); signal `weapon_changed(weapon)`. Không tính damage.
+**WeaponEquipment** — export `starting_weapon`; `get_weapon()`, `equip_weapon(w) -> bool` (bị từ chối → giữ vũ khí cũ, phát `equip_rejected(weapon, reason)`; definition lỗi còn cảnh báo), `unequip_weapon()`, `can_equip(w)`, `get_equip_block_reason(w)`, `set_equip_validator(callable)` (ClassManager gắn luật class ↔ `weapon_type_id`, xem 2i); signal `weapon_changed(weapon)`. Không tính damage.
 
 **BasicAttackController** — export `equipment`, `health`, `target_layers`. Lấy combo từ vũ khí đang trang bị; đổi vũ khí → `cancel()` rồi dùng combo mới.
 
@@ -337,11 +339,11 @@ Runtime state (bước hiện tại, phase, thời gian, buffer, hướng, shape
 
 **Tạo vũ khí mới:** FileSystem → New Resource → `ComboStepDefinition`/`ComboDefinition` (hoặc nhân bản `combo_test_*.tres`) → chỉnh các bước; New Resource → `WeaponDefinition`, đặt `weapon_id`, `weapon_type_id`, gán `combo`. Gán vào `WeaponEquipment.starting_weapon` hoặc thêm vào mảng `DebugWeaponSwitcher.weapons`. Không cần sửa code.
 
-Giới hạn: hitbox mỗi bước là hình chữ nhật (chưa có arc thật); chưa có animation; enemy vẫn dùng MeleeAttack đơn (không combo); chưa có luật class ↔ vũ khí.
+Giới hạn: hitbox mỗi bước là hình chữ nhật (chưa có arc thật); chưa có animation; enemy vẫn dùng MeleeAttack đơn (không combo). Luật class ↔ vũ khí: xem 2i.
 
 ## 2h. Active skill framework [Đã triển khai, placeholder]
 
-Quy tắc đã chốt: đúng **4 ô** kỹ năng chủ động (ultimate dùng một trong 4 ô, không có ô thứ 5); mỗi kỹ năng có cast mode **Normal / Quick / Instant** cấu hình riêng; kỹ năng thuộc **class**, không thuộc vũ khí. Chưa có class, skill level/evolution, passive, ultimate, mana/stamina/cost.
+Quy tắc đã chốt: đúng **4 ô** kỹ năng chủ động (ultimate dùng một trong 4 ô, không có ô thứ 5); mỗi kỹ năng có cast mode **Normal / Quick / Instant** cấu hình riêng; kỹ năng thuộc **class**, không thuộc vũ khí. Class, skill level/evolution, passive: xem 2i. Chưa có ultimate, mana/stamina/cost.
 
 ```
 features/skills/
@@ -360,9 +362,9 @@ ui/skills/  skill_bar.gd/.tscn, skill_slot_view.gd/.tscn      ui/common/input_hi
 
 **Cooldown & charges (quy tắc prototype):** mỗi lần thi triển tiêu 1 charge; khi charges < max, hồi **lần lượt từng charge** sau mỗi `cooldown` giây (`max_charges = 1` → cooldown thông thường). `recast_delay` = khoảng nghỉ tối thiểu giữa 2 lần thi triển. Thi triển được khi charges > 0 và hết recast delay. Không có global cooldown.
 
-**SkillRuntime** — một instance cho mỗi ô; `can_cast()`, `consume()`, `tick(delta)`, `reset()`, `get_charges()`, `get_cooldown_remaining()`, `get_recharge_remaining()`, `get_block_reason()`, `cast_mode`, `is_casting`; signal `changed`. Không ghi vào Resource.
+**SkillRuntime** — một instance cho mỗi ô; `can_cast()`, `consume()`, `tick(delta)`, `reset()`, `get_charges()`, `get_cooldown_remaining()`, `get_recharge_remaining()`, `get_block_reason()`, `cast_mode`, `is_casting`, `set_definition(def)` (thay definition sau khi lên level/tiến hóa, giữ charges/hồi chiêu, kẹp charges theo max mới); signal `changed`. Không ghi vào Resource.
 
-**SkillLoadout** — `SLOT_COUNT = 4`; export `starting_skills`, `starting_cast_modes`; `equip_skill(slot, def) -> bool`, `unequip_skill(slot)`, `get_skill(slot)`, `get_runtime(slot)`, `set_cast_mode(slot, mode)`, `cycle_cast_mode(slot)`, `reset_runtimes()`, `can_equip(slot, def)` (điểm tích hợp Class System); signal `slot_changed`, `cast_mode_changed`. Ô ngoài [0, 3] bị từ chối. **Quy tắc prototype: một kỹ năng chỉ ở một ô** (trang bị trùng bị từ chối) — đổi trong `can_equip()`. Equip mới tạo runtime mới (charges đầy).
+**SkillLoadout** — `SLOT_COUNT = 4`; export `starting_skills`, `starting_cast_modes` (Player để trống: ClassManager xếp loadout); `equip_skill(slot, def) -> bool`, `unequip_skill(slot)`, `update_definition(slot, def)`, `find_slot(skill_id)`, `get_skill(slot)`, `get_runtime(slot)`, `set_cast_mode(slot, mode)`, `cycle_cast_mode(slot)`, `reset_runtimes()`, `can_equip(slot, def)`, `get_equip_block_reason(slot, def)`, `set_equip_validator(callable)` (luật class, xem 2i); signal `slot_changed`, `cast_mode_changed`, `equip_rejected(slot, def, reason)`. Ô ngoài [0, 3] bị từ chối. **Quy tắc prototype: một kỹ năng chỉ ở một ô** (trang bị trùng bị từ chối). Equip mới tạo runtime mới (charges đầy).
 
 **SkillCastingController** — export `loadout`, `health`, `target_layers` (Player: 6 `enemy_hurtbox`). State `IDLE → TARGETING → CASTING → IDLE`:
 
@@ -387,18 +389,95 @@ ui/skills/  skill_bar.gd/.tscn, skill_slot_view.gd/.tscn      ui/common/input_hi
 
 **Skill HUD** (`SkillBar`, góc dưới phải): 4 ô — phím, tên ngắn, nút cast mode (bấm để xoay Normal → Quick → Instant, chỉ đổi runtime), trạng thái "Sẵn sàng" / thời gian hồi / charges `x/y`, thanh tiến độ vận sức, tô sáng ô đang ngắm, mờ khi chưa thể dùng; dòng thông báo ngắn khi bị từ chối. Chỉ đọc SkillRuntime/controller, không tự tính.
 
-**Kỹ năng prototype** (placeholder; ô mặc định: 1 Normal, 2 Quick, 3 Instant, 4 Instant):
+**Kỹ năng prototype** (placeholder, giá trị ở Lv 1; ô trang bị do class quyết định — xem 2i):
 
-| Ô | Kỹ năng | Targeting | Thông số | Effect | Hồi |
+| Mode mặc định | Kỹ năng | Targeting | Thông số | Effect | Hồi |
 |---|---|---|---|---|---|
-| Q | Test Arc Slash | CONE | range 64, 100° | 18 dmg, kb 160 | 3 s |
-| C | Test Ground Burst | GROUND_CIRCLE | range 160, r 40, cast 0.3 s | 22 dmg, kb 120 | 5 s |
-| V | Test Linear Strike | LINE | 150 × 22 | 12 dmg, nhiều mục tiêu | 2 charge, 4 s/charge, recast 0.5 s |
-| X | Test Self Heal | SELF | r 18, cast 0.8 s | hồi 25 HP | 8 s |
+| Normal | Test Arc Slash | CONE | range 64, 100° | 18 dmg, kb 160 | 3 s |
+| Quick | Test Ground Burst | GROUND_CIRCLE | range 160, r 40, cast 0.3 s | 22 dmg, kb 120 | 5 s |
+| Instant | Test Linear Strike | LINE | 150 × 22 | 12 dmg, nhiều mục tiêu | 2 charge, 4 s/charge, recast 0.5 s |
+| Instant | Test Self Heal | SELF | r 18, cast 0.8 s | hồi 25 HP | 8 s |
 
-**Tạo kỹ năng mới:** New Resource → `SkillDefinition`, đặt `skill_id`, targeting, timing, effect → gán vào `SkillLoadout.starting_skills` (hoặc `equip_skill()` lúc chạy). Không cần sửa controller; loại effect mới cần thêm nhánh trong `SkillEffectExecutor`.
+**Tạo kỹ năng mới:** New Resource → `SkillDefinition`, đặt `skill_id`, targeting, timing, effect → thêm vào `ClassDefinition.skills` của class (xem 2i). Không cần sửa controller; loại effect mới cần thêm nhánh trong `SkillEffectExecutor`.
 
 Giới hạn: chưa có projectile, buff/debuff, CC, interrupt; cone lọc theo tâm Hurtbox (mục tiêu sát mép góc có thể không trúng); hủy vận sức không hoàn charge; indicator vẽ cùng thứ tự Y-sort với Player; chỉ Player dùng skill.
+
+## 2i. Class, Mastery, Passive & Skill Progression [Đã triển khai, prototype]
+
+Quy tắc đã chốt: một nhân vật mở khóa được nhiều class (qua NPC/nhiệm vụ/thử thách/khám phá — chưa triển khai), chỉ đổi class tại NPC/địa điểm quy định; mỗi class dùng nhiều loại vũ khí; đánh thường theo vũ khí, kỹ năng chủ động theo class; một **character level** dùng chung + **mastery** riêng từng class; kỹ năng có level và nhánh tiến hóa; đúng 4 ô (ultimate dùng chung); mỗi class có một **signature passive** cố định + passive bổ sung tự chọn. Điều kiện, tài nguyên, công thức và cân bằng **chưa chốt** — mọi số liệu dưới đây là placeholder.
+
+```
+features/character/
+├── level_curve.gd        — LevelCurve (Resource): exp_to_next_level[]; dùng cho character level và mastery
+├── level_progress.gd     — LevelProgress (RefCounted): level + EXP theo curve
+├── character_level.gd    — CharacterLevel (Node, trên Player): level dùng chung
+└── data/test_character_curve.tres
+features/classes/
+├── class_definition.gd   — ClassDefinition (Resource)
+├── class_manager.gd      — ClassManager (Node, trên Player)
+├── class_progress.gd     — ClassProgress (RefCounted): runtime state của một class đã mở khóa
+├── skill_progress.gd     — SkillProgress (RefCounted): level / nhánh / cast mode của một kỹ năng đã học
+├── passives/             — PassiveDefinition (Resource), PassiveController (Node, trên Player), data/*.tres
+├── station/              — ClassTrainingStation (Interactable placeholder)
+└── data/                 — test_fighter.tres, test_caster.tres, test_mastery_curve.tres
+features/skills/progression/
+├── skill_modifier.gd         — SkillModifier (Resource): cộng thêm thông số cho level / nhánh
+└── skill_evolution_branch.gd — SkillEvolutionBranch (Resource)
+ui/progression/progression_panel.gd/.tscn — ProgressionPanel
+```
+
+**Definitions** (dữ liệu, không chứa runtime state, không sửa lúc chạy):
+
+| Resource | Field |
+|---|---|
+| `ClassDefinition` | `class_id` (ổn định), `display_name`, `description`, `allowed_weapon_type_ids`, `skills` (học được), `starting_skills` (học sẵn khi mở khóa + loadout mặc định theo ô, ≤ 4), `signature_passive`, `additional_passives`. `get_validation_errors()` / `is_valid()`: ID/tên rỗng, không có loại vũ khí, skill null/lỗi/trùng, starting ngoài skills, signature thiếu, passive trùng (kể cả trùng signature) |
+| `PassiveDefinition` | `passive_id`, `display_name`, `description`, `effect_type` (`MAX_HEALTH` / `SKILL_POWER_PERCENT` / `MOVE_SPEED_PERCENT`), `amount`. `is_valid()` |
+| `SkillDefinition` (thêm nhóm *Progression*) | `max_level`, `level_modifiers` (phần tử i áp dụng từ Lv i+2, cộng dồn), `evolution_branches`. `create_variant(level, branch_id, effect_percent)` trả **bản sao** đã áp modifier; `is_progression_valid()` kiểm tra mọi tổ hợp level × nhánh |
+| `SkillModifier` | `short_name_override`, bonus cho `cast_range` / `radius` / `width` / `angle_degrees` / `cast_time` / `cooldown` / `max_charges` / `effect_amount` / `knockback`, đổi `indicator_color` |
+| `SkillEvolutionBranch` | `branch_id` (duy nhất trong kỹ năng), `display_name`, `description`, `modifier` |
+| `LevelCurve` | `exp_to_next_level: Array[int]`; level tối đa = size + 1 |
+
+**Runtime state** (trong component của Player, chỉ ID + số):
+
+- `CharacterLevel` — level/EXP dùng chung; `add_exp(n)`, `get_level()`, `get_exp()`, `get_exp_to_next()`; signal `level_changed`, `exp_changed`. Level chỉ tăng; ở level tối đa EXP không tích lũy. **Không** tự thưởng EXP khi hạ enemy, không tăng chỉ số.
+- `ClassManager` — `_progress: class_id → ClassProgress` (chỉ tạo khi mở khóa): `mastery` (LevelProgress), `skills: skill_id → SkillProgress {level, branch_id, cast_mode}`, `unlocked_passive_ids`, `equipped_passive_ids`, `loadout` (4 skill_id). `to_dict()` trả dữ liệu thuần có `version` (chuẩn bị Save/Load; chưa có SaveManager).
+
+**ClassManager API** (một active class tại một thời điểm):
+
+- Class: `get_current_class()`, `get_current_class_id()`, `get_class_definition(id)`, `get_class_ids()`, `is_class_unlocked(id)`, `get_unlocked_class_ids()`, `unlock_class(id)` (API chung cho quest/NPC/khám phá sau này; không mở lặp), `can_switch_class(id)`, `get_switch_block_reason(id)`, `switch_class(id)`.
+- Phiên đổi class: `open_switch_session(station, max_distance)`, `close_switch_session()`, `has_switch_session()`, `get_switch_station()`.
+- Mastery: `get_mastery(id)` (null nếu chưa mở khóa), `add_mastery_exp(id, n)` — chỉ cộng cho đúng class đó.
+- Kỹ năng: `learn_skill`, `is_skill_learned`, `get_skill_level`, `can_level_up_skill`, `level_up_skill`, `get_skill_branch`, `select_evolution_branch`, `get_skill_cast_mode`, `get_effective_skill`, `equip_skill(slot, skill_id)`, `unequip_skill(slot)`, `get_saved_loadout(id)`.
+- Passive: `get_signature_passive`, `unlock_passive`, `is_passive_unlocked`, `equip_passive`, `unequip_passive`, `get_equipped_passive_ids`, `get_passive_equip_block_reason`; export `additional_passive_limit` = **2** (thông số prototype).
+- Signal: `class_unlocked`, `class_switched`, `mastery_changed`, `skill_learned`, `skill_level_changed`, `skill_evolved`, `passives_changed`, `switch_session_started/ended`, `progression_changed` (sau mọi thay đổi).
+- `ClassManager.find_in(actor)` tìm component trên actor (không Autoload, không đường dẫn cứng).
+
+**Đổi class tại điểm hợp lệ:** `ClassTrainingStation` (Interactable): nhấn **E** → `ClassManager.open_switch_session(station, session_range = 72)` → signal → World mở ProgressionPanel. Quyền đổi class kiểm tra ở gameplay layer (`get_switch_block_reason`): class tồn tại, đã mở khóa, khác class hiện tại, chưa chết, phiên hợp lệ (station còn, actor trong phạm vi). Phiên kết thúc khi đóng bảng, rời quá phạm vi (kiểm tra mỗi physics tick), station bị xóa, hoặc chết. Đi ngang qua không mở phiên. Mở khóa class thử nghiệm: `station.debug_unlock_class(manager, id)` — chỉ khi đang có phiên tại chính trạm đó và class nằm trong `debug_unlockable_classes`.
+
+**Khi đổi class** (`_activate`): hủy ngắm/vận sức (`cancel_all`) và combo → gỡ 4 ô → đổi active class → tính lại passive (signature mới + passive bổ sung đã lưu của class mới) → khôi phục loadout đã lưu (bỏ ô không còn hợp lệ) với cast mode đã lưu theo kỹ năng → gỡ vũ khí không hợp lệ (không cấp vũ khí mới; Player hoạt động được khi không có vũ khí). Character level, mastery và tiến trình kỹ năng của mọi class giữ nguyên.
+
+**Cooldown khi đổi class (quy tắc prototype, có thể đổi):** runtime gắn với ô trang bị; đổi class tạo runtime mới cho class mới (charges đầy, cooldown không được bảo toàn) — không bao giờ dùng chung runtime giữa hai class. Lên level/tiến hóa kỹ năng đang trang bị thì giữ charges/hồi chiêu (`SkillLoadout.update_definition`).
+
+**Weapon compatibility:** `WeaponEquipment.set_equip_validator()` ← ClassManager: `weapon_type_id` phải thuộc `allowed_weapon_type_ids` của class đang dùng. Mọi đường trang bị (kể cả debug 1/2/3) đều qua `equip_weapon()` → bị từ chối, phát `equip_rejected` (World hiện thông báo). Không sửa WeaponDefinition / BasicAttackController.
+
+**Kỹ năng:** `SkillLoadout.set_equip_validator()` ← ClassManager: kỹ năng phải thuộc class đang dùng **và** đã học. Tiến trình kỹ năng lưu **theo class** (cùng một SkillDefinition ở hai class có level/nhánh riêng) và độc lập với ô (gỡ không mất). Definition trong ô là bản sao `create_variant(level, nhánh, % sức mạnh passive)`; mọi effect vẫn qua SkillCastingController/SkillEffectExecutor/SkillAreaVisual nên indicator khớp vùng mới. Nhánh tiến hóa chọn/đổi tự do bằng debug — **chưa phải quy tắc gameplay**.
+
+**Passive:** `PassiveController` nhận tập passive đang hoạt động và **tính lại tổng từ đầu** mỗi lần đổi (không cộng/trừ dần → không cộng trùng, không sót modifier); passive trùng ID tính một lần. Áp: max HP qua `HealthComponent.set_max_health_bonus()` (giữ tỉ lệ HP, kẹp [1, max] khi sống, đã chết vẫn 0 — không hồi sinh; `reset()` hồi đầy theo max mới), % sức mạnh kỹ năng (vào `create_variant`), % tốc độ (Player đọc `get_move_speed_multiplier()`). Signature không gỡ được, không chiếm ô bổ sung.
+
+**Progression UI** (`ProgressionPanel`, góc trên phải): phím **P** (`debug_progression`) mở/đóng; **Esc / chuột phải** hoặc nút *Đóng* để đóng. Hiện character level/EXP, class đang dùng + đã mở khóa, mastery, signature, passive bổ sung (n/2 ô), kỹ năng (Lv, cast mode, nhánh, sát thương/hồi hiệu lực, nút xếp vào ô Q/C/V/X / Gỡ). Nút màu cam **[Debug]** (+EXP, +Mastery, Học, +Lv, Nhánh, Mở khóa passive/class) là công cụ thử nghiệm. Nút đổi class chỉ hiện khi có phiên tại trạm; bảng không tự quyết quyền. Bảng mở → `Player.set_combat_input_blocked(true)` (World nối), hủy ngắm/vận sức; đóng bảng kết thúc phiên. CombatHUD thêm dòng `Class: … · Lv n`.
+
+**Dữ liệu prototype** (không phải class chính thức):
+
+| Class | Vũ khí | Kỹ năng (học sẵn **đậm**) | Signature | Passive bổ sung |
+|---|---|---|---|---|
+| Test Fighter (khởi đầu) | sword, heavy | **Arc Slash**, **Linear Strike**, Self Heal | Test Vigor: +30 max HP | Test Toughness +15 HP, Test Swiftness +15% tốc độ |
+| Test Caster (mở khóa tại trạm) | dagger | **Ground Burst**, **Self Heal**, Linear Strike | Test Focus: +20% sức mạnh kỹ năng | Test Attunement +10% sức mạnh, Test Swiftness |
+
+Level kỹ năng: Arc (max 3: +4 dmg; +4 dmg & −0.5 s hồi), Burst (max 3: +5 dmg; +8 bán kính), Line (max 2: +1 charge), Heal (max 2: +10 hồi, −0.3 s vận sức). Nhánh: Arc — *Quạt rộng* (+80°, −4 dmg) / *Chém xa* (+40 tầm, −40°); Burst — *Bùng rộng* (+24 bán kính, −6 dmg) / *Bùng tụ* (−16 bán kính, +16 dmg, +40 tầm). Character curve 100/150/220/300 (max Lv 5); mastery curve 60/90/130 (max Lv 4).
+
+**Thêm class mới bằng dữ liệu:** New Resource → `PassiveDefinition` (signature + passive bổ sung) → New Resource → `ClassDefinition`, đặt `class_id`, loại vũ khí, `skills` / `starting_skills`, passive → thêm vào `ClassManager.classes` trên Player (và `debug_unlockable_classes` của một trạm nếu muốn mở khóa thử). Không cần sửa code. Kỹ năng có level/nhánh: điền nhóm *Progression* trong SkillDefinition.
+
+**Chưa chốt / chưa triển khai:** điều kiện mở khóa class/kỹ năng/passive, nguồn EXP & mastery (chỉ có debug), công thức level, tài nguyên nâng cấp, quy tắc đổi/reset nhánh, bảo toàn cooldown khi đổi class, số ô passive, ultimate, cây kỹ năng, NPC/quest, Save/Load. Debug reset **R** không đụng tới progression; chưa có nút reset progression.
 
 ## 3. Quy ước đặt tên [Đã quyết định]
 

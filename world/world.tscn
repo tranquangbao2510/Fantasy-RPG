@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3]
+[gd_scene load_steps=17 format=3]
 
 [ext_resource type="Script" uid="uid://ddak435txd5d4" path="res://world/world.gd" id="1_world"]
 [ext_resource type="PackedScene" path="res://world/maps/test_map/test_map.tscn" id="2_test_map"]
@@ -13,8 +13,12 @@
 [ext_resource type="PackedScene" path="res://entities/enemies/simple_enemy/simple_enemy.tscn" id="11_enemy"]
 [ext_resource type="PackedScene" path="res://ui/combat/combat_hud.tscn" id="12_hud"]
 [ext_resource type="PackedScene" path="res://ui/skills/skill_bar.tscn" id="13_skill_bar"]
+[ext_resource type="PackedScene" path="res://features/classes/station/class_training_station.tscn" id="14_station"]
+[ext_resource type="PackedScene" path="res://ui/progression/progression_panel.tscn" id="15_progression"]
+[ext_resource type="Resource" path="res://features/classes/data/test_caster.tres" id="16_caster_class"]
+[ext_resource type="Script" path="res://features/classes/class_definition.gd" id="17_class_def"]
 
-[node name="World" type="Node2D" node_paths=PackedStringArray("camera", "camera_target", "map_bounds", "interaction_detector", "interaction_prompt", "interaction_feedback", "player_health", "combat_hud", "player_weapon", "player_attack", "player_skills", "player_caster", "skill_bar")]
+[node name="World" type="Node2D" node_paths=PackedStringArray("camera", "camera_target", "map_bounds", "interaction_detector", "interaction_prompt", "interaction_feedback", "player_health", "combat_hud", "player_weapon", "player_attack", "player_skills", "player_caster", "skill_bar", "player", "player_classes", "player_level", "progression_panel")]
 script = ExtResource("1_world")
 camera = NodePath("CameraContainer/GameCamera")
 camera_target = NodePath("EntityContainer/Player")
@@ -29,6 +33,10 @@ player_attack = NodePath("EntityContainer/Player/BasicAttackController")
 player_skills = NodePath("EntityContainer/Player/SkillLoadout")
 player_caster = NodePath("EntityContainer/Player/SkillCastingController")
 skill_bar = NodePath("UILayer/SkillBar")
+player = NodePath("EntityContainer/Player")
+player_classes = NodePath("EntityContainer/Player/ClassManager")
+player_level = NodePath("EntityContainer/Player/CharacterLevel")
+progression_panel = NodePath("UILayer/ProgressionPanel")
 
 [node name="Environment" type="Node2D" parent="."]
 
@@ -58,6 +66,10 @@ position = Vector2(656, 240)
 position = Vector2(300, 420)
 target = NodePath("../Player")
 
+[node name="ClassTrainingStation" parent="EntityContainer" instance=ExtResource("14_station")]
+position = Vector2(560, 256)
+debug_unlockable_classes = Array[ExtResource("17_class_def")]([ExtResource("16_caster_class")])
+
 [node name="CameraContainer" type="Node2D" parent="."]
 
 [node name="GameCamera" parent="CameraContainer" instance=ExtResource("4_camera")]
@@ -71,3 +83,5 @@ target = NodePath("../Player")
 [node name="InteractionPrompt" parent="UILayer" instance=ExtResource("8_prompt")]
 
 [node name="InteractionFeedback" parent="UILayer" instance=ExtResource("9_feedback")]
+
+[node name="ProgressionPanel" parent="UILayer" instance=ExtResource("15_progression")]

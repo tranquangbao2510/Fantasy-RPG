@@ -16,6 +16,10 @@ extends Node2D
 @export var player_skills: SkillLoadout
 @export var player_caster: SkillCastingController
 @export var skill_bar: SkillBar
+@export var player: Player
+@export var player_classes: ClassManager
+@export var player_level: CharacterLevel
+@export var progression_panel: ProgressionPanel
 
 @onready var _environment: Node2D = $Environment
 @onready var _map_container: Node2D = $MapContainer
@@ -29,6 +33,7 @@ func _ready() -> void:
 	_setup_combat_hud()
 	if skill_bar != null and player_skills != null and player_caster != null:
 		skill_bar.bind(player_skills, player_caster)
+	_setup_progression()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -107,6 +112,32 @@ func _setup_combat_hud() -> void:
 		var hurtbox: Hurtbox = node as Hurtbox
 		if hurtbox != null and is_ancestor_of(hurtbox):
 			hurtbox.hit_received.connect(_on_hit_received.bind(hurtbox))
+
+
+## Nối Class/Progression vào UI: bảng progression, thông báo unlock/đổi class/từ chối trang bị, chặn input combat khi bảng mở.
+func _setup_progression() -> void:
+	if player_classes == null:
+		return
+	if progression_panel != null and player_level != null:
+		progression_panel.bind(player_classes, player_level)
+		if player != null:
+			progression_panel.opened.connect(player.set_combat_input_blocked.bind(true))
+			progression_panel.closed.connect(player.set_combat_input_blocked.bind(false))
+	if combat_hud != null:
+		combat_hud.bind_progression(player_classes, player_level)
+	if interaction_feedback == null:
+		return
+	player_classes.class_unlocked.connect(func(class_id: StringName) -> void:
+		interaction_feedback.show_message("Đã mở khóa class: %s" % player_classes.get_class_definition(class_id).display_name))
+	player_classes.class_switched.connect(func(previous_id: StringName, class_id: StringName) -> void:
+		if previous_id != &"":
+			interaction_feedback.show_message("Đã chuyển sang class: %s" % player_classes.get_class_definition(class_id).display_name))
+	if player_weapon != null:
+		player_weapon.equip_rejected.connect(func(weapon: WeaponDefinition, reason: String) -> void:
+			interaction_feedback.show_message("Không thể trang bị %s: %s" % [weapon.display_name if weapon != null else "—", reason]))
+	if player_skills != null:
+		player_skills.equip_rejected.connect(func(_slot: int, skill: SkillDefinition, reason: String) -> void:
+			interaction_feedback.show_message("Không thể trang bị %s: %s" % [skill.display_name if skill != null else "—", reason]))
 
 
 func _on_player_healed(amount: int) -> void:

@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="PassiveDefinition" format=3]
+
+[ext_resource type="Script" path="res://features/classes/passives/passive_definition.gd" id="1_pascc"]
+
+[resource]
+script = ExtResource("1_pascc")
+passive_id = &"test_toughness"
+display_name = "Test Toughness"
+description = "Prototype: +15 max HP."
+amount = 15.0

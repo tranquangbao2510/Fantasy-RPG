@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="ClassDefinition" format=3]
+
+[ext_resource type="Script" path="res://features/classes/passives/passive_definition.gd" id="1_xhcco"]
+[ext_resource type="Resource" path="res://features/classes/passives/data/test_attunement.tres" id="2_d6mpp"]
+[ext_resource type="Resource" path="res://features/classes/passives/data/test_swiftness.tres" id="3_twvwl"]
+[ext_resource type="Script" path="res://features/classes/class_definition.gd" id="4_4rvr4"]
+[ext_resource type="Resource" path="res://features/classes/passives/data/test_caster_focus.tres" id="5_i0pj3"]
+[ext_resource type="Script" path="res://features/skills/skill_definition.gd" id="6_q1way"]
+[ext_resource type="Resource" path="res://features/skills/data/test_ground_burst.tres" id="7_78y48"]
+[ext_resource type="Resource" path="res://features/skills/data/test_linear_strike.tres" id="8_jdkkq"]
+[ext_resource type="Resource" path="res://features/skills/data/test_self_heal.tres" id="9_2jjoi"]
+
+[resource]
+script = ExtResource("4_4rvr4")
+class_id = &"test_caster"
+display_name = "Test Caster"
+description = "Class thử nghiệm (không chính thức): dao găm."
+allowed_weapon_type_ids = Array[StringName]([&"dagger"])
+skills = Array[ExtResource("6_q1way")]([ExtResource("7_78y48"), ExtResource("8_jdkkq"), ExtResource("9_2jjoi")])
+starting_skills = Array[ExtResource("6_q1way")]([ExtResource("7_78y48"), ExtResource("9_2jjoi")])
+signature_passive = ExtResource("5_i0pj3")
+additional_passives = Array[ExtResource("1_xhcco")]([ExtResource("2_d6mpp"), ExtResource("3_twvwl")])

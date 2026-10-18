@@ -1,6 +1,43 @@
 [gd_resource type="Resource" script_class="SkillDefinition" format=3]
 
+[ext_resource type="Script" path="res://features/skills/progression/skill_evolution_branch.gd" id="1_5dtmp"]
 [ext_resource type="Script" path="res://features/skills/skill_definition.gd" id="1_8uqe6"]
+[ext_resource type="Script" path="res://features/skills/progression/skill_modifier.gd" id="2_2ft1s"]
+
+[sub_resource type="Resource" id="Resource_ilmlj"]
+script = ExtResource("2_2ft1s")
+short_name_override = "Burst·W"
+radius_bonus = 24.0
+effect_amount_bonus = -6
+
+[sub_resource type="Resource" id="Resource_eje6l"]
+script = ExtResource("1_5dtmp")
+branch_id = &"wide_burst"
+display_name = "Bùng rộng"
+description = "Prototype: bán kính +24, sát thương −6."
+modifier = SubResource("Resource_ilmlj")
+
+[sub_resource type="Resource" id="Resource_7lj0w"]
+script = ExtResource("2_2ft1s")
+short_name_override = "Burst·F"
+cast_range_bonus = 40.0
+radius_bonus = -16.0
+effect_amount_bonus = 16
+
+[sub_resource type="Resource" id="Resource_iwld4"]
+script = ExtResource("1_5dtmp")
+branch_id = &"focused_burst"
+display_name = "Bùng tụ"
+description = "Prototype: bán kính −16, sát thương +16, tầm +40."
+modifier = SubResource("Resource_7lj0w")
+
+[sub_resource type="Resource" id="Resource_ou6h7"]
+script = ExtResource("2_2ft1s")
+effect_amount_bonus = 5
+
+[sub_resource type="Resource" id="Resource_1g5bv"]
+script = ExtResource("2_2ft1s")
+radius_bonus = 8.0
 
 [resource]
 script = ExtResource("1_8uqe6")
@@ -17,3 +54,6 @@ cooldown = 5.0
 effect_amount = 22
 knockback = 120.0
 indicator_color = Color(1, 0.45, 0.35, 0.3)
+max_level = 3
+level_modifiers = Array[ExtResource("2_2ft1s")]([SubResource("Resource_ou6h7"), SubResource("Resource_1g5bv")])
+evolution_branches = Array[ExtResource("1_5dtmp")]([SubResource("Resource_eje6l"), SubResource("Resource_iwld4")])

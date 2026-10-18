@@ -54,4 +54,6 @@ Quy ước commit: [docs/git_conventions.md](docs/git_conventions.md).
 
 - TASK 09 — Active skill framework (`features/skills/`, `ui/skills/`): 4 ô kỹ năng **Q / C / V / X**, cast mode Normal / Quick / Instant (bấm nút trên Skill Bar để đổi), hủy ngắm bằng **chuột phải / Esc**.
 
-Chưa có class, skill level, passive, ultimate, mana/stamina, animation, inventory, hội thoại hay menu. Mọi chỉ số combat, vũ khí và kỹ năng là placeholder.
+- TASK 10 — Class & progression prototype (`features/classes/`, `features/character/`, `ui/progression/`): class **Test Fighter** (khởi đầu) / **Test Caster**, character level dùng chung, mastery theo class, signature + passive bổ sung, học / nâng level / tiến hóa kỹ năng, loadout riêng từng class, luật vũ khí theo class. Đến **Trạm huấn luyện** (cột cờ tím phía trên phải quảng trường) và nhấn **E** để mở khóa (debug) / đổi class. **P** mở bảng Class/Progression (nút **[Debug]** để cộng EXP, mastery, học/nâng/tiến hóa kỹ năng); **Esc** đóng.
+
+Chưa có ultimate, mana/stamina, animation, inventory, hội thoại, quest hay save. Mọi chỉ số combat, vũ khí, kỹ năng, class và EXP là placeholder.

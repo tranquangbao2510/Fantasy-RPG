@@ -53,6 +53,12 @@ theme_override_styles/background = SubResource("StyleBoxFlat_back")
 theme_override_styles/fill = SubResource("StyleBoxFlat_fill")
 show_percentage = false
 
+[node name="ClassLabel" type="Label" parent="PlayerHealth"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+text = "Class: —"
+
 [node name="WeaponLabel" type="Label" parent="PlayerHealth"]
 unique_name_in_owner = true
 layout_mode = 2

@@ -1,6 +1,43 @@
 [gd_resource type="Resource" script_class="SkillDefinition" format=3]
 
 [ext_resource type="Script" path="res://features/skills/skill_definition.gd" id="1_abd2r"]
+[ext_resource type="Script" path="res://features/skills/progression/skill_evolution_branch.gd" id="1_olykh"]
+[ext_resource type="Script" path="res://features/skills/progression/skill_modifier.gd" id="2_w4qew"]
+
+[sub_resource type="Resource" id="Resource_g7l2s"]
+script = ExtResource("2_w4qew")
+short_name_override = "Arc·W"
+angle_degrees_bonus = 80.0
+effect_amount_bonus = -4
+
+[sub_resource type="Resource" id="Resource_asi51"]
+script = ExtResource("1_olykh")
+branch_id = &"wide_arc"
+display_name = "Quạt rộng"
+description = "Prototype: góc +80°, sát thương −4."
+modifier = SubResource("Resource_g7l2s")
+
+[sub_resource type="Resource" id="Resource_1n3gi"]
+script = ExtResource("2_w4qew")
+short_name_override = "Arc·R"
+cast_range_bonus = 40.0
+angle_degrees_bonus = -40.0
+
+[sub_resource type="Resource" id="Resource_supe2"]
+script = ExtResource("1_olykh")
+branch_id = &"long_reach"
+display_name = "Chém xa"
+description = "Prototype: tầm +40, góc −40°."
+modifier = SubResource("Resource_1n3gi")
+
+[sub_resource type="Resource" id="Resource_2j8fu"]
+script = ExtResource("2_w4qew")
+effect_amount_bonus = 4
+
+[sub_resource type="Resource" id="Resource_rdjt4"]
+script = ExtResource("2_w4qew")
+cooldown_bonus = -0.5
+effect_amount_bonus = 4
 
 [resource]
 script = ExtResource("1_abd2r")
@@ -15,3 +52,6 @@ cooldown = 3.0
 effect_amount = 18
 knockback = 160.0
 indicator_color = Color(1, 0.85, 0.4, 0.3)
+max_level = 3
+level_modifiers = Array[ExtResource("2_w4qew")]([SubResource("Resource_2j8fu"), SubResource("Resource_rdjt4")])
+evolution_branches = Array[ExtResource("1_olykh")]([SubResource("Resource_asi51"), SubResource("Resource_supe2")])

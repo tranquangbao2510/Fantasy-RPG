@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="PassiveDefinition" format=3]
+
+[ext_resource type="Script" path="res://features/classes/passives/passive_definition.gd" id="1_3cwhx"]
+
+[resource]
+script = ExtResource("1_3cwhx")
+passive_id = &"test_swiftness"
+display_name = "Test Swiftness"
+description = "Prototype: +15% tốc độ di chuyển."
+effect_type = 2
+amount = 15.0

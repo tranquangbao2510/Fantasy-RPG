@@ -1,7 +1,8 @@
 class_name SkillDefinition
 extends Resource
 ## Định nghĩa một kỹ năng chủ động (dữ liệu thiết kế, chỉ đọc lúc chạy). Không chứa cooldown/charges đang chạy.
-## Không phụ thuộc vũ khí; thuộc về class (Class System sau này). Mọi giá trị là placeholder.
+## Không phụ thuộc vũ khí; thuộc về class (ClassDefinition.skills). Level/nhánh tiến hóa tạo bản sao runtime
+## qua create_variant(), không sửa Resource này. Mọi giá trị là placeholder.
 
 enum TargetingType {
 	SELF,          ## Tại vị trí người thi triển; `radius` (0 = chỉ bản thân).
@@ -54,6 +55,52 @@ enum EffectType {
 
 @export_group("Indicator")
 @export var indicator_color: Color = Color(0.4, 0.8, 1.0, 0.35)
+
+@export_group("Progression")
+## Cấp tối đa của kỹ năng (1 = không nâng cấp).
+@export var max_level: int = 1
+## level_modifiers[i] áp dụng từ level i + 2 trở đi (cộng dồn). Số phần tử <= max_level − 1.
+@export var level_modifiers: Array[SkillModifier] = []
+## Các nhánh tiến hóa (branch_id duy nhất). Rỗng = không có tiến hóa.
+@export var evolution_branches: Array[SkillEvolutionBranch] = []
+
+
+func get_evolution_branch(branch_id: StringName) -> SkillEvolutionBranch:
+	for branch: SkillEvolutionBranch in evolution_branches:
+		if branch != null and branch.branch_id == branch_id:
+			return branch
+	return null
+
+
+## Bản sao runtime đã áp skill level, nhánh tiến hóa (branch_id rỗng = chưa tiến hóa) và % hiệu ứng từ passive.
+## Không sửa Resource này. Kết quả có thể không hợp lệ nếu dữ liệu modifier sai — người gọi kiểm tra is_valid().
+func create_variant(level: int, branch_id: StringName = &"", effect_percent: float = 0.0) -> SkillDefinition:
+	var variant: SkillDefinition = duplicate() as SkillDefinition
+	for i: int in clampi(level - 1, 0, level_modifiers.size()):
+		if level_modifiers[i] != null:
+			level_modifiers[i].apply_to(variant)
+	var branch: SkillEvolutionBranch = get_evolution_branch(branch_id) if branch_id != &"" else null
+	if branch != null:
+		branch.modifier.apply_to(variant)
+	if effect_percent != 0.0:
+		variant.effect_amount = maxi(0, roundi(variant.effect_amount * (1.0 + effect_percent / 100.0)))
+	return variant
+
+
+## Kiểm tra dữ liệu progression: cấp hợp lệ, nhánh có ID duy nhất, mọi tổ hợp level × nhánh cho ra definition hợp lệ.
+func is_progression_valid() -> bool:
+	if max_level < 1 or level_modifiers.size() > max_level - 1 or level_modifiers.has(null):
+		return false
+	var ids: Array[StringName] = [&""]
+	for branch: SkillEvolutionBranch in evolution_branches:
+		if branch == null or not branch.is_valid() or ids.has(branch.branch_id):
+			return false
+		ids.append(branch.branch_id)
+	for level: int in range(1, max_level + 1):
+		for id: StringName in ids:
+			if not create_variant(level, id).is_valid():
+				return false
+	return true
 
 
 func is_valid() -> bool:

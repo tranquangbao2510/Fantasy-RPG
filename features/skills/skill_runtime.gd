@@ -26,6 +26,18 @@ func _init(p_definition: SkillDefinition, p_cast_mode: SkillDefinition.CastMode)
 	reset()
 
 
+## Thay definition (vd. bản sao sau khi lên level/tiến hóa) mà giữ charges và thời gian hồi đang chạy.
+## Charges bị kẹp theo max mới; nếu max tăng thì bắt đầu hồi charge còn thiếu.
+func set_definition(p_definition: SkillDefinition) -> void:
+	definition = p_definition
+	_charges = mini(_charges, definition.max_charges)
+	if _charges < definition.max_charges and _recharge_left <= 0.0:
+		_recharge_left = definition.cooldown
+	elif _charges >= definition.max_charges:
+		_recharge_left = 0.0
+	changed.emit()
+
+
 func get_charges() -> int:
 	return _charges
 

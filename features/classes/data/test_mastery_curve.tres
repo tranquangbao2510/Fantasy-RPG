@@ -1,0 +1,7 @@
+[gd_resource type="Resource" script_class="LevelCurve" format=3]
+
+[ext_resource type="Script" path="res://features/character/level_curve.gd" id="1_ri1sv"]
+
+[resource]
+script = ExtResource("1_ri1sv")
+exp_to_next_level = Array[int]([60, 90, 130])

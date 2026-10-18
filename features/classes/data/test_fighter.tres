@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="ClassDefinition" format=3]
+
+[ext_resource type="Script" path="res://features/classes/passives/passive_definition.gd" id="1_76s6y"]
+[ext_resource type="Resource" path="res://features/classes/passives/data/test_toughness.tres" id="2_gon08"]
+[ext_resource type="Resource" path="res://features/classes/passives/data/test_swiftness.tres" id="3_pm0i2"]
+[ext_resource type="Script" path="res://features/classes/class_definition.gd" id="4_y7w6g"]
+[ext_resource type="Resource" path="res://features/classes/passives/data/test_fighter_vigor.tres" id="5_phfq1"]
+[ext_resource type="Script" path="res://features/skills/skill_definition.gd" id="6_nb443"]
+[ext_resource type="Resource" path="res://features/skills/data/test_arc_slash.tres" id="7_x14hq"]
+[ext_resource type="Resource" path="res://features/skills/data/test_linear_strike.tres" id="8_7yduu"]
+[ext_resource type="Resource" path="res://features/skills/data/test_self_heal.tres" id="9_wrl6s"]
+
+[resource]
+script = ExtResource("4_y7w6g")
+class_id = &"test_fighter"
+display_name = "Test Fighter"
+description = "Class thử nghiệm (không chính thức): kiếm / vũ khí nặng."
+allowed_weapon_type_ids = Array[StringName]([&"sword", &"heavy"])
+skills = Array[ExtResource("6_nb443")]([ExtResource("7_x14hq"), ExtResource("8_7yduu"), ExtResource("9_wrl6s")])
+starting_skills = Array[ExtResource("6_nb443")]([ExtResource("7_x14hq"), ExtResource("8_7yduu")])
+signature_passive = ExtResource("5_phfq1")
+additional_passives = Array[ExtResource("1_76s6y")]([ExtResource("2_gon08"), ExtResource("3_pm0i2")])

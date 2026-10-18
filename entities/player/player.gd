@@ -1,7 +1,9 @@
+class_name Player
 extends CharacterBody2D
 ## Player placeholder: di chuyển liên tục 8 hướng và điều phối các component (combat, interaction, health).
 ## Origin đặt tại chân nhân vật để Y-sort đúng trong EntityContainer.
 ## Combo đánh thường nằm trong BasicAttackController (dữ liệu từ vũ khí đang trang bị), HP trong HealthComponent;
+## Class/passive/progression nằm trong ClassManager, PassiveController, CharacterLevel.
 ## script này chỉ đọc input và nối trạng thái.
 
 @export var move_speed: float = 160.0
@@ -9,8 +11,11 @@ extends CharacterBody2D
 ## Hướng nhìn cuối cùng; dùng khi chuột trùng vị trí Player.
 var _facing: Vector2 = Vector2.DOWN
 var _spawn_position: Vector2
+## Khi một bảng UI đang nhận input (vd. Progression Panel): bỏ qua đánh thường và kỹ năng.
+var _combat_input_blocked: bool = false
 
 @onready var _facing_pivot: Node2D = $Visual/FacingPivot
+@onready var _passives: PassiveController = $PassiveController
 @onready var _health: HealthComponent = $HealthComponent
 @onready var _attack: BasicAttackController = $BasicAttackController
 @onready var _interaction_detector: InteractionDetector = $InteractionDetector
@@ -33,7 +38,7 @@ func _physics_process(_delta: float) -> void:
 		return
 	# get_vector giới hạn độ dài <= 1 nên đi chéo không nhanh hơn đi thẳng.
 	var direction: Vector2 = Input.get_vector(&"move_left", &"move_right", &"move_up", &"move_down")
-	velocity = direction * move_speed
+	velocity = direction * move_speed * _passives.get_move_speed_multiplier()
 	move_and_slide()
 	if direction != Vector2.ZERO and not _attack.is_attacking():
 		_set_facing(direction)
@@ -42,6 +47,8 @@ func _physics_process(_delta: float) -> void:
 ## Đầu mối input combat: kỹ năng được hỏi trước (phím ô, xác nhận/hủy ngắm);
 ## chỉ khi kỹ năng không dùng event và không đang ngắm/vận sức thì click trái mới là đánh thường.
 func _unhandled_input(event: InputEvent) -> void:
+	if _combat_input_blocked:
+		return
 	if _skills.handle_input(event):
 		get_viewport().set_input_as_handled()
 		return
@@ -52,6 +59,19 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func is_dead() -> bool:
 	return _health.is_dead()
+
+
+## Chặn/mở input combat (đánh thường, kỹ năng) khi UI đang nhận input. Chặn sẽ hủy ngắm/vận sức và combo đang chạy.
+## Di chuyển không bị chặn.
+func set_combat_input_blocked(blocked: bool) -> void:
+	_combat_input_blocked = blocked
+	if blocked:
+		_skills.cancel_all()
+		_attack.cancel()
+
+
+func is_combat_input_blocked() -> bool:
+	return _combat_input_blocked
 
 
 ## Reset thử nghiệm: về spawn, hồi đầy HP, xóa vận tốc và combo đang đánh, bật lại tương tác.

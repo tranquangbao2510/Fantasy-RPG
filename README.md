@@ -27,8 +27,8 @@ Quy tắc cộng tác cho AI agent: [docs/agent_rules.md](docs/agent_rules.md).
 
 ## Chạy
 
-- **F5**: chạy project (Main Scene là `res://app/main.tscn`).
-- **F6**: chạy scene đang mở.
+- **F5**: chạy project (Main Scene là `res://app/main.tscn`), nhấn **Vào game** để chuyển sang World Scene.
+- **F6**: chạy scene đang mở (vd. mở `world/world.tscn` để chạy World độc lập).
 - Dòng lệnh (headless, kiểm tra nhanh):
 
   ```sh
@@ -37,5 +37,7 @@ Quy tắc cộng tác cho AI agent: [docs/agent_rules.md](docs/agent_rules.md).
 
 ## Trạng thái hiện tại
 
-TASK 01 — đã dựng nền tảng: cấu trúc thư mục, Main Scene tạm thời, cấu hình Godot, Git và tài liệu.
-Chưa có gameplay, player, map, menu hay hệ thống nào khác.
+- TASK 01 — nền tảng: cấu trúc thư mục, Main Scene tạm thời, cấu hình Godot, Git và tài liệu.
+- TASK 02 — World Scene với các container (Environment, Map, Entity, Camera) và nút "Vào game" từ Main Scene.
+
+Chưa có gameplay, player, map, camera, menu hay hệ thống nào khác.

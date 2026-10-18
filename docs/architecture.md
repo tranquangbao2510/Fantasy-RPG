@@ -21,7 +21,7 @@ Mã nguồn được tổ chức theo **tính năng** (feature) thay vì theo lo
 | `core/` | Thành phần kỹ thuật dùng chung, không phụ thuộc gameplay cụ thể | Chưa triển khai |
 | `features/` | Module gameplay (mỗi tính năng một thư mục con, vd. `features/combat/`) | Chưa triển khai |
 | `entities/` | Player, NPC, enemy (scene ghép từ component) | Chưa triển khai |
-| `world/` | Bản đồ, môi trường, camera | Chưa triển khai |
+| `world/` | Bản đồ, môi trường, camera | Đã triển khai (`world.tscn`, `world.gd` — chỉ có container) |
 | `ui/` | Thành phần giao diện | Chưa triển khai |
 | `data/` | Dữ liệu game dùng chung (`.tres` Resource) | Chưa triển khai |
 | `assets/` | Tài nguyên dùng chung (sprite, âm thanh, font) | Chưa triển khai |
@@ -30,6 +30,42 @@ Mã nguồn được tổ chức theo **tính năng** (feature) thay vì theo lo
 | `addons/` | Plugin bên thứ ba (chỉ khi thật sự cần) | Chưa triển khai |
 
 Thư mục chỉ được tạo khi có nội dung thực tế. Không tạo thư mục, script hoặc class rỗng để "giữ chỗ".
+
+## 2a. Scene hiện tại [Đã triển khai]
+
+```
+app/main.tscn  (Main Scene, entry point)
+Main (Control) ── main.gd
+├── Background (ColorRect)
+└── Center (CenterContainer)
+    └── Layout (VBoxContainer)
+        ├── StatusLabel (Label)
+        └── EnterButton (Button "Vào game")
+            └─ nhấn → SceneTree.change_scene_to_file("res://world/world.tscn")
+
+world/world.tscn  (World Scene, mở độc lập được)
+World (Node2D) ── world.gd
+├── Environment (Node2D)        — nền, trang trí, hiệu ứng môi trường
+├── MapContainer (Node2D)       — bản đồ / TileMapLayer
+├── EntityContainer (Node2D)    — player, NPC, enemy
+├── CameraContainer (Node2D)    — camera
+├── PrototypeBackground (CanvasLayer, layer -100) — nền tạm, sẽ xóa
+└── PrototypeOverlay (CanvasLayer) — nhãn "World Prototype", sẽ xóa
+```
+
+- **Main Scene** là entry point: màn hình khởi động tạm và chuyển vào World. Không giữ trạng thái game.
+- **World Scene** là gốc của môi trường game. Không phụ thuộc Main Scene, mở và chạy độc lập bằng F6.
+- `world.gd` chỉ cung cấp public API trả về các container (`get_map_container()`, `get_entity_container()`, ...). Không chứa logic gameplay.
+- Chuyển scene dùng trực tiếp `change_scene_to_file()`; chưa có SceneManager, loading screen hay hiệu ứng chuyển cảnh.
+
+Nguyên tắc đặt node vào World:
+
+- Bản đồ → `MapContainer`; entity → `EntityContainer`; camera → `CameraContainer`; phần môi trường không thuộc bản đồ (nền, thời tiết, ánh sáng) → `Environment`.
+- Không đặt node gameplay trực tiếp dưới `World`.
+- Sắp xếp theo chiều sâu (y-sort) cho góc nhìn three-quarter sẽ quyết định khi triển khai map/entity.
+- `PrototypeBackground` và `PrototypeOverlay` chỉ phục vụ kiểm thử, xóa khi có map thật.
+
+Chưa triển khai: map, TileMapLayer, entity, camera, physics/collision.
 
 ## 3. Quy ước đặt tên [Đã quyết định]
 

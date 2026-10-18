@@ -1,12 +1,19 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://entities/player/player.gd" id="1_player"]
 [ext_resource type="PackedScene" path="res://features/interaction/interaction_detector.tscn" id="2_detector"]
+[ext_resource type="Script" path="res://features/character/health_component.gd" id="3_health"]
+[ext_resource type="Script" path="res://features/combat/hurtbox.gd" id="4_hurtbox"]
+[ext_resource type="PackedScene" path="res://features/combat/melee_attack.tscn" id="5_melee"]
+[ext_resource type="Script" path="res://features/combat/hit_flash.gd" id="6_flash"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_feet"]
 radius = 6.0
 
-[node name="Player" type="CharacterBody2D"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hurt"]
+size = Vector2(14, 24)
+
+[node name="Player" type="CharacterBody2D" groups=["test_resettable"]]
 collision_layer = 2
 motion_mode = 1
 script = ExtResource("1_player")
@@ -34,3 +41,32 @@ position = Vector2(0, -6)
 shape = SubResource("CircleShape2D_feet")
 
 [node name="InteractionDetector" parent="." instance=ExtResource("2_detector")]
+
+[node name="HealthComponent" type="Node" parent="."]
+script = ExtResource("3_health")
+
+[node name="Hurtbox" type="Area2D" parent="." node_paths=PackedStringArray("health")]
+collision_layer = 16
+collision_mask = 0
+monitoring = false
+script = ExtResource("4_hurtbox")
+health = NodePath("../HealthComponent")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox"]
+position = Vector2(0, -14)
+shape = SubResource("RectangleShape2D_hurt")
+
+[node name="MeleeAttack" parent="." node_paths=PackedStringArray("health") instance=ExtResource("5_melee")]
+position = Vector2(0, -12)
+damage = 20
+attack_range = 30.0
+attack_width = 26.0
+duration = 0.12
+cooldown = 0.35
+target_layers = 32
+health = NodePath("../HealthComponent")
+
+[node name="HitFlash" type="Node" parent="." node_paths=PackedStringArray("health", "visual")]
+script = ExtResource("6_flash")
+health = NodePath("../HealthComponent")
+visual = NodePath("../Visual")

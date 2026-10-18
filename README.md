@@ -48,4 +48,6 @@ Quy ước commit: [docs/git_conventions.md](docs/git_conventions.md).
 
 - TASK 06 — Interaction System (`features/interaction/`, `ui/interaction/`): đến gần bảng thông báo, rương hoặc tinh thể thử nghiệm và nhấn **E**.
 
-Chưa có animation, combat, inventory, hội thoại, menu hay hệ thống nào khác.
+- TASK 07 — Combat prototype: **chuột trái** chém về phía con trỏ, Training Dummy và Simple Enemy, HP/HUD, số sát thương, bị hạ gục; **R** để reset thử nghiệm.
+
+Chưa có class, kỹ năng, animation, inventory, hội thoại, menu hay hệ thống nào khác. Mọi chỉ số combat là placeholder.

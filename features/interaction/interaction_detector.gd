@@ -17,6 +17,7 @@ const SWITCH_MARGIN: float = 1.0
 
 var _candidates: Array[Interactable] = []
 var _target: Interactable
+var _enabled: bool = true
 
 @onready var _actor: Node2D = get_parent() as Node2D
 @onready var _shape: CollisionShape2D = $CollisionShape2D
@@ -31,7 +32,8 @@ func _ready() -> void:
 
 
 func _physics_process(_delta: float) -> void:
-	_update_target()
+	if _enabled:
+		_update_target()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -43,8 +45,22 @@ func get_target() -> Interactable:
 	return _target if is_instance_valid(_target) else null
 
 
-## Tương tác với mục tiêu hiện tại. Trả về false nếu không có mục tiêu hợp lệ.
+## Bật/tắt khả năng tương tác (vd. khi actor bị hạ gục). Tắt sẽ xóa mục tiêu hiện tại.
+func set_enabled(value: bool) -> void:
+	_enabled = value
+	if not _enabled and _target != null:
+		_target = null
+		target_changed.emit(null)
+
+
+func is_enabled() -> bool:
+	return _enabled
+
+
+## Tương tác với mục tiêu hiện tại. Trả về false nếu không có mục tiêu hợp lệ hoặc đang bị tắt.
 func try_interact() -> bool:
+	if not _enabled:
+		return false
 	_update_target()
 	if _target == null:
 		return false

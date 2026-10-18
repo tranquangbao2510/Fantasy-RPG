@@ -1,0 +1,59 @@
+class_name HealthComponent
+extends Node
+## HP dùng chung cho mọi thực thể (Player, enemy, dummy). Không biết gì về chủ thể, UI hay animation.
+## HP luôn trong [0, max_health]. died phát đúng một lần cho tới khi reset().
+
+signal health_changed(current: int, maximum: int)
+signal damaged(amount: int)
+signal healed(amount: int)
+signal died
+## Phát khi reset() đưa thực thể từ trạng thái chết về sống.
+signal revived
+
+@export var max_health: int = 100
+
+var current_health: int = 0
+
+
+func _ready() -> void:
+	max_health = maxi(1, max_health)
+	current_health = max_health
+
+
+func is_dead() -> bool:
+	return current_health <= 0
+
+
+## Trừ HP. Trả về lượng HP thực sự bị trừ (0 nếu amount không hợp lệ hoặc đã chết).
+func apply_damage(amount: int) -> int:
+	if amount <= 0 or is_dead():
+		return 0
+	var applied: int = mini(amount, current_health)
+	current_health -= applied
+	damaged.emit(applied)
+	health_changed.emit(current_health, max_health)
+	if current_health == 0:
+		died.emit()
+	return applied
+
+
+## Hồi HP, không vượt max_health. Không hồi sinh thực thể đã chết (dùng reset()).
+func heal(amount: int) -> int:
+	if amount <= 0 or is_dead():
+		return 0
+	var applied: int = mini(amount, max_health - current_health)
+	if applied == 0:
+		return 0
+	current_health += applied
+	healed.emit(applied)
+	health_changed.emit(current_health, max_health)
+	return applied
+
+
+## Đưa HP về max_health.
+func reset() -> void:
+	var was_dead: bool = is_dead()
+	current_health = max_health
+	health_changed.emit(current_health, max_health)
+	if was_dead:
+		revived.emit()

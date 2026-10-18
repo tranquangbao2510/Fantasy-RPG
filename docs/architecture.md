@@ -19,10 +19,10 @@ Mã nguồn được tổ chức theo **tính năng** (feature) thay vì theo lo
 | `app/` | Main scene, khởi động và vòng đời ứng dụng | Đã triển khai (`main.tscn`, `main.gd` — màn hình tạm) |
 | `docs/` | Tài liệu kỹ thuật | Đã triển khai |
 | `core/` | Thành phần kỹ thuật dùng chung, không phụ thuộc gameplay cụ thể | Chưa triển khai |
-| `features/` | Module gameplay (mỗi tính năng một thư mục con, vd. `features/combat/`) | Đã triển khai (`interaction/`) |
-| `entities/` | Player, NPC, enemy (scene ghép từ component) | Đã triển khai (`player/` — placeholder) |
+| `features/` | Module gameplay (mỗi tính năng một thư mục con, vd. `features/combat/`) | Đã triển khai (`interaction/`, `combat/`, `character/`) |
+| `entities/` | Player, NPC, enemy (scene ghép từ component) | Đã triển khai (`player/`, `enemies/` — placeholder) |
 | `world/` | Bản đồ, môi trường, camera | Đã triển khai (`world.tscn`, `world.gd`, `maps/test_map/`, `camera/`) |
-| `ui/` | Thành phần giao diện | Đã triển khai (`interaction/`) |
+| `ui/` | Thành phần giao diện | Đã triển khai (`interaction/`, `combat/`) |
 | `data/` | Dữ liệu game dùng chung (`.tres` Resource) | Chưa triển khai |
 | `assets/` | Tài nguyên dùng chung (sprite, âm thanh, font) | Chưa triển khai |
 | `save/` | Logic lưu / tải game | Chưa triển khai |
@@ -50,10 +50,12 @@ World (Node2D) ── world.gd
 │   └── TestMap (instance world/maps/test_map/test_map.tscn)
 ├── EntityContainer (Node2D, y_sort_enabled) — player, NPC, enemy
 │   ├── Player (instance entities/player/player.tscn, spawn (480, 320))
-│   └── NoticeBoard (400, 256), TestChest (528, 392), TestCrystal (576, 392) — vật thể tương tác thử nghiệm
+│   ├── NoticeBoard (400, 256), TestChest (528, 392), TestCrystal (576, 392) — vật thể tương tác thử nghiệm
+│   └── TrainingDummy (656, 240), SimpleEnemy (300, 420) — mục tiêu combat thử nghiệm
 ├── CameraContainer (Node2D)    — camera
 │   └── GameCamera (instance world/camera/game_camera.tscn)
 └── UILayer (CanvasLayer)     — UI cố định trên màn hình
+    ├── CombatHUD
     ├── InteractionPrompt
     └── InteractionFeedback
 ```
@@ -70,7 +72,7 @@ Nguyên tắc đặt node vào World:
 - Vật thể **đứng** cần Y-sort cùng entity (rương, bảng, ...) cũng đặt trong `EntityContainer`, origin tại chân.
 - UI cố định trên màn hình đặt trong `UILayer` (CanvasLayer), không bị camera zoom/di chuyển.
 
-Chưa triển khai: NPC, enemy.
+Chưa triển khai: NPC, enemy chính thức.
 
 ## 2b. Bản đồ thử nghiệm — TestMap [Đã triển khai, placeholder]
 
@@ -100,6 +102,9 @@ world/maps/test_map/
 | 1 | `world` | Vật cản tĩnh của bản đồ (tile ObstacleLayer, MapBounds) |
 | 2 | `player` | Player |
 | 3 | `interaction` | Vùng Area2D của Interactable (InteractionDetector dò layer này) |
+| 4 | `enemy` | Thân CharacterBody2D của enemy (chưa layer nào dò) |
+| 5 | `player_hurtbox` | Hurtbox của Player (Hitbox của enemy dò layer này) |
+| 6 | `enemy_hurtbox` | Hurtbox của enemy/dummy (Hitbox của Player dò layer này) |
 
 - TileSet physics layer 0: `collision_layer = 1`, `collision_mask = 0` (vật cản tĩnh không cần dò).
 - Chỉ tile đá `(2,1)` và bụi `(3,1)` có polygon (24×24, lệch xuống dưới theo chân vật). Ground và Detail tắt `collision_enabled`.
@@ -129,7 +134,8 @@ Player (CharacterBody2D, motion_mode = Floating) ── player.gd
 │   ├── Body (Polygon2D)          — khối xanh 16×26 phía trên chân
 │   └── FacingPivot (Node2D)      — xoay theo hướng di chuyển cuối
 │       └── Marker (Polygon2D)    — tam giác vàng chỉ hướng trước mặt
-└── CollisionShape2D              — CircleShape2D r=6, tâm (0,-6): chạm tới chân
+├── CollisionShape2D              — CircleShape2D r=6, tâm (0,-6): chạm tới chân
+└── InteractionDetector, HealthComponent, Hurtbox, MeleeAttack, HitFlash — xem 2e, 2f
 ```
 
 - **Origin = chân nhân vật**, nên Y-sort trong `EntityContainer` dựa trên điểm tiếp xúc mặt đất. Visual vẽ phía trên origin. Không dùng Z-index.
@@ -138,6 +144,7 @@ Player (CharacterBody2D, motion_mode = Floating) ── player.gd
 - `move_speed` (`@export`, mặc định **160 px/s**) — giá trị thử nghiệm.
 - **Spawn:** đặt trực tiếp trong `world.tscn` tại (480, 320), giữa quảng trường đá. Chưa có SpawnManager/checkpoint.
 - Placeholder: toàn bộ visual, kích thước collision, tốc độ, vị trí spawn.
+- `player.gd` chỉ đọc input (`basic_attack` → `MeleeAttack.attack()`), chặn điều khiển khi chết và cung cấp `is_dead()`, `reset_state()`, `get_aim_direction(world_point)`. Logic HP/đòn đánh nằm trong component.
 
 ## 2d. Camera — GameCamera [Đã triển khai]
 
@@ -194,7 +201,7 @@ Luồng: Player → `InteractionDetector` → `Interactable.interact()` → chu�
 - Phạm vi: `@export detection_radius = 48` + bán kính vùng của Interactable (8) → khoảng **56 px** tính từ chân Player tới điểm tương tác.
 - Input: action `interact` = **E** (physical keycode), xử lý trong `_unhandled_input` với `is_action_pressed` (bỏ echo → giữ phím chỉ tương tác 1 lần).
 - Signal: `target_changed(target)` (null = không có; phát lại sau mỗi lần tương tác vì prompt có thể đổi) và `interacted(target, message)`.
-- API: `get_target()`, `try_interact()`.
+- API: `get_target()`, `try_interact()`, `set_enabled(bool)` / `is_enabled()` (tắt khi actor bị hạ gục; tắt sẽ xóa mục tiêu).
 
 **UI:** `World._ready()` nối `target_changed` → `InteractionPrompt.show_target()` và `interacted` → `InteractionFeedback.show_message()`. UI chỉ đọc public API của Interactable, không gọi `interact()` và không đọc trạng thái nội bộ. Prompt lấy tên phím từ Input Map.
 
@@ -212,6 +219,67 @@ Giới hạn prototype:
 - Kết quả tương tác chỉ là chuỗi thông báo; chưa có kiểu kết quả có cấu trúc.
 - Trạng thái rương/tinh thể chỉ tồn tại lúc chạy, không lưu.
 - Văn bản thử nghiệm viết trực tiếp trong scene/script, chưa có hệ thống bản địa hóa.
+
+## 2f. Combat prototype [Đã triển khai, placeholder]
+
+```
+features/character/health_component.gd — class_name HealthComponent (Node)
+features/combat/
+├── damage_info.gd        — class_name DamageInfo (RefCounted): amount, source
+├── hitbox.gd             — class_name Hitbox (Area2D): vùng gây đòn, bật/tắt theo đòn
+├── hurtbox.gd            — class_name Hurtbox (Area2D): vùng nhận đòn → HealthComponent
+├── melee_attack.gd/.tscn — class_name MeleeAttack (Node2D): đòn cận chiến dùng chung Player/enemy
+└── hit_flash.gd          — class_name HitFlash (Node): nháy màu / tô xám theo HP (chỉ visual)
+entities/enemies/
+├── training_dummy/       — Node2D đứng yên, HP 60, không AI
+└── simple_enemy/         — CharacterBody2D, HP 40, AI đơn giản (IDLE / CHASE / ATTACK / DEAD)
+ui/combat/
+├── combat_hud.gd/.tscn   — HP Player, thông báo bị hạ gục, gợi ý phím
+├── damage_numbers.gd     — số sát thương neo vào vị trí world, vẽ trên màn hình
+└── world_health_bar.gd   — thanh HP nhỏ trên đầu dummy/enemy
+```
+
+**Luồng:** Input (`basic_attack` = chuột trái) → `player.gd` tính hướng tới chuột → `MeleeAttack.attack(dir)` → (windup) → `Hitbox.activate(DamageInfo)` → mỗi physics tick duyệt `get_overlapping_areas()` → `Hurtbox.receive_damage(info)` → `HealthComponent.apply_damage()` → signal `damaged` / `health_changed` / `died` → HitFlash, WorldHealthBar, CombatHUD, logic chết của thực thể.
+
+**HealthComponent** — `max_health` (export), `current_health`, `is_dead()`, `apply_damage(n) -> int`, `heal(n) -> int`, `reset()`. HP kẹp trong [0, max]; amount ≤ 0 bị bỏ qua; đã chết thì không nhận damage/heal; `died` phát đúng 1 lần cho tới `reset()` (phát `revived`). Không biết chủ thể là gì.
+
+**Damage** — `DamageInfo.new(amount, source)`; một instance dùng chung cho mọi mục tiêu của một đòn. Mục tiêu = Hurtbox nhận đòn. Chưa có chỉ số/phòng thủ/chí mạng/nguyên tố; mở rộng bằng cách thêm field vào DamageInfo.
+
+**Hitbox / Hurtbox**
+
+- Hitbox: `activate(info)` / `deactivate()` (đổi `monitoring` bằng `set_deferred`); chống trúng lặp bằng danh sách khóa mục tiêu trong một lần activate (`Hurtbox.get_damage_key()` = HealthComponent, nên nhiều Hurtbox cùng một HP chỉ tính một lần). Dùng `get_overlapping_areas()` thay vì `area_entered` để mục tiêu đứng sẵn trong vùng lúc bật vẫn bị trúng.
+- Hurtbox: `health` (export); bỏ qua đòn có `source == owner` (tự đánh mình), amount không hợp lệ, hoặc mục tiêu đã chết. Phát `hit_received(info, applied)`. Tự vào group `hurtboxes`.
+- Phe = collision layer: Player Hurtbox layer 5, enemy/dummy Hurtbox layer 6. Hitbox `layer = 0`; Player Hitbox mask 6, enemy Hitbox mask 5 → không tự đánh, dummy/enemy không đánh lẫn nhau. Hitbox/Hurtbox là Area2D, không chặn chuyển động, không dùng layer `interaction`.
+
+**MeleeAttack** (export, mọi giá trị là placeholder):
+
+| | damage | attack_range | attack_width | windup | duration | cooldown | target_layers |
+|---|---|---|---|---|---|---|---|
+| Player | 20 | 30 | 26 | 0 | 0.12 s | 0.35 s | 6 `enemy_hurtbox` |
+| SimpleEnemy | 10 | 26 | 20 | 0.35 s | 0.15 s | 1.0 s | 5 `player_hurtbox` |
+
+API: `attack(direction) -> bool`, `can_attack()`, `is_attacking()`, `cancel()`, `get_hitbox()`; signal `attack_started(direction)`, `attack_finished`. Chỉ xoay node MeleeAttack (Hitbox + visual), không xoay thực thể. Mỗi click là một đòn (không echo, không buffer); đang đánh/nghỉ thì bỏ qua. Không đánh khi `health` của chủ thể đã chết. Hướng ngắm của Player: từ điểm đánh tới chuột (world), tự do 360°; chuột quá gần (≤ 4 px) thì dùng hướng nhìn hiện tại.
+
+**SimpleEnemy** — export `target` (World gán Player), `move_speed` 70, `detection_range` 150, `attack_trigger_ratio` 0.8 × `MeleeAttack.attack_range`. Ngoài tầm: đứng yên; trong tầm: đi thẳng tới target (`move_and_slide`, mask `world`, có thể kẹt sau vật cản, không pathfinding); đủ gần: đứng lại và đánh. Chỉ đọc vị trí và `is_dead()` của target (nếu có), không đọc HP. Chết: dừng AI, hủy đòn. Thân enemy layer 4, mask 1; Player và enemy không chặn nhau.
+
+**Chết / reset (thử nghiệm):**
+
+- Player chết: không di chuyển/tấn công, `InteractionDetector.set_enabled(false)`, tô xám, HUD hiện "Bạn đã bị hạ gục".
+- Phím **R** (`debug_reset`, không phải phím chính thức): `World.reset_test_state()` gọi `reset_state()` trên mọi node group `test_resettable` (Player, dummy, enemy) rồi `camera.set_target()` để camera nhảy ngay về Player. Player về spawn, HP đầy, vận tốc 0, hủy đòn; enemy về spawn. Không reload scene.
+
+**HUD / feedback:** `World._ready()` gọi `CombatHUD.bind_player_health()` và nối `hit_received` của mọi Hurtbox trong World tới `CombatHUD.show_damage()` (số sát thương + "Hạ gục!"). DamageNumbers chuyển vị trí world → màn hình bằng `get_canvas_transform()` mỗi frame nên đúng ở mọi mức zoom. UI không tính damage, không sửa HP.
+
+**Thêm một mục tiêu có HP:** thêm `HealthComponent` + `Hurtbox` (Area2D, `layer` = 5 hoặc 6 theo phe, `mask = 0`, `monitoring = false`, gán `health`, thêm CollisionShape2D); tùy chọn `HitFlash`, `WorldHealthBar`. Muốn tấn công: instance `melee_attack.tscn`, đặt `target_layers` = layer Hurtbox phe đối địch, gán `health`. Muốn reset bằng R: thêm vào group `test_resettable` và viết `reset_state()`. Đặt trong `EntityContainer`.
+
+**Kiểm tra trong game:** F5 → Vào game. Chuột trái để chém về phía con trỏ; dummy (bù nhìn rơm, bên phải quảng trường) và enemy đỏ (dưới trái) có thanh HP. Đến gần enemy để nó đuổi và đánh. **R** để reset.
+
+Giới hạn prototype:
+
+- Hurtbox chỉ được nối vào HUD lúc `World._ready()`; thực thể sinh ra sau này cần được nối thêm.
+- Không knockback, không i-frame: enemy đánh trúng mỗi lần hết cooldown.
+- Enemy không pathfinding, không tránh vật cản; Player và enemy có thể chồng lên nhau.
+- Vùng tấn công là hình chữ nhật; chưa có animation chính thức.
+- `get_global_mouse_position()` đọc con trỏ thật nên kiểm thử tự động không giả lập được hướng chuột (đã tách `get_aim_direction()` để kiểm thử).
 
 ## 3. Quy ước đặt tên [Đã quyết định]
 

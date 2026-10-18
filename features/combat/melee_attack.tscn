@@ -1,0 +1,20 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://features/combat/melee_attack.gd" id="1_melee"]
+[ext_resource type="Script" path="res://features/combat/hitbox.gd" id="2_hitbox"]
+
+[node name="MeleeAttack" type="Node2D"]
+script = ExtResource("1_melee")
+
+[node name="Visual" type="Polygon2D" parent="."]
+visible = false
+color = Color(1, 1, 0.8, 0.6)
+
+[node name="Hitbox" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 0
+monitoring = false
+monitorable = false
+script = ExtResource("2_hitbox")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox"]

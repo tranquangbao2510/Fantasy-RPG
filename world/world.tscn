@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="Script" uid="uid://ddak435txd5d4" path="res://world/world.gd" id="1_world"]
 [ext_resource type="PackedScene" path="res://world/maps/test_map/test_map.tscn" id="2_test_map"]
@@ -9,8 +9,11 @@
 [ext_resource type="PackedScene" path="res://features/interaction/examples/test_crystal.tscn" id="7_crystal"]
 [ext_resource type="PackedScene" path="res://ui/interaction/interaction_prompt.tscn" id="8_prompt"]
 [ext_resource type="PackedScene" path="res://ui/interaction/interaction_feedback.tscn" id="9_feedback"]
+[ext_resource type="PackedScene" path="res://entities/enemies/training_dummy/training_dummy.tscn" id="10_dummy"]
+[ext_resource type="PackedScene" path="res://entities/enemies/simple_enemy/simple_enemy.tscn" id="11_enemy"]
+[ext_resource type="PackedScene" path="res://ui/combat/combat_hud.tscn" id="12_hud"]
 
-[node name="World" type="Node2D" node_paths=PackedStringArray("camera", "camera_target", "map_bounds", "interaction_detector", "interaction_prompt", "interaction_feedback")]
+[node name="World" type="Node2D" node_paths=PackedStringArray("camera", "camera_target", "map_bounds", "interaction_detector", "interaction_prompt", "interaction_feedback", "player_health", "combat_hud")]
 script = ExtResource("1_world")
 camera = NodePath("CameraContainer/GameCamera")
 camera_target = NodePath("EntityContainer/Player")
@@ -18,6 +21,8 @@ map_bounds = NodePath("MapContainer/TestMap/MapBounds")
 interaction_detector = NodePath("EntityContainer/Player/InteractionDetector")
 interaction_prompt = NodePath("UILayer/InteractionPrompt")
 interaction_feedback = NodePath("UILayer/InteractionFeedback")
+player_health = NodePath("EntityContainer/Player/HealthComponent")
+combat_hud = NodePath("UILayer/CombatHUD")
 
 [node name="Environment" type="Node2D" parent="."]
 
@@ -40,11 +45,20 @@ position = Vector2(528, 392)
 [node name="TestCrystal" parent="EntityContainer" instance=ExtResource("7_crystal")]
 position = Vector2(576, 392)
 
+[node name="TrainingDummy" parent="EntityContainer" instance=ExtResource("10_dummy")]
+position = Vector2(656, 240)
+
+[node name="SimpleEnemy" parent="EntityContainer" node_paths=PackedStringArray("target") instance=ExtResource("11_enemy")]
+position = Vector2(300, 420)
+target = NodePath("../Player")
+
 [node name="CameraContainer" type="Node2D" parent="."]
 
 [node name="GameCamera" parent="CameraContainer" instance=ExtResource("4_camera")]
 
 [node name="UILayer" type="CanvasLayer" parent="."]
+
+[node name="CombatHUD" parent="UILayer" instance=ExtResource("12_hud")]
 
 [node name="InteractionPrompt" parent="UILayer" instance=ExtResource("8_prompt")]
 

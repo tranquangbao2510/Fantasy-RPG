@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3]
+[gd_scene load_steps=22 format=3]
 
 [ext_resource type="Script" uid="uid://ddak435txd5d4" path="res://world/world.gd" id="1_world"]
 [ext_resource type="PackedScene" path="res://world/maps/test_map/test_map.tscn" id="2_test_map"]
@@ -17,8 +17,12 @@
 [ext_resource type="PackedScene" path="res://ui/progression/progression_panel.tscn" id="15_progression"]
 [ext_resource type="Resource" path="res://features/classes/data/test_caster.tres" id="16_caster_class"]
 [ext_resource type="Script" path="res://features/classes/class_definition.gd" id="17_class_def"]
+[ext_resource type="Script" path="res://features/inventory/pickup/item_pickup_layer.gd" id="18_items"]
+[ext_resource type="Resource" path="res://features/items/data/item_database.tres" id="19_item_db"]
+[ext_resource type="PackedScene" path="res://ui/inventory/pickup_toast.tscn" id="20_toast"]
+[ext_resource type="PackedScene" path="res://ui/inventory/inventory_window.tscn" id="21_inventory"]
 
-[node name="World" type="Node2D" node_paths=PackedStringArray("camera", "camera_target", "map_bounds", "interaction_detector", "interaction_prompt", "interaction_feedback", "player_health", "combat_hud", "player_weapon", "player_attack", "player_skills", "player_caster", "skill_bar", "player", "player_classes", "player_level", "progression_panel")]
+[node name="World" type="Node2D" node_paths=PackedStringArray("camera", "camera_target", "map_bounds", "interaction_detector", "interaction_prompt", "interaction_feedback", "player_health", "combat_hud", "player_weapon", "player_attack", "player_skills", "player_caster", "skill_bar", "player", "player_classes", "player_level", "progression_panel", "inventory_window", "pickup_layer", "pickup_toast")]
 script = ExtResource("1_world")
 camera = NodePath("CameraContainer/GameCamera")
 camera_target = NodePath("EntityContainer/Player")
@@ -37,6 +41,10 @@ player = NodePath("EntityContainer/Player")
 player_classes = NodePath("EntityContainer/Player/ClassManager")
 player_level = NodePath("EntityContainer/Player/CharacterLevel")
 progression_panel = NodePath("UILayer/ProgressionPanel")
+map_id = &"test_map"
+inventory_window = NodePath("UILayer/InventoryWindow")
+pickup_layer = NodePath("EntityContainer/Items")
+pickup_toast = NodePath("UILayer/PickupToast")
 
 [node name="Environment" type="Node2D" parent="."]
 
@@ -70,6 +78,11 @@ target = NodePath("../Player")
 position = Vector2(560, 256)
 debug_unlockable_classes = Array[ExtResource("17_class_def")]([ExtResource("16_caster_class")])
 
+[node name="Items" type="Node2D" parent="EntityContainer" groups=["saveable"]]
+y_sort_enabled = true
+script = ExtResource("18_items")
+database = ExtResource("19_item_db")
+
 [node name="EffectContainer" type="Node2D" parent="."]
 
 [node name="CameraContainer" type="Node2D" parent="."]
@@ -87,3 +100,7 @@ debug_unlockable_classes = Array[ExtResource("17_class_def")]([ExtResource("16_c
 [node name="InteractionFeedback" parent="UILayer" instance=ExtResource("9_feedback")]
 
 [node name="ProgressionPanel" parent="UILayer" instance=ExtResource("15_progression")]
+
+[node name="PickupToast" parent="UILayer" instance=ExtResource("20_toast")]
+
+[node name="InventoryWindow" parent="UILayer" instance=ExtResource("21_inventory")]

@@ -1,4 +1,4 @@
-[gd_scene load_steps=28 format=3]
+[gd_scene load_steps=31 format=3]
 
 [ext_resource type="Script" path="res://entities/player/player.gd" id="1_player"]
 [ext_resource type="PackedScene" path="res://features/interaction/interaction_detector.tscn" id="2_detector"]
@@ -24,6 +24,9 @@
 [ext_resource type="Script" path="res://features/classes/class_definition.gd" id="27_class_def"]
 [ext_resource type="SpriteFrames" path="res://entities/player/art/hero_sprite_frames.tres" id="28_frames"]
 [ext_resource type="Script" path="res://entities/player/player_sprite.gd" id="29_sprite"]
+[ext_resource type="Script" path="res://features/inventory/inventory.gd" id="30_inventory"]
+[ext_resource type="Script" path="res://features/inventory/equipment_slots.gd" id="31_equipment"]
+[ext_resource type="Resource" path="res://features/items/data/item_database.tres" id="32_items"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_feet"]
 radius = 6.0
@@ -31,7 +34,7 @@ radius = 6.0
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hurt"]
 size = Vector2(14, 24)
 
-[node name="Player" type="CharacterBody2D" groups=["test_resettable"]]
+[node name="Player" type="CharacterBody2D" groups=["saveable", "test_resettable"]]
 collision_layer = 2
 motion_mode = 1
 script = ExtResource("1_player")
@@ -123,3 +126,13 @@ passives = NodePath("../PassiveController")
 [node name="CharacterLevel" type="Node" parent="."]
 script = ExtResource("22_level")
 curve = ExtResource("26_char_curve")
+
+[node name="Inventory" type="Node" parent="."]
+script = ExtResource("30_inventory")
+database = ExtResource("32_items")
+
+[node name="EquipmentSlots" type="Node" parent="." node_paths=PackedStringArray("inventory", "weapon_equipment")]
+script = ExtResource("31_equipment")
+database = ExtResource("32_items")
+inventory = NodePath("../Inventory")
+weapon_equipment = NodePath("../WeaponEquipment")

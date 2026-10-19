@@ -46,6 +46,11 @@ const FOOT_J: float = 23.6
 
 
 func _init() -> void:
+	# Chạy sau khi SceneTree khởi động xong (Autoload SaveService đã có, world.gd mới biên dịch được).
+	_run.call_deferred()
+
+
+func _run() -> void:
 	_build_tileset()
 	_build_props()
 	_build_world()
@@ -444,7 +449,7 @@ func _build_world() -> void:
 	cam.set("min_zoom", 1.0)
 	cam.set("max_zoom", 3.0)
 	cam.set("default_zoom", 2.0)
-	for pair: Array in [["res://ui/combat/combat_hud.tscn", "CombatHUD"], ["res://ui/skills/skill_bar.tscn", "SkillBar"], ["res://ui/interaction/interaction_prompt.tscn", "InteractionPrompt"], ["res://ui/interaction/interaction_feedback.tscn", "InteractionFeedback"], ["res://ui/progression/progression_panel.tscn", "ProgressionPanel"], ["res://ui/debug/environment_debug_hud.tscn", "EnvironmentDebugHud"]]:
+	for pair: Array in [["res://ui/combat/combat_hud.tscn", "CombatHUD"], ["res://ui/skills/skill_bar.tscn", "SkillBar"], ["res://ui/interaction/interaction_prompt.tscn", "InteractionPrompt"], ["res://ui/interaction/interaction_feedback.tscn", "InteractionFeedback"], ["res://ui/progression/progression_panel.tscn", "ProgressionPanel"], ["res://ui/debug/environment_debug_hud.tscn", "EnvironmentDebugHud"], ["res://ui/inventory/pickup_toast.tscn", "PickupToast"], ["res://ui/inventory/inventory_window.tscn", "InventoryWindow"]]:
 		var inst: Node = (load(pair[0]) as PackedScene).instantiate()
 		inst.name = pair[1]
 		ui.add_child(inst)
@@ -471,6 +476,10 @@ func _build_world() -> void:
 	sroot.set("player_classes", player.get_node("ClassManager"))
 	sroot.set("player_level", player.get_node("CharacterLevel"))
 	sroot.set("progression_panel", ui.get_node("ProgressionPanel"))
+	sroot.set("map_id", &"glade")
+	sroot.set("inventory_window", ui.get_node("InventoryWindow"))
+	sroot.set("pickup_layer", entities.get_node("Items"))
+	sroot.set("pickup_toast", ui.get_node("PickupToast"))
 	var _unused: Node = elevation
 	save_scene(sroot, PROTO + "environment_prototype.tscn")
 
@@ -938,8 +947,40 @@ func _entities(entities: Node2D) -> Node:
 	enemy.set("target", player)
 	_agent(enemy)
 	_adapter(enemy, "Visual/Shadow", "", "CollisionShape2D")
+	_items(entities)
 	return player
 
+
+## TASK M1: rương + vật phẩm đặt sẵn (pickup_id ổn định cho save). [tên, item, số lượng, pickup_id, i, j, tầng]
+const PICKUPS: Array = [
+	["WoodPickup", &"wood", 5, "glade_wood_1", 25.2, 30.2, 0],
+	["StonePickup", &"stone", 3, "glade_stone_1", 27.4, 34.8, 0],
+	["HerbPickup", &"herb", 2, "glade_herb_1", 23.0, 33.0, 0],
+	["BerryPickup", &"berry", 4, "glade_berry_1", 29.6, 34.0, 0],
+	["MeatPickup", &"raw_meat", 1, "glade_meat_1", 21.5, 36.5, 0],
+	["HelmetPickup", &"test_helmet", 1, "glade_helmet_1", 24.0, 36.0, 0],
+	["RelicPickup", &"ancient_relic", 1, "glade_relic_1", 12.0, 9.0, 1],
+]
+
+
+func _items(entities: Node2D) -> void:
+	var chest: Node = instance(entities, "res://features/inventory/chest/chest.tscn", iso(28.2, 32.4), "Chest")
+	chest.set("interaction_name", "Rương gỗ")
+	chest.set("chest_id", "glade_chest")
+	var loot: Dictionary[StringName, int] = {&"berry": 3, &"test_dagger": 1, &"wood": 10}
+	chest.set("starting_items", loot)
+	var layer: Node2D = Node2D.new()
+	layer.set_script(load("res://features/inventory/pickup/item_pickup_layer.gd"))
+	layer.y_sort_enabled = true
+	layer.set("database", load("res://features/items/data/item_database.tres"))
+	layer.set("ground_squash", 0.5)
+	add(entities, layer, "Items")
+	layer.add_to_group(&"saveable", true)
+	for p: Array in PICKUPS:
+		var pickup: Node = instance(layer, "res://features/inventory/pickup/item_pickup.tscn", iso(p[4], p[5], H * p[6]), p[0])
+		pickup.set("item_id", p[1])
+		pickup.set("count", p[2])
+		pickup.set("pickup_id", p[3])
 
 func _agent(body: Node) -> void:
 	var agent: Node = Node.new()

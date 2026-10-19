@@ -25,6 +25,12 @@ extends Node2D
 ## Tùy chọn (Combat Sandbox): bảng debug combat và điều phối tình huống thử nghiệm.
 @export var debug_panel: CombatDebugPanel
 @export var scenario_controller: ScenarioController
+## ID map ổn định cho Save/Load (khớp MapCatalog). Rỗng = map không lưu được (vd. Combat Sandbox).
+@export var map_id: StringName = &""
+## Tùy chọn (TASK M1): cửa sổ túi đồ, lớp vật phẩm trên đất, thông báo nhặt đồ.
+@export var inventory_window: InventoryWindow
+@export var pickup_layer: ItemPickupLayer
+@export var pickup_toast: PickupToast
 
 @onready var _environment: Node2D = $Environment
 @onready var _map_container: Node2D = $MapContainer
@@ -41,12 +47,21 @@ func _ready() -> void:
 	if skill_bar != null and player_skills != null and player_caster != null:
 		skill_bar.bind(player_skills, player_caster)
 	_setup_progression()
+	_setup_inventory()
+	_setup_save()
 	_setup_sandbox()
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed(&"debug_reset"):
 		reset_test_state()
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed(&"quick_save"):
+		if SaveService.save_game():
+			_show_feedback("Đã lưu (slot %d)." % SaveService.DEFAULT_SLOT)
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed(&"quick_load"):
+		SaveService.load_game()
 		get_viewport().set_input_as_handled()
 
 
@@ -157,8 +172,8 @@ func _setup_progression() -> void:
 	if progression_panel != null and player_level != null:
 		progression_panel.bind(player_classes, player_level)
 		if player != null:
-			progression_panel.opened.connect(player.set_combat_input_blocked.bind(true))
-			progression_panel.closed.connect(player.set_combat_input_blocked.bind(false))
+			progression_panel.opened.connect(_refresh_combat_block)
+			progression_panel.closed.connect(_refresh_combat_block)
 	if combat_hud != null:
 		combat_hud.bind_progression(player_classes, player_level)
 	if interaction_feedback == null:
@@ -192,3 +207,70 @@ func _on_hit_received(_info: DamageInfo, applied: int, hurtbox: Hurtbox) -> void
 	HitSpark.spawn(effects, position_on_hit, Color(1, 0.45, 0.4) if is_player else Color(1, 1, 0.85), 7.0)
 	if defeated:
 		HitSpark.spawn(effects, position_on_hit, Color(1, 0.6, 0.2), 18.0)
+
+
+## Túi đồ / rương / vật phẩm trên đất (TASK M1). Bỏ qua phần nào scene không có.
+func _setup_inventory() -> void:
+	if player == null:
+		return
+	var database: ItemDatabase = player.get_inventory().database
+	if inventory_window != null:
+		inventory_window.bind(player.get_inventory(), player.get_equipment(), database, player)
+		inventory_window.can_drop_to_ground = pickup_layer != null
+		inventory_window.opened.connect(_refresh_combat_block)
+		inventory_window.closed.connect(_refresh_combat_block)
+		inventory_window.drop_requested.connect(_on_drop_requested)
+		inventory_window.message.connect(_show_feedback)
+		for node: Node in find_children("*", "Chest", true, false):
+			(node as Chest).open_requested.connect(inventory_window.open_chest)
+	if pickup_layer != null:
+		if pickup_layer.collector == null:
+			pickup_layer.collector = player
+		player.get_equipment().overflow_handler = drop_item
+		if pickup_toast != null:
+			pickup_layer.item_picked.connect(func(item_id: StringName, amount: int) -> void:
+				var item: ItemDefinition = database.get_item(item_id)
+				pickup_toast.show_pickup(item_id, item.display_name if item != null else String(item_id), amount))
+			pickup_layer.pickup_blocked.connect(func(_item_id: StringName) -> void:
+				pickup_toast.show_message("Túi đầy — không nhặt được."))
+
+
+## Vứt stack xuống đất dưới chân Player (cùng tầng). false nếu map không có ItemPickupLayer.
+func drop_item(stack: ItemStack) -> bool:
+	if pickup_layer == null or player == null or stack == null:
+		return false
+	var agent: ElevationAgent = ElevationAgent.find_for(player)
+	var offset: Vector2 = Vector2(randf_range(-6.0, 6.0), randf_range(2.0, 5.0))
+	return pickup_layer.spawn_drop(stack, player.global_position + offset, agent.get_tier() if agent != null else -1) != null
+
+
+func _on_drop_requested(stack: ItemStack) -> void:
+	if not drop_item(stack):
+		# Không vứt được: trả lại túi để không mất đồ.
+		player.get_inventory().add_stack(stack)
+		_show_feedback("Không vứt đồ được ở đây.")
+
+
+## Chặn đánh thường/kỹ năng khi có bảng UI đang mở (Progression, túi đồ). Di chuyển vẫn được.
+func _refresh_combat_block() -> void:
+	if player == null:
+		return
+	var blocked: bool = (progression_panel != null and progression_panel.is_open()) \
+		or (inventory_window != null and inventory_window.is_open())
+	player.set_combat_input_blocked(blocked)
+
+
+func _setup_save() -> void:
+	SaveService.loaded.connect(_on_game_loaded)
+	SaveService.failed.connect(_show_feedback)
+
+
+func _on_game_loaded(slot: int) -> void:
+	if camera != null:
+		camera.set_target(camera_target)
+	_show_feedback("Đã tải (slot %d)." % slot)
+
+
+func _show_feedback(message: String) -> void:
+	if interaction_feedback != null:
+		interaction_feedback.show_message(message)

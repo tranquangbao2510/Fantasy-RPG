@@ -1,0 +1,69 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://features/inventory/chest/chest.gd" id="1_chest"]
+[ext_resource type="Script" path="res://features/inventory/inventory.gd" id="2_inventory"]
+[ext_resource type="Resource" path="res://features/items/data/item_database.tres" id="3_items"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_point"]
+radius = 8.0
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_block"]
+size = Vector2(28, 10)
+
+[node name="Chest" type="Area2D" groups=["saveable"]]
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("1_chest")
+interaction_name = "Rương"
+interaction_prompt = "Mở"
+
+[node name="Visual" type="Node2D" parent="."]
+
+[node name="Shadow" type="Polygon2D" parent="Visual"]
+color = Color(0, 0, 0, 0.35)
+polygon = PackedVector2Array(-16, 0, -10, -3, 10, -3, 16, 0, 10, 3, -10, 3)
+
+[node name="Closed" type="Node2D" parent="Visual"]
+
+[node name="Body" type="Polygon2D" parent="Visual/Closed"]
+color = Color(0.55, 0.33, 0.15, 1)
+polygon = PackedVector2Array(-14, -18, 14, -18, 14, 0, -14, 0)
+
+[node name="Lid" type="Polygon2D" parent="Visual/Closed"]
+color = Color(0.42, 0.24, 0.1, 1)
+polygon = PackedVector2Array(-15, -24, 15, -24, 15, -17, -15, -17)
+
+[node name="Lock" type="Polygon2D" parent="Visual/Closed"]
+color = Color(0.95, 0.8, 0.25, 1)
+polygon = PackedVector2Array(-2, -17, 2, -17, 2, -11, -2, -11)
+
+[node name="Open" type="Node2D" parent="Visual"]
+visible = false
+
+[node name="Body" type="Polygon2D" parent="Visual/Open"]
+color = Color(0.55, 0.33, 0.15, 1)
+polygon = PackedVector2Array(-14, -14, 14, -14, 14, 0, -14, 0)
+
+[node name="Inside" type="Polygon2D" parent="Visual/Open"]
+color = Color(0.15, 0.08, 0.04, 1)
+polygon = PackedVector2Array(-12, -18, 12, -18, 14, -14, -14, -14)
+
+[node name="Lid" type="Polygon2D" parent="Visual/Open"]
+color = Color(0.42, 0.24, 0.1, 1)
+polygon = PackedVector2Array(-15, -30, 15, -30, 12, -18, -12, -18)
+
+[node name="InteractionShape" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_point")
+
+[node name="BlockingBody" type="StaticBody2D" parent="."]
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="BlockingBody"]
+position = Vector2(0, -4)
+shape = SubResource("RectangleShape2D_block")
+
+[node name="Inventory" type="Node" parent="."]
+script = ExtResource("2_inventory")
+database = ExtResource("3_items")
+size = 20

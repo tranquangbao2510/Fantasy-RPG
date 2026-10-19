@@ -25,6 +25,9 @@ var _combat_input_blocked: bool = false
 @onready var _interaction_detector: InteractionDetector = $InteractionDetector
 @onready var _skills: SkillCastingController = $SkillCastingController
 @onready var _skill_loadout: SkillLoadout = $SkillLoadout
+@onready var _level: CharacterLevel = $CharacterLevel
+@onready var _inventory: Inventory = $Inventory
+@onready var _equipment: EquipmentSlots = $EquipmentSlots
 
 
 func _ready() -> void:
@@ -131,3 +134,62 @@ func _on_died() -> void:
 	_attack.cancel()
 	_skills.cancel_all()
 	_interaction_detector.set_enabled(false)
+
+
+func get_inventory() -> Inventory:
+	return _inventory
+
+
+func get_equipment() -> EquipmentSlots:
+	return _equipment
+
+
+# --- Save (TASK M1) ------------------------------------------------------------------------------
+# Player trong group `saveable`, đi theo người chơi qua mọi map (global). Thứ tự khôi phục: class/level (passive đổi
+# max HP) → trang bị (luật vũ khí theo class) → túi → HP → vị trí/tầng.
+
+func get_save_id() -> String:
+	return "player"
+
+
+func is_save_global() -> bool:
+	return true
+
+
+func save_state() -> Dictionary:
+	var agent: ElevationAgent = ElevationAgent.find_for(self)
+	return {
+		"position": [snappedf(global_position.x, 0.01), snappedf(global_position.y, 0.01)],
+		"tier": agent.get_tier() if agent != null else -1,
+		"health": _health.current_health,
+		"level": _level.to_dict(),
+		"classes": _classes.to_dict(),
+		"equipment": _equipment.to_dict(),
+		"inventory": _inventory.to_dict(),
+	}
+
+
+## Field thiếu → giữ giá trị hiện tại của scene (vị trí spawn, HP đầy...). HP ≤ 0 trong save → hồi đầy (tỉnh lại).
+func load_state(state: Dictionary) -> void:
+	_attack.cancel()
+	_skills.cancel_all()
+	velocity = Vector2.ZERO
+	if state.has("level"):
+		_level.load_dict(state["level"])
+	if state.has("classes"):
+		_classes.load_dict(state["classes"])
+	if state.has("equipment"):
+		_equipment.load_dict(state["equipment"])
+	if state.has("inventory"):
+		_inventory.load_dict(state["inventory"])
+	var hp: Variant = state.get("health")
+	_health.restore(int(hp) if (hp is int or hp is float) and int(hp) > 0 else _health.max_health)
+	var saved_position: Variant = state.get("position")
+	if saved_position is Array and saved_position.size() == 2 and (saved_position[0] is float or saved_position[0] is int) \
+			and (saved_position[1] is float or saved_position[1] is int):
+		global_position = Vector2(saved_position[0], saved_position[1])
+	_interaction_detector.set_enabled(true)
+	var agent: ElevationAgent = ElevationAgent.find_for(self)
+	if agent != null:
+		var tier: Variant = state.get("tier", -1)
+		agent.set_tier(int(tier) if (tier is int or tier is float) else -1)

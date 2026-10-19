@@ -1,0 +1,16 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://ui/inventory/pickup_toast.gd" id="1_toast"]
+
+[node name="PickupToast" type="VBoxContainer"]
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 16.0
+offset_top = -40.0
+offset_right = 260.0
+offset_bottom = 120.0
+grow_vertical = 2
+mouse_filter = 2
+alignment = 2
+script = ExtResource("1_toast")

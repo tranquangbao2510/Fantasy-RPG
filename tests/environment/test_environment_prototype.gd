@@ -19,6 +19,11 @@ var _never_inside: bool = true
 
 
 func _init() -> void:
+	# Nạp scene sau khi SceneTree khởi động xong (Autoload SaveService đã có, world.gd mới biên dịch được).
+	_setup.call_deferred()
+
+
+func _setup() -> void:
 	_world = (load(SCENE_PATH) as PackedScene).instantiate()
 	root.add_child(_world)
 	_player = _world.get_node("EntityContainer/Player") as CharacterBody2D
@@ -75,6 +80,8 @@ func _case(label: String, grid: Vector2, tier: int, screen_dir: Vector2, frames:
 
 
 func _physics_process(_delta: float) -> bool:
+	if _world == null:
+		return false
 	if _index >= 0 and _frames > 0:
 		_frames -= 1
 		var each_frame: Callable = _cases[_index]["each_frame"]

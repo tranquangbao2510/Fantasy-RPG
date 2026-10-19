@@ -39,6 +39,13 @@ theme_override_font_sizes/font_size = 32
 text = "Fantasy RPG"
 horizontal_alignment = 1
 
+[node name="ContinueButton" type="Button" parent="Center/Layout"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(200, 48)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "Tiếp tục"
+
 [node name="EnterButton" type="Button" parent="Center/Layout" unique_id=1797731067]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(200, 48)

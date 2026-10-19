@@ -72,6 +72,12 @@
 [ext_resource type="PackedScene" path="res://ui/interaction/interaction_feedback.tscn" id="79_lm7vw"]
 [ext_resource type="PackedScene" path="res://ui/progression/progression_panel.tscn" id="81_t636r"]
 [ext_resource type="PackedScene" path="res://ui/debug/environment_debug_hud.tscn" id="83_pf5uv"]
+[ext_resource type="PackedScene" path="res://features/inventory/chest/chest.tscn" id="m1_chest"]
+[ext_resource type="PackedScene" path="res://features/inventory/pickup/item_pickup.tscn" id="m1_pickup"]
+[ext_resource type="Script" path="res://features/inventory/pickup/item_pickup_layer.gd" id="m1_layer"]
+[ext_resource type="Resource" path="res://features/items/data/item_database.tres" id="m1_items"]
+[ext_resource type="PackedScene" path="res://ui/inventory/pickup_toast.tscn" id="m1_toast"]
+[ext_resource type="PackedScene" path="res://ui/inventory/inventory_window.tscn" id="m1_window"]
 
 [sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_0h8ps"]
 blend_mode = 1
@@ -117,7 +123,7 @@ border_width_right = 1
 border_width_bottom = 1
 border_color = Color(0.45, 0.45, 0.6, 1)
 
-[node name="EnvironmentPrototype" type="Node2D" unique_id=1465201579 node_paths=PackedStringArray("camera", "camera_target", "map_bounds", "interaction_detector", "interaction_prompt", "interaction_feedback", "player_health", "combat_hud", "player_weapon", "player_attack", "player_skills", "player_caster", "skill_bar", "player", "player_classes", "player_level", "progression_panel")]
+[node name="EnvironmentPrototype" type="Node2D" unique_id=1465201579 node_paths=PackedStringArray("camera", "camera_target", "map_bounds", "interaction_detector", "interaction_prompt", "interaction_feedback", "player_health", "combat_hud", "player_weapon", "player_attack", "player_skills", "player_caster", "skill_bar", "player", "player_classes", "player_level", "progression_panel", "inventory_window", "pickup_layer", "pickup_toast")]
 texture_filter = 4
 script = ExtResource("1_y3y0j")
 camera = NodePath("CameraContainer/GameCamera")
@@ -137,6 +143,10 @@ player = NodePath("EntityContainer/Player")
 player_classes = NodePath("EntityContainer/Player/ClassManager")
 player_level = NodePath("EntityContainer/Player/CharacterLevel")
 progression_panel = NodePath("UILayer/ProgressionPanel")
+map_id = &"glade"
+inventory_window = NodePath("UILayer/InventoryWindow")
+pickup_layer = NodePath("EntityContainer/Items")
+pickup_toast = NodePath("UILayer/PickupToast")
 
 [node name="Environment" type="Node2D" parent="." unique_id=978478]
 
@@ -1203,6 +1213,65 @@ script = ExtResource("64_e3nyw")
 shadow = NodePath("../Visual/Shadow")
 body_shape = NodePath("../CollisionShape2D")
 
+
+[node name="Chest" parent="EntityContainer" instance=ExtResource("m1_chest")]
+position = Vector2(-134.4, 969.6)
+interaction_name = "Rương gỗ"
+chest_id = "glade_chest"
+starting_items = Dictionary[StringName, int]({
+&"berry": 3,
+&"test_dagger": 1,
+&"wood": 10
+})
+
+[node name="Items" type="Node2D" parent="EntityContainer" groups=["saveable"]]
+y_sort_enabled = true
+script = ExtResource("m1_layer")
+database = ExtResource("m1_items")
+ground_squash = 0.5
+
+[node name="WoodPickup" parent="EntityContainer/Items" instance=ExtResource("m1_pickup")]
+position = Vector2(-160, 886.4)
+item_id = &"wood"
+count = 5
+pickup_id = "glade_wood_1"
+
+[node name="StonePickup" parent="EntityContainer/Items" instance=ExtResource("m1_pickup")]
+position = Vector2(-236.8, 995.2)
+item_id = &"stone"
+count = 3
+pickup_id = "glade_stone_1"
+
+[node name="HerbPickup" parent="EntityContainer/Items" instance=ExtResource("m1_pickup")]
+position = Vector2(-320, 896)
+item_id = &"herb"
+count = 2
+pickup_id = "glade_herb_1"
+
+[node name="BerryPickup" parent="EntityContainer/Items" instance=ExtResource("m1_pickup")]
+position = Vector2(-140.8, 1017.6)
+item_id = &"berry"
+count = 4
+pickup_id = "glade_berry_1"
+
+[node name="MeatPickup" parent="EntityContainer/Items" instance=ExtResource("m1_pickup")]
+position = Vector2(-480, 928)
+item_id = &"raw_meat"
+count = 1
+pickup_id = "glade_meat_1"
+
+[node name="HelmetPickup" parent="EntityContainer/Items" instance=ExtResource("m1_pickup")]
+position = Vector2(-384, 960)
+item_id = &"test_helmet"
+count = 1
+pickup_id = "glade_helmet_1"
+
+[node name="RelicPickup" parent="EntityContainer/Items" instance=ExtResource("m1_pickup")]
+position = Vector2(96, 272)
+item_id = &"ancient_relic"
+count = 1
+pickup_id = "glade_relic_1"
+
 [node name="EffectContainer" type="Node2D" parent="." unique_id=88998114]
 
 [node name="CameraContainer" type="Node2D" parent="." unique_id=1090960829]
@@ -1239,3 +1308,7 @@ agent = NodePath("../../EntityContainer/Player/ElevationAgent")
 terrain_logic = NodePath("../../MapContainer/GladeMap/TerrainLogic")
 camera = NodePath("../../CameraContainer/GameCamera")
 tracked_body = NodePath("../../EntityContainer/Player")
+
+[node name="PickupToast" parent="UILayer" instance=ExtResource("m1_toast")]
+
+[node name="InventoryWindow" parent="UILayer" instance=ExtResource("m1_window")]

@@ -1,4 +1,4 @@
-extends SceneTree
+extends "res://tests/test_base.gd"
 ## Kiểm thử headless cho sprite 8 hướng của Player (TASK CHAR-01):
 ## 1. SpriteFrames sinh từ hero_sprites.json: đủ 9 animation × 8 hướng, anchor/texel_scale, sheet có mipmaps,
 ##    nhân vật cao < 64 px world.
@@ -31,50 +31,25 @@ const GROUND_DIRECTIONS: Array[Vector2] = [
 var _world: Node
 var _player: Player
 var _sprite: PlayerSprite
-var _passed: int = 0
-var _failed: int = 0
 
 
-func _init() -> void:
-	_run.call_deferred()
-
-
-func _run() -> void:
+func _run_tests() -> void:
 	_test_frames()
 	_test_direction_rows()
 	_world = (load(SCENE_PATH) as PackedScene).instantiate()
 	root.add_child(_world)
 	_player = _world.get_node("EntityContainer/Player") as Player
 	_sprite = _player.get_node("Visual/Sprite") as PlayerSprite
-	await _frames(5)
+	await frames(5)
 	_park_enemy()
 	_place_player()
-	await _frames(3)
+	await frames(3)
 	await _test_locomotion()
 	await _test_attack()
 	await _test_cast()
 	await _test_hit()
 	await _test_death()
 	await _test_legacy_map()
-	print("RESULT %d/%d passed" % [_passed, _passed + _failed])
-	quit(1 if _failed > 0 else 0)
-
-
-func _check(label: String, ok: bool, detail: String = "") -> void:
-	print("%s %s %s" % ["PASS" if ok else "FAIL", label, detail])
-	if ok:
-		_passed += 1
-	else:
-		_failed += 1
-
-
-func _frames(count: int) -> void:
-	for i: int in count:
-		await physics_frame
-
-
-func _seconds(duration: float) -> void:
-	await create_timer(duration, true, true).timeout
 
 
 func _place_player() -> void:
@@ -106,9 +81,9 @@ func _test_frames() -> void:
 					or not is_equal_approx(FRAMES.get_animation_speed(full), float(spec["fps"])) \
 					or FRAMES.get_animation_loop(full) != bool(spec["loop"]):
 				missing.append(String(full))
-	_check("frames_all_animations", missing.is_empty() and FRAMES.get_animation_names().size() == animations.size() * 8, str(missing))
-	_check("frames_directions_order", Array(FRAMES.get_meta(&"directions")) == Array(PlayerSprite.DIRECTIONS))
-	_check("frames_texel_scale", is_equal_approx(FRAMES.get_meta(&"texel_scale"), float(data["texel_scale"])))
+	check("frames_all_animations", missing.is_empty() and FRAMES.get_animation_names().size() == animations.size() * 8, str(missing))
+	check("frames_directions_order", Array(FRAMES.get_meta(&"directions")) == Array(PlayerSprite.DIRECTIONS))
+	check("frames_texel_scale", is_equal_approx(FRAMES.get_meta(&"texel_scale"), float(data["texel_scale"])))
 	# Mọi frame (mọi animation) cùng canvas; điểm chân của từng animation rơi đúng `anchor` chung.
 	var anchor: Vector2 = FRAMES.get_meta(&"anchor")
 	var aligned: bool = true
@@ -117,19 +92,19 @@ func _test_frames() -> void:
 		var atlas: AtlasTexture = FRAMES.get_frame_texture(StringName(anim_name + "_S"), 0) as AtlasTexture
 		var own_anchor: Vector2 = Vector2(spec["anchor"][0], spec["anchor"][1])
 		aligned = aligned and atlas.margin.position + own_anchor == anchor and atlas.filter_clip
-	_check("frames_anchor_aligned", aligned, "anchor=%s" % anchor)
+	check("frames_anchor_aligned", aligned, "anchor=%s" % anchor)
 	var mipmapped: bool = true
 	for anim_name: String in animations:
 		var texture: Texture2D = load("res://entities/player/art/" + String(animations[anim_name]["file"]))
 		mipmapped = mipmapped and texture.get_image().has_mipmaps()
-	_check("sheets_have_mipmaps", mipmapped)
+	check("sheets_have_mipmaps", mipmapped)
 	# Chiều cao nhân vật (phần đục của idle_S frame 0, từ đỉnh tới điểm chân) đổi sang px world.
 	var idle: Dictionary = animations["idle"]
 	var image: Image = (load("res://entities/player/art/" + String(idle["file"])) as Texture2D).get_image()
 	image.clear_mipmaps()
 	var used: Rect2i = image.get_region(Rect2i(0, 0, int(idle["frame_size"][0]), int(idle["frame_size"][1]))).get_used_rect()
 	var height: float = (float(idle["anchor"][1]) - used.position.y) * float(data["texel_scale"])
-	_check("character_height_under_64", height > 20.0 and height < 64.0, "height=%.1f px world" % height)
+	check("character_height_under_64", height > 20.0 and height < 64.0, "height=%.1f px world" % height)
 
 
 # ---------------------------------------------------------------- 2. chọn hướng
@@ -141,13 +116,13 @@ func _test_direction_rows() -> void:
 		var ground: Vector2 = GROUND_DIRECTIONS[row]
 		iso_ok = iso_ok and PlayerSprite.direction_index(GroundSpace.to_screen(ground, S), S) == row
 		legacy_ok = legacy_ok and PlayerSprite.direction_index(ground, 1.0) == row
-	_check("direction_rows_iso", iso_ok)
-	_check("direction_rows_legacy", legacy_ok)
+	check("direction_rows_iso", iso_ok)
+	check("direction_rows_legacy", legacy_ok)
 	# Cùng vector màn hình (1, 0.4): trên mặt đất iso là (1, 0.8) → SE; map cũ góc 22° → E.
-	_check("direction_uses_ground_plane", PlayerSprite.direction_index(Vector2(1, 0.4), S) == 7
+	check("direction_uses_ground_plane", PlayerSprite.direction_index(Vector2(1, 0.4), S) == 7
 		and PlayerSprite.direction_index(Vector2(1, 0.4), 1.0) == 6)
 	# Lệch 20° so với W vẫn làm tròn về W.
-	_check("direction_rounds_to_nearest", PlayerSprite.direction_index(GroundSpace.to_screen(Vector2.from_angle(PI + 0.35), S), S) == 2)
+	check("direction_rounds_to_nearest", PlayerSprite.direction_index(GroundSpace.to_screen(Vector2.from_angle(PI + 0.35), S), S) == 2)
 
 
 # ---------------------------------------------------------------- 3. trạng thái → animation
@@ -155,7 +130,7 @@ func _test_direction_rows() -> void:
 func _hold(actions: Array[StringName], frames: int) -> void:
 	for action: StringName in actions:
 		Input.action_press(action)
-	await _frames(frames)
+	await frames(frames)
 
 
 func _release(actions: Array[StringName]) -> void:
@@ -164,8 +139,8 @@ func _release(actions: Array[StringName]) -> void:
 
 
 func _test_locomotion() -> void:
-	_check("iso_squash", is_equal_approx(_sprite._ground_squash, S))
-	_check("start_idle_S", _sprite.animation == &"idle_S" and _sprite.is_playing(), String(_sprite.animation))
+	check("iso_squash", is_equal_approx(_sprite._ground_squash, S))
+	check("start_idle_S", _sprite.animation == &"idle_S" and _sprite.is_playing(), String(_sprite.animation))
 	var cases: Array = [
 		[[&"move_right"], &"run_E"],
 		[[&"move_down"], &"run_S"],
@@ -176,23 +151,23 @@ func _test_locomotion() -> void:
 		var actions: Array[StringName] = []
 		actions.assign(c[0])
 		await _hold(actions, 6)
-		_check("move_%s" % c[1], _sprite.animation == c[1], String(_sprite.animation))
+		check("move_%s" % c[1], _sprite.animation == c[1], String(_sprite.animation))
 		_release(actions)
-		await _frames(3)
+		await frames(3)
 		# Thả phím: đứng yên, giữ hướng vừa đi.
 		var idle: StringName = StringName(String(c[1]).replace("run_", "idle_"))
-		_check("release_%s" % idle, _sprite.animation == idle, String(_sprite.animation))
+		check("release_%s" % idle, _sprite.animation == idle, String(_sprite.animation))
 		_place_player()
-		await _frames(2)
+		await frames(2)
 	# Chậm hơn ngưỡng run (vd. passive làm chậm) → walk.
 	var speed: float = _player.move_speed
 	_player.move_speed = _sprite.run_speed_threshold * 0.6
 	await _hold([&"move_left"], 6)
-	_check("slow_move_walk", _sprite.animation == &"walk_W", String(_sprite.animation))
+	check("slow_move_walk", _sprite.animation == &"walk_W", String(_sprite.animation))
 	_release([&"move_left"])
 	_player.move_speed = speed
 	_place_player()
-	await _frames(2)
+	await frames(2)
 
 
 func _test_attack() -> void:
@@ -203,14 +178,14 @@ func _test_attack() -> void:
 	# Đánh về phía trên-trái màn hình (mặt đất NW).
 	attack.set_aim_provider(func() -> Vector2: return GroundSpace.to_screen(Vector2(-1, -1), S))
 	for weapon: WeaponDefinition in WEAPONS:
-		_check("equip_%s" % weapon.weapon_id, equipment.equip_weapon(weapon))
+		check("equip_%s" % weapon.weapon_id, equipment.equip_weapon(weapon))
 		var timing_ok: bool = true
 		var anim_ok: bool = true
 		var finish_ok: bool = true
 		var detail: String = ""
 		for step: int in weapon.combo.get_step_count():
 			attack.request_attack()
-			await _frames(1)
+			await frames(1)
 			var data: ComboStepDefinition = weapon.combo.get_step(step)
 			var expected: StringName = StringName("%s_NW" % PlayerSprite.attack_animation(step))
 			var target: float = data.windup + data.active + data.recovery
@@ -223,16 +198,16 @@ func _test_attack() -> void:
 			var last: int = _sprite.sprite_frames.get_frame_count(expected) - 1
 			finish_ok = finish_ok and _sprite.frame >= last - 2
 			detail += "%s:%s f%d/%d " % [step, _sprite.animation, _sprite.frame, last]
-			await _frames(1)
-		_check("attack_animations_%s" % weapon.weapon_id, anim_ok, detail)
-		_check("attack_speed_matches_step_%s" % weapon.weapon_id, timing_ok)
-		_check("attack_ends_with_step_%s" % weapon.weapon_id, finish_ok, detail)
+			await frames(1)
+		check("attack_animations_%s" % weapon.weapon_id, anim_ok, detail)
+		check("attack_speed_matches_step_%s" % weapon.weapon_id, timing_ok)
+		check("attack_ends_with_step_%s" % weapon.weapon_id, finish_ok, detail)
 		while attack.get_phase() != BasicAttackController.Phase.READY:
 			await physics_frame
-		await _frames(1)
-		_check("after_combo_idle_%s" % weapon.weapon_id, _sprite.animation == &"idle_NW", String(_sprite.animation))
+		await frames(1)
+		check("after_combo_idle_%s" % weapon.weapon_id, _sprite.animation == &"idle_NW", String(_sprite.animation))
 	equipment.equip_weapon(WEAPONS[0])
-	_check("attack_animation_cycle", PlayerSprite.attack_animation(3) == &"attack_1" and PlayerSprite.attack_animation(2) == &"attack_3")
+	check("attack_animation_cycle", PlayerSprite.attack_animation(3) == &"attack_1" and PlayerSprite.attack_animation(2) == &"attack_3")
 
 
 func _test_cast() -> void:
@@ -241,85 +216,85 @@ func _test_cast() -> void:
 	loadout.set_equip_validator(Callable())
 	var slot: int = 3
 	loadout.unequip_skill(slot)
-	_check("equip_self_heal", loadout.equip_skill(slot, SELF_HEAL))
+	check("equip_self_heal", loadout.equip_skill(slot, SELF_HEAL))
 	loadout.set_cast_mode(slot, SkillDefinition.CastMode.INSTANT)
 	var press: InputEventAction = InputEventAction.new()
 	press.action = SkillCastingController.SLOT_ACTIONS[slot]
 	press.pressed = true
 	caster.handle_input(press)
-	await _frames(1)
-	_check("cast_animation", _sprite.get_animation_base() == &"cast" and caster.get_state() == SkillCastingController.State.CASTING,
+	await frames(1)
+	check("cast_animation", _sprite.get_animation_base() == &"cast" and caster.get_state() == SkillCastingController.State.CASTING,
 		String(_sprite.animation))
-	_check("cast_speed_matches_cast_time", absf(_sprite.get_action_duration() - SELF_HEAL.cast_time) < 0.001,
+	check("cast_speed_matches_cast_time", absf(_sprite.get_action_duration() - SELF_HEAL.cast_time) < 0.001,
 		"%.3f vs %.3f" % [_sprite.get_action_duration(), SELF_HEAL.cast_time])
 	while caster.is_busy():
 		await physics_frame
-	await _frames(2)
-	_check("cast_ends_idle", _sprite.get_animation_base() == &"idle", String(_sprite.animation))
+	await frames(2)
+	check("cast_ends_idle", _sprite.get_animation_base() == &"idle", String(_sprite.animation))
 	# Kỹ năng không vận sức vẫn phát cast tối thiểu; hủy cast → về locomotion ngay.
 	caster.cast_started.emit(slot, 0.0)
-	await _frames(1)
-	_check("instant_cast_min_duration", absf(_sprite.get_action_duration() - _sprite.min_cast_duration) < 0.001)
+	await frames(1)
+	check("instant_cast_min_duration", absf(_sprite.get_action_duration() - _sprite.min_cast_duration) < 0.001)
 	caster.cast_cancelled.emit(slot)
-	await _frames(1)
-	_check("cast_cancel_idle", _sprite.get_animation_base() == &"idle", String(_sprite.animation))
+	await frames(1)
+	check("cast_cancel_idle", _sprite.get_animation_base() == &"idle", String(_sprite.animation))
 
 
 func _test_hit() -> void:
 	var health: HealthComponent = _player.get_health()
 	health.reset()
 	health.apply_damage(1)
-	await _frames(1)
-	_check("hit_animation", _sprite.get_animation_base() == &"hit", String(_sprite.animation))
+	await frames(1)
+	check("hit_animation", _sprite.get_animation_base() == &"hit", String(_sprite.animation))
 	# Không chặn input: vẫn đi được ngay trong lúc phát hit.
 	var start: Vector2 = _player.global_position
 	await _hold([&"move_right"], 4)
-	_check("hit_does_not_block_movement", _player.global_position.x > start.x + 4.0 and _sprite.get_animation_base() == &"hit",
+	check("hit_does_not_block_movement", _player.global_position.x > start.x + 4.0 and _sprite.get_animation_base() == &"hit",
 		"dx=%.1f %s" % [_player.global_position.x - start.x, _sprite.animation])
 	_release([&"move_right"])
-	await _seconds(_sprite.hit_duration + 0.05)
-	_check("hit_ends", _sprite.get_animation_base() == &"idle", String(_sprite.animation))
+	await seconds(_sprite.hit_duration + 0.05)
+	check("hit_ends", _sprite.get_animation_base() == &"idle", String(_sprite.animation))
 	# Đang đánh thì bị trúng không ngắt animation đòn.
 	var attack: BasicAttackController = _player.get_node("BasicAttackController") as BasicAttackController
 	attack.request_attack()
-	await _frames(1)
+	await frames(1)
 	health.apply_damage(1)
-	await _frames(1)
-	_check("hit_keeps_attack", _sprite.get_animation_base() == &"attack_1", String(_sprite.animation))
+	await frames(1)
+	check("hit_keeps_attack", _sprite.get_animation_base() == &"attack_1", String(_sprite.animation))
 	while attack.get_phase() != BasicAttackController.Phase.READY:
 		await physics_frame
 	_place_player()
-	await _frames(2)
+	await frames(2)
 
 
 func _test_death() -> void:
 	var health: HealthComponent = _player.get_health()
 	_sprite.set_facing(GroundSpace.to_screen(Vector2(1, 0), S))
 	health.apply_damage(health.max_health)
-	await _frames(1)
-	_check("death_animation", _sprite.animation == &"death_E", String(_sprite.animation))
-	await _seconds(_sprite.death_duration + 0.2)
+	await frames(1)
+	check("death_animation", _sprite.animation == &"death_E", String(_sprite.animation))
+	await seconds(_sprite.death_duration + 0.2)
 	var last: int = _sprite.sprite_frames.get_frame_count(&"death_E") - 1
-	_check("death_holds_last_frame", _sprite.animation == &"death_E" and _sprite.frame == last and not _sprite.is_playing(),
+	check("death_holds_last_frame", _sprite.animation == &"death_E" and _sprite.frame == last and not _sprite.is_playing(),
 		"%s f%d/%d" % [_sprite.animation, _sprite.frame, last])
 	_place_player()
-	await _frames(2)
-	_check("reset_idle_S", _sprite.animation == &"idle_S" and _sprite.is_playing(), String(_sprite.animation))
+	await frames(2)
+	check("reset_idle_S", _sprite.animation == &"idle_S" and _sprite.is_playing(), String(_sprite.animation))
 
 
 # ---------------------------------------------------------------- 4. map cũ
 
 func _test_legacy_map() -> void:
 	_world.queue_free()
-	await _frames(2)
+	await frames(2)
 	var legacy: Node = (load("res://world/world.tscn") as PackedScene).instantiate()
 	root.add_child(legacy)
-	await _frames(5)
+	await frames(5)
 	var player: Player = legacy.get_node("EntityContainer/Player") as Player
 	var sprite: PlayerSprite = player.get_node("Visual/Sprite") as PlayerSprite
-	_check("legacy_squash", is_equal_approx(sprite._ground_squash, 1.0))
-	_check("legacy_offset_scale", sprite.offset == -(FRAMES.get_meta(&"anchor") as Vector2) and sprite.scale == Vector2(0.5, 0.5))
+	check("legacy_squash", is_equal_approx(sprite._ground_squash, 1.0))
+	check("legacy_offset_scale", sprite.offset == -(FRAMES.get_meta(&"anchor") as Vector2) and sprite.scale == Vector2(0.5, 0.5))
 	await _hold([&"move_up", &"move_right"], 6)
-	_check("legacy_move_NE", sprite.animation == &"run_NE", String(sprite.animation))
+	check("legacy_move_NE", sprite.animation == &"run_NE", String(sprite.animation))
 	_release([&"move_up", &"move_right"])
 	legacy.queue_free()

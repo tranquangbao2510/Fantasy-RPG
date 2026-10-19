@@ -42,3 +42,6 @@
 - Mỗi task phải được kiểm tra trong phạm vi phù hợp với thay đổi.
 - Không chạy build hoặc test lặp lại khi không có thay đổi liên quan.
 - Báo cáo trung thực: nếu không kiểm thử được (thiếu executable, lỗi môi trường), nói rõ thay vì tuyên bố thành công.
+- Test đi qua **đường input thật** khi có thể (gửi `InputEventAction` qua `Input.parse_input_event` để node xử lý trong `_input` / `_unhandled_input`), không gọi thẳng hàm mà phím đó kích hoạt. Gọi thẳng chỉ dùng cho logic thuần không có đường input.
+- Test kế thừa `tests/test_base.gd`: test **FAIL** khi có lỗi runtime / `push_error` / lỗi biên dịch script nạp lúc chạy mà không khai báo trước bằng `expect_error()` (cảnh báo không tính). Lỗi cố ý (vd. thử file save hỏng) phải khai báo bằng `expect_error()`.
+- Chạy toàn bộ test bằng `tests/run_all.gd` (mỗi test một tiến trình; fail khi mã thoát ≠ 0 hoặc thiếu dòng `RESULT`) trước khi báo hoàn thành.

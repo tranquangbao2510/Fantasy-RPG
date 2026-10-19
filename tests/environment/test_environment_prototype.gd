@@ -1,8 +1,8 @@
-extends SceneTree
+extends "res://tests/test_base.gd"
 ## Kiểm thử headless cho Environment Prototype isometric (TASK VISUAL-02): elevation, collision, thứ tự che/fade.
 ## Chạy:  Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/environment/test_environment_prototype.gd
 ## Mỗi ca: đặt Player tại một điểm lưới (i, j) ở tầng cho trước, giữ phím di chuyển theo một hướng MÀN HÌNH
-## trong N physics frame, rồi kiểm tra kết quả. Thoát với mã 1 nếu có ca thất bại.
+## trong N physics frame, rồi kiểm tra kết quả. Thoát với mã 1 nếu có ca thất bại hoặc lỗi ngoài dự kiến (test_base.gd).
 
 const SCENE_PATH: String = "res://world/environment_prototype/environment_prototype.tscn"
 const H: float = IsoProjection.TIER_HEIGHT
@@ -14,16 +14,10 @@ var _plateau: ElevatedTerrain
 var _cases: Array[Dictionary] = []
 var _index: int = -1
 var _frames: int = 0
-var _failures: int = 0
 var _never_inside: bool = true
 
 
-func _init() -> void:
-	# Nạp scene sau khi SceneTree khởi động xong (Autoload SaveService đã có, world.gd mới biên dịch được).
-	_setup.call_deferred()
-
-
-func _setup() -> void:
+func _run_tests() -> void:
 	_world = (load(SCENE_PATH) as PackedScene).instantiate()
 	root.add_child(_world)
 	_player = _world.get_node("EntityContainer/Player") as CharacterBody2D
@@ -73,10 +67,13 @@ func _setup() -> void:
 		return _bridge_alpha() < 0.9)
 	_case("on_bridge_opaque", Vector2(22.3, 10.35), 1, Vector2.ZERO, 30, func() -> bool:
 		return _bridge_alpha() > 0.99 and _player.z_index == ElevationMap.tier_z(1))
+	# Các ca chạy trong _physics_process; chờ tới khi xong.
+	while _index < _cases.size():
+		await physics_frame
 
 
-func _case(label: String, grid: Vector2, tier: int, screen_dir: Vector2, frames: int, check: Callable, each_frame: Callable = Callable()) -> void:
-	_cases.append({"name": label, "grid": grid, "tier": tier, "dir": screen_dir, "frames": frames, "check": check, "each_frame": each_frame})
+func _case(label: String, grid: Vector2, tier: int, screen_dir: Vector2, frame_count: int, verify: Callable, each_frame: Callable = Callable()) -> void:
+	_cases.append({"name": label, "grid": grid, "tier": tier, "dir": screen_dir, "frames": frame_count, "check": verify, "each_frame": each_frame})
 
 
 func _physics_process(_delta: float) -> bool:
@@ -92,19 +89,15 @@ func _physics_process(_delta: float) -> bool:
 		_release()
 		var c: Dictionary = _cases[_index]
 		var ok: bool = (c["check"] as Callable).call()
-		print("%s %s grid=%s tier=%d" % ["PASS" if ok else "FAIL", c["name"], _grid().snapped(Vector2(0.01, 0.01)), _agent.get_tier()])
-		if not ok:
-			_failures += 1
+		check(c["name"], ok, "grid=%s tier=%d" % [_grid().snapped(Vector2(0.01, 0.01)), _agent.get_tier()])
 	_index += 1
 	if _index >= _cases.size():
-		print("RESULT %d/%d passed" % [_cases.size() - _failures, _cases.size()])
-		quit(1 if _failures > 0 else 0)
-		return true
-	_start(_cases[_index])
+		return false
+	_begin_case(_cases[_index])
 	return false
 
 
-func _start(c: Dictionary) -> void:
+func _begin_case(c: Dictionary) -> void:
 	var grid: Vector2 = c["grid"]
 	var tier: int = c["tier"]
 	_player.global_position = IsoProjection.to_screen(grid.x, grid.y, H * tier)

@@ -43,3 +43,9 @@ func add_exp(amount: int) -> int:
 
 func to_dict() -> Dictionary:
 	return _progress.to_dict()
+
+
+## Khôi phục từ to_dict() (save). Field thiếu → level 1.
+func load_dict(value: Variant) -> void:
+	_progress.load_dict(value)
+	level_changed.emit(_progress.level)

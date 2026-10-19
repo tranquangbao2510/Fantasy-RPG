@@ -84,6 +84,20 @@ func reset_state() -> void:
 	_setup.call_deferred()
 
 
+## Đặt tầng trực tiếp (khôi phục save, vật phẩm rơi theo tầng người vứt): bỏ trạng thái chuyển tầng.
+## tier < 0 = tính từ vị trí như lúc bắt đầu. Không đổi initial_tier (reset R vẫn dùng giá trị của scene).
+func set_tier(tier: int) -> void:
+	_connectors.clear()
+	if tier < 0:
+		_setup()
+		return
+	_tier = tier
+	if _map == null:
+		_map = get_tree().get_first_node_in_group(ElevationMap.GROUP) as ElevationMap if is_inside_tree() else null
+	if _map != null:
+		_apply()
+
+
 func _setup() -> void:
 	_map = get_tree().get_first_node_in_group(ElevationMap.GROUP) as ElevationMap
 	if _map == null:

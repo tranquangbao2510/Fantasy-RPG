@@ -79,3 +79,13 @@ func reset() -> void:
 	health_changed.emit(current_health, max_health)
 	if was_dead:
 		revived.emit()
+
+
+## Đặt HP trực tiếp (khôi phục save): kẹp trong [1, max_health], không phát damaged/healed.
+## Đang chết thì hồi sinh (revived).
+func restore(value: int) -> void:
+	var was_dead: bool = is_dead()
+	current_health = clampi(value, 1, max_health)
+	health_changed.emit(current_health, max_health)
+	if was_dead:
+		revived.emit()

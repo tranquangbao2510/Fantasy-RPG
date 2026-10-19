@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="MapCatalog" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://world/maps/map_catalog.gd" id="1_catalog"]
+
+[resource]
+script = ExtResource("1_catalog")
+scenes = Dictionary[StringName, String]({
+&"glade": "res://world/environment_prototype/environment_prototype.tscn",
+&"test_map": "res://world/world.tscn"
+})

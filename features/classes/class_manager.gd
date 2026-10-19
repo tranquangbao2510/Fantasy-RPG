@@ -24,7 +24,7 @@ signal switch_session_ended
 ## Phát sau mọi thay đổi ở trên (UI dùng để làm mới).
 signal progression_changed
 
-## Phiên bản cấu trúc to_dict() (chuẩn bị cho Save/Load sau này).
+## Phiên bản cấu trúc to_dict() / load_dict().
 const STATE_VERSION: int = 1
 
 ## Các class nhân vật này có thể có (prototype: khai báo trực tiếp, chưa có database class).
@@ -410,14 +410,44 @@ func unequip_passive(class_id: StringName, passive_id: StringName) -> bool:
 	return true
 
 
-# --- Save prep -----------------------------------------------------------------------------------
+# --- Save ------------------------------------------------------------------------------------------
 
-## Dữ liệu thuần (ID + số) của progression class. Chưa có Save/Load; dùng để kiểm tra cấu trúc.
+## Dữ liệu thuần (ID + số) của progression class (Player lưu vào save, TASK M1).
 func to_dict() -> Dictionary:
 	var class_data: Dictionary = {}
 	for id: StringName in _progress:
 		class_data[String(id)] = _progress[id].to_dict()
 	return {"version": STATE_VERSION, "active_class": String(_current_id), "classes": class_data}
+
+
+## Khôi phục progression từ to_dict() (save). Thay toàn bộ class đã mở khóa; bỏ qua (cảnh báo) class/kỹ năng/passive
+## không còn tồn tại; level kỹ năng kẹp theo max_level, nhánh lỗi → chưa tiến hóa. Thiếu dữ liệu → trạng thái như
+## lúc bắt đầu (starting_class). Cooldown/charges không lưu: mọi runtime đầy charges. Không phát class_unlocked /
+## thông báo đổi class.
+func load_dict(value: Variant) -> void:
+	var dict: Dictionary = value if value is Dictionary else {}
+	var saved_classes: Variant = dict.get("classes", {})
+	if caster != null:
+		caster.cancel_all()
+	if attack != null:
+		attack.cancel()
+	close_switch_session()
+	_progress.clear()
+	for key: Variant in (saved_classes as Dictionary if saved_classes is Dictionary else {}):
+		var class_id: StringName = StringName(str(key))
+		if get_class_definition(class_id) == null:
+			push_warning("[ClassManager] Save có class không tồn tại: %s" % class_id)
+			continue
+		_load_class(class_id, saved_classes[key] if saved_classes[key] is Dictionary else {})
+	if starting_class != null and not is_class_unlocked(starting_class.class_id):
+		unlock_class(starting_class.class_id)
+	var active: StringName = StringName(str(dict.get("active_class", "")))
+	if not is_class_unlocked(active):
+		active = starting_class.class_id if starting_class != null else &""
+	_current_id = &""
+	if active != &"":
+		_activate(active)
+	progression_changed.emit()
 
 
 # --- Nội bộ --------------------------------------------------------------------------------------
@@ -463,6 +493,45 @@ func _restore_loadout() -> void:
 		var runtime: SkillRuntime = progress.runtimes.get(skill_id)
 		if runtime == null or not loadout.equip_runtime(slot, runtime):
 			progress.loadout[slot] = &""
+
+
+func _load_class(class_id: StringName, data: Dictionary) -> void:
+	var definition: ClassDefinition = get_class_definition(class_id)
+	var progress: ClassProgress = ClassProgress.new(class_id, mastery_curve)
+	progress.mastery.load_dict(data.get("mastery", {}))
+	progress.mastery.changed.connect(_on_mastery_changed.bind(class_id))
+	_progress[class_id] = progress
+	var skills: Variant = data.get("skills", {})
+	for key: Variant in (skills as Dictionary if skills is Dictionary else {}):
+		var skill: SkillDefinition = definition.get_skill(StringName(str(key)))
+		var entry: Dictionary = skills[key] if skills[key] is Dictionary else {}
+		if skill == null:
+			push_warning("[ClassManager] Save có kỹ năng không thuộc class %s: %s" % [class_id, key])
+			continue
+		var mode: int = int(entry.get("cast_mode", skill.default_cast_mode))
+		var skill_progress: SkillProgress = SkillProgress.new(skill.skill_id,
+			mode if mode >= 0 and mode < SkillDefinition.CastMode.size() else skill.default_cast_mode)
+		skill_progress.level = clampi(int(entry.get("level", 1)), 1, skill.max_level)
+		var branch: StringName = StringName(str(entry.get("branch", "")))
+		skill_progress.branch_id = branch if branch == &"" or skill.get_evolution_branch(branch) != null else &""
+		progress.skills[skill.skill_id] = skill_progress
+		progress.runtimes[skill.skill_id] = SkillRuntime.new(_build_skill(class_id, skill.skill_id), skill_progress.cast_mode)
+	for key: String in ["unlocked_passives", "equipped_passives"]:
+		var ids: Variant = data.get(key, [])
+		for id: Variant in (ids if ids is Array else []):
+			var passive_id: StringName = StringName(str(id))
+			if definition.get_additional_passive(passive_id) == null:
+				continue
+			var target: Array[StringName] = progress.unlocked_passive_ids if key == "unlocked_passives" else progress.equipped_passive_ids
+			if not target.has(passive_id):
+				target.append(passive_id)
+	progress.equipped_passive_ids = progress.equipped_passive_ids.filter(func(id: StringName) -> bool:
+		return progress.unlocked_passive_ids.has(id)).slice(0, additional_passive_limit)
+	var loadout_ids: Variant = data.get("loadout", [])
+	var slots: Array = loadout_ids if loadout_ids is Array else []
+	for slot: int in mini(slots.size(), SkillLoadout.SLOT_COUNT):
+		var skill_id: StringName = StringName(str(slots[slot]))
+		progress.loadout[slot] = skill_id if progress.skills.has(skill_id) and not progress.loadout.has(skill_id) else &""
 
 
 ## Ghi nhận kỹ năng đã học: tiến trình (SkillProgress) + đúng một runtime (SkillRuntime) cho class này.

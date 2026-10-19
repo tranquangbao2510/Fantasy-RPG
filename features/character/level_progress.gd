@@ -45,6 +45,18 @@ func add_exp(amount: int) -> int:
 	return gained
 
 
-## Dữ liệu thuần để lưu sau này.
+## Dữ liệu thuần để lưu (save).
 func to_dict() -> Dictionary:
 	return {"level": level, "exp": experience}
+
+
+## Khôi phục từ to_dict(). Field thiếu/sai → mặc định (level 1, exp 0); kẹp level trong [1, max], exp trong
+## [0, exp tới level kế). Phát `changed`, không phát `leveled_up`.
+func load_dict(value: Variant) -> void:
+	var dict: Dictionary = value if value is Dictionary else {}
+	var saved_level: Variant = dict.get("level", 1)
+	var saved_exp: Variant = dict.get("exp", 0)
+	level = clampi(int(saved_level) if (saved_level is int or saved_level is float) else 1, 1, get_max_level())
+	experience = int(saved_exp) if (saved_exp is int or saved_exp is float) else 0
+	experience = 0 if is_max_level() else clampi(experience, 0, maxi(0, get_exp_to_next() - 1))
+	changed.emit(level, experience)

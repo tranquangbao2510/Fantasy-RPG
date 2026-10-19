@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://features/items/item_definition.gd" id="1_item"]
+[ext_resource type="Texture2D" path="res://features/items/icons/test_sword.png" id="3_icon"]
+[ext_resource type="Resource" path="res://features/combat/weapons/data/test_sword.tres" id="2_weapon"]
+
+[resource]
+script = ExtResource("1_item")
+id = &"test_sword"
+display_name = "Kiếm thử nghiệm"
+description = "Kiếm cân bằng, combo 3 đòn."
+icon = ExtResource("3_icon")
+category = 3
+max_stack = 1
+sell_price = 40
+tags = Array[StringName]([&"sword"])
+equip_slot = &"weapon"
+weapon = ExtResource("2_weapon")
+

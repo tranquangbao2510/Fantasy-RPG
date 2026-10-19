@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="SkillDefinition" format=3]
+[gd_resource type="Resource" script_class="SkillDefinition" format=3 uid="uid://x2wcorbkfnwr"]
 
-[ext_resource type="Script" path="res://features/skills/skill_definition.gd" id="1_abd2r"]
-[ext_resource type="Script" path="res://features/skills/progression/skill_evolution_branch.gd" id="1_olykh"]
-[ext_resource type="Script" path="res://features/skills/progression/skill_modifier.gd" id="2_w4qew"]
+[ext_resource type="Script" uid="uid://bik2nxdq85jp3" path="res://features/skills/skill_definition.gd" id="1_abd2r"]
+[ext_resource type="Script" uid="uid://427p2nljsclr" path="res://features/skills/progression/skill_evolution_branch.gd" id="1_olykh"]
+[ext_resource type="Script" uid="uid://bc2ny6b1jofuj" path="res://features/skills/progression/skill_modifier.gd" id="2_w4qew"]
 
 [sub_resource type="Resource" id="Resource_g7l2s"]
 script = ExtResource("2_w4qew")

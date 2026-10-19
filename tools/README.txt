@@ -2,6 +2,8 @@ Công cụ phát triển chạy ngoài game. Thư mục có .gdignore nên Godot
 Chạy từ thư mục gốc project (Godot 4.7.2 console):
 
 1. Sinh lại placeholder art môi trường (world/environment/art/):
+   CẢNH BÁO (VISUAL-02.2): phần lớn art đã là art vẽ tay — chạy không lọc sẽ GHI ĐÈ. Chỉ sinh nhóm còn do code
+   (fx, logic; nhóm decals gồm cả decal vẽ tay) — xem docs/visual/environment-style-guide.md mục 11.2.
      Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tools/placeholder_art/generate_environment_art.gd
    Chỉ sinh một nhóm: đặt biến môi trường ART_ONLY=ground,cliff,trees,plants,rocks,ruins,structures,decals,fx,scenery,logic
    Sau đó import lại:  Godot_v4.7.2-stable_win64_console.exe --headless --path . --import

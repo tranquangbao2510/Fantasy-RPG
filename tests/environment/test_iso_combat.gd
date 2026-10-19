@@ -12,6 +12,8 @@ const SCENE_PATH: String = "res://world/environment_prototype/environment_protot
 const PROJECTILE_SCENE: PackedScene = preload("res://features/combat/projectile.tscn")
 const GROUND_BURST: SkillDefinition = preload("res://features/skills/data/test_ground_burst.tres")
 const S: float = IsoProjection.GROUND_SQUASH
+## Mặc định IsoActorAdapter.vertical_speed_scale (VISUAL-02.2: 0.5 → 0.7 sau khi thử bằng slider).
+const ISO_VERTICAL_SPEED: float = 0.7
 
 var _world: Node
 var _player: Player
@@ -80,18 +82,18 @@ const ARENA: Vector2 = Vector2(22.0, 35.0)
 # ---------------------------------------------------------------- 1. tỉ lệ vận tốc dọc
 
 func _test_speed_scale() -> void:
-	_check("enemy_scale_matches_player", is_equal_approx(_enemy.vertical_speed_scale, _player.vertical_speed_scale) and is_equal_approx(_player.vertical_speed_scale, 0.5),
+	_check("enemy_scale_matches_player", is_equal_approx(_enemy.vertical_speed_scale, _player.vertical_speed_scale) and is_equal_approx(_player.vertical_speed_scale, ISO_VERTICAL_SPEED),
 		"player=%.2f enemy=%.2f" % [_player.vertical_speed_scale, _enemy.vertical_speed_scale])
 	var legacy: Enemy = (load("res://entities/enemies/simple_enemy/simple_enemy.tscn") as PackedScene).instantiate() as Enemy
 	_check("legacy_enemy_default_scale", is_equal_approx(legacy.vertical_speed_scale, 1.0))
 	legacy.free()
-	# Enemy đuổi Player thẳng theo chiều dọc màn hình: vận tốc dọc = move_speed × 0.5.
+	# Enemy đuổi Player thẳng theo chiều dọc màn hình: vận tốc dọc = move_speed × ISO_VERTICAL_SPEED.
 	_place(_player, _player_agent, ARENA, 0)
 	_place(_enemy, _enemy_agent, ARENA, 0)
 	_enemy.global_position = _player.global_position + Vector2(0, -50)
 	await _frames(4)
 	var vy: float = absf(_enemy.velocity.y)
-	_check("enemy_vertical_speed", absf(vy - _enemy.move_speed * 0.5) < 1.0, "vy=%.1f move_speed=%.1f" % [vy, _enemy.move_speed])
+	_check("enemy_vertical_speed", absf(vy - _enemy.move_speed * ISO_VERTICAL_SPEED) < 1.0, "vy=%.1f move_speed=%.1f" % [vy, _enemy.move_speed])
 	_enemy.global_position = _player.global_position + Vector2(-60, 0)
 	await _frames(4)
 	_check("enemy_horizontal_speed", absf(absf(_enemy.velocity.x) - _enemy.move_speed) < 1.0, "vx=%.1f" % _enemy.velocity.x)

@@ -7,10 +7,15 @@ uniform sampler2D albedo : source_color, filter_linear_mipmap, repeat_enable;
 uniform sampler2D edge_noise : filter_linear_mipmap, repeat_enable;
 uniform float tiles_per_texture = 6.0;
 uniform vec4 tint : source_color = vec4(1.0);
+/// Pha màu texture về phía sand_color (0 = giữ nguyên) — làm đường sáng, giảm tương phản đốm đậm (VISUAL-02.2).
+uniform vec4 sand_color : source_color = vec4(0.86, 0.78, 0.6, 1.0);
+uniform float sand_mix = 0.0;
 /// Mép bắt đầu mờ từ khoảng cách này (0 = tâm, 1 = mép).
 uniform float edge_start = 0.55;
 uniform float edge_noise_strength = 0.35;
 uniform float edge_noise_scale = 3.0;
+/// Tỉ trọng lớp noise chi tiết (tần số × 3.3) trong mép — cỏ lấn vào đường thành vệt nhỏ.
+uniform float edge_detail = 0.0;
 /// Viền tối nhẹ (đất nén / ẩm) ngay trước mép.
 uniform float rim_darken = 0.18;
 
@@ -27,9 +32,11 @@ void vertex() {
 void fragment() {
 	float d = abs(UV.y - 0.5) * 2.0;
 	float n = texture(edge_noise, grid / edge_noise_scale).r - 0.5;
-	float e = d + n * edge_noise_strength;
+	float n_fine = texture(edge_noise, grid * 3.3 / edge_noise_scale + vec2(0.37, 0.61)).r - 0.5;
+	float e = d + mix(n, n_fine, edge_detail) * edge_noise_strength;
 	float alpha = 1.0 - smoothstep(edge_start, 1.0, e);
-	vec4 c = texture(albedo, grid / tiles_per_texture) * tint;
+	vec4 c = texture(albedo, grid / tiles_per_texture);
+	c.rgb = mix(c.rgb, sand_color.rgb, sand_mix) * tint.rgb;
 	c.rgb *= 1.0 - rim_darken * smoothstep(edge_start - 0.3, edge_start + 0.15, e);
-	COLOR = vec4(c.rgb, c.a * alpha * vertex_color.a);
+	COLOR = vec4(c.rgb, c.a * tint.a * alpha * vertex_color.a);
 }

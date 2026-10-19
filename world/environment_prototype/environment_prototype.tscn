@@ -1,51 +1,50 @@
-[gd_scene format=4]
+[gd_scene format=4 uid="uid://cn0055iwrvykc"]
 
-[ext_resource type="Script" path="res://world/world.gd" id="1_y3y0j"]
-[ext_resource type="Texture2D" path="res://world/environment/art/scenery/valley_far.png" id="2_elyg2"]
-[ext_resource type="Texture2D" path="res://world/environment/art/fx/mist.png" id="3_kiwsh"]
-[ext_resource type="Script" path="res://world/environment/atmosphere/ambient_drift.gd" id="4_l5u2a"]
-[ext_resource type="Texture2D" path="res://world/environment/art/fx/light_shaft.png" id="5_ovivh"]
-[ext_resource type="Texture2D" path="res://world/environment/art/fx/mote.png" id="6_7hfbj"]
-[ext_resource type="Texture2D" path="res://world/environment/art/scenery/foreground_leaves.png" id="7_ito6r"]
-[ext_resource type="TileSet" path="res://world/environment/terrain/terrain_logic_tileset.tres" id="8_ggow3"]
-[ext_resource type="Script" path="res://world/environment/terrain/terrain_logic.gd" id="9_mc5hu"]
-[ext_resource type="Script" path="res://world/environment/iso/iso_map_bounds.gd" id="10_jg4x4"]
-[ext_resource type="Script" path="res://world/environment/elevation/elevated_terrain.gd" id="11_ofygr"]
-[ext_resource type="Texture2D" path="res://world/environment/art/ground/grass_base.png" id="12_5aqxx"]
+[ext_resource type="Script" uid="uid://ddak435txd5d4" path="res://world/world.gd" id="1_y3y0j"]
+[ext_resource type="Texture2D" uid="uid://k0burdn38ur" path="res://world/environment/art/scenery/valley_far.png" id="2_elyg2"]
+[ext_resource type="Texture2D" uid="uid://763m4kbor1ra" path="res://world/environment/art/fx/mist.png" id="3_kiwsh"]
+[ext_resource type="Script" uid="uid://cao8gm7p5uhxo" path="res://world/environment/atmosphere/ambient_drift.gd" id="4_l5u2a"]
+[ext_resource type="Texture2D" uid="uid://0rf4kckosgis" path="res://world/environment/art/fx/light_shaft.png" id="5_ovivh"]
+[ext_resource type="Texture2D" uid="uid://dmyps0rv34nug" path="res://world/environment/art/fx/mote.png" id="6_7hfbj"]
+[ext_resource type="Texture2D" uid="uid://qtipvf5guva8" path="res://world/environment/art/scenery/foreground_leaves.png" id="7_ito6r"]
+[ext_resource type="TileSet" uid="uid://bt7hhj46urel3" path="res://world/environment/terrain/terrain_logic_tileset.tres" id="8_ggow3"]
+[ext_resource type="Script" uid="uid://bhmjlre5ia0gs" path="res://world/environment/terrain/terrain_logic.gd" id="9_mc5hu"]
+[ext_resource type="Script" uid="uid://xfmc1x4ifr3s" path="res://world/environment/iso/iso_map_bounds.gd" id="10_jg4x4"]
+[ext_resource type="Script" uid="uid://cafq2jbcf1pj6" path="res://world/environment/elevation/elevated_terrain.gd" id="11_ofygr"]
+[ext_resource type="Texture2D" uid="uid://b0afvi1yg55ma" path="res://world/environment/art/ground/grass_base.png" id="12_5aqxx"]
 [ext_resource type="Material" path="res://world/environment/terrain/ground_grass.tres" id="13_p0mpl"]
-[ext_resource type="Texture2D" path="res://world/environment/art/cliff/cliff_face.png" id="14_ur7u8"]
-[ext_resource type="Texture2D" path="res://world/environment/art/cliff/cliff_lip.png" id="15_1day1"]
-[ext_resource type="Script" path="res://world/environment/terrain/decal_scatter.gd" id="16_u0dlr"]
-[ext_resource type="Texture2D" path="res://world/environment/art/decals/moss_patch.png" id="17_a0f68"]
-[ext_resource type="Texture2D" path="res://world/environment/art/decals/dirt_patch.png" id="18_p3o33"]
+[ext_resource type="Texture2D" uid="uid://bqx8otywkilcv" path="res://world/environment/art/cliff/cliff_face.png" id="14_ur7u8"]
+[ext_resource type="Texture2D" uid="uid://c0c6pwob7n8pb" path="res://world/environment/art/cliff/cliff_lip.png" id="15_1day1"]
+[ext_resource type="Script" uid="uid://cnwhdvudi5xkt" path="res://world/environment/terrain/decal_scatter.gd" id="16_u0dlr"]
+[ext_resource type="Texture2D" uid="uid://dd1s5mt5lgvy6" path="res://world/environment/art/decals/moss_patch.png" id="17_a0f68"]
+[ext_resource type="Texture2D" uid="uid://bvi4kdkuwrg45" path="res://world/environment/art/decals/dirt_patch.png" id="18_p3o33"]
 [ext_resource type="Material" path="res://world/environment/terrain/path_dirt.tres" id="19_1ceo4"]
-[ext_resource type="Texture2D" path="res://world/environment/art/ground/dirt_base.png" id="20_12htd"]
-[ext_resource type="Script" path="res://world/environment/water/stream.gd" id="21_qnh58"]
+[ext_resource type="Texture2D" uid="uid://cged6jmddkhxt" path="res://world/environment/art/ground/dirt_base.png" id="20_12htd"]
+[ext_resource type="Script" uid="uid://ctulk7stpdvme" path="res://world/environment/water/stream.gd" id="21_qnh58"]
 [ext_resource type="Material" path="res://world/environment/terrain/shore_mud.tres" id="22_386pm"]
 [ext_resource type="Material" path="res://world/environment/water/stream_water.tres" id="23_l46lc"]
-[ext_resource type="Texture2D" path="res://world/environment/art/fx/water_noise.png" id="24_cbdx0"]
-[ext_resource type="Script" path="res://world/environment/water/footbridge.gd" id="25_idtf5"]
-[ext_resource type="Texture2D" path="res://world/environment/art/decals/shadow_soft.png" id="26_lmlma"]
-[ext_resource type="Texture2D" path="res://world/environment/art/structures/footbridge.png" id="27_ff5sv"]
+[ext_resource type="Texture2D" uid="uid://b1ipkm1aixe3m" path="res://world/environment/art/fx/water_noise.png" id="24_cbdx0"]
+[ext_resource type="Script" uid="uid://d4lmnywy8no76" path="res://world/environment/water/footbridge.gd" id="25_idtf5"]
+[ext_resource type="Texture2D" uid="uid://d14lo23oe3wua" path="res://world/environment/art/decals/shadow_soft.png" id="26_lmlma"]
+[ext_resource type="Texture2D" uid="uid://bpv5y4bwfn3pw" path="res://world/environment/art/structures/footbridge.png" id="27_ff5sv"]
 [ext_resource type="Material" path="res://world/environment/water/waterfall.tres" id="28_3eaab"]
-[ext_resource type="Texture2D" path="res://world/environment/art/decals/canopy_shadow.png" id="29_gsais"]
-[ext_resource type="Texture2D" path="res://world/environment/art/decals/grass_tufts.png" id="30_ywjqv"]
-[ext_resource type="Texture2D" path="res://world/environment/art/decals/pebbles.png" id="31_83mfo"]
-[ext_resource type="Texture2D" path="res://world/environment/art/decals/flowers.png" id="32_3u3x7"]
-[ext_resource type="Texture2D" path="res://world/environment/art/decals/leaf_litter.png" id="33_cgai8"]
-[ext_resource type="Texture2D" path="res://world/environment/art/decals/light_patch.png" id="34_wiykl"]
-[ext_resource type="Script" path="res://world/environment/elevation/elevation_map.gd" id="35_nr7n0"]
+[ext_resource type="Texture2D" uid="uid://wpl2qswhgpts" path="res://world/environment/art/decals/canopy_shadow.png" id="29_gsais"]
+[ext_resource type="Texture2D" uid="uid://bl7jm1wdhjqeh" path="res://world/environment/art/decals/grass_tufts.png" id="30_ywjqv"]
+[ext_resource type="Texture2D" uid="uid://bx0s02nxqglrv" path="res://world/environment/art/decals/pebbles.png" id="31_83mfo"]
+[ext_resource type="Texture2D" uid="uid://dbqr8i3il5m04" path="res://world/environment/art/decals/flowers.png" id="32_3u3x7"]
+[ext_resource type="Texture2D" uid="uid://dnc8aa76s10fg" path="res://world/environment/art/decals/leaf_litter.png" id="33_cgai8"]
+[ext_resource type="Texture2D" uid="uid://ds5eyp1ghkj8t" path="res://world/environment/art/decals/light_patch.png" id="34_wiykl"]
+[ext_resource type="Script" uid="uid://dpiq83bod4630" path="res://world/environment/elevation/elevation_map.gd" id="35_nr7n0"]
 [ext_resource type="Material" path="res://world/environment/terrain/ground_grass_upper.tres" id="36_hx0lq"]
-[ext_resource type="Texture2D" path="res://world/environment/art/cliff/cliff_base.png" id="37_kvdfj"]
-[ext_resource type="Script" path="res://world/environment/elevation/elevated_deck.gd" id="38_8y02d"]
-[ext_resource type="Script" path="res://world/environment/iso/footprint_sorted_sprite.gd" id="39_y5u35"]
-[ext_resource type="Texture2D" path="res://world/environment/art/structures/stone_bridge.png" id="40_v6rx5"]
-[ext_resource type="Script" path="res://world/environment/props/occlusion_fader.gd" id="41_sa2nk"]
-[ext_resource type="Script" path="res://world/environment/elevation/elevation_connector.gd" id="42_v4wd1"]
-[ext_resource type="Texture2D" path="res://world/environment/art/structures/cliff_stairs.png" id="43_8xh1y"]
+[ext_resource type="Texture2D" uid="uid://depa20tya0yyj" path="res://world/environment/art/cliff/cliff_base.png" id="37_kvdfj"]
+[ext_resource type="Script" uid="uid://bvf0cvpgs6kpj" path="res://world/environment/elevation/elevated_deck.gd" id="38_8y02d"]
+[ext_resource type="Script" uid="uid://d0ns3pakwjt8o" path="res://world/environment/iso/footprint_sorted_sprite.gd" id="39_y5u35"]
+[ext_resource type="Texture2D" uid="uid://p4dnuuqwuuux" path="res://world/environment/art/structures/stone_bridge.png" id="40_v6rx5"]
+[ext_resource type="Script" uid="uid://bfmlxyg58neq3" path="res://world/environment/props/occlusion_fader.gd" id="41_sa2nk"]
+[ext_resource type="Script" uid="uid://cfkp3kismxwcx" path="res://world/environment/elevation/elevation_connector.gd" id="42_v4wd1"]
+[ext_resource type="Texture2D" uid="uid://bm7xfh5p1ql43" path="res://world/environment/art/structures/cliff_stairs.png" id="43_8xh1y"]
 [ext_resource type="Material" path="res://world/environment/terrain/ground_stone_plaza.tres" id="44_gjfe8"]
 [ext_resource type="PackedScene" path="res://world/environment/props/ruin_arch.tscn" id="45_w1y1h"]
-[ext_resource type="Script" path="res://world/environment/props/environment_prop.gd" id="46_ci0sh"]
 [ext_resource type="PackedScene" path="res://world/environment/props/ruin_pillar.tscn" id="47_mna7s"]
 [ext_resource type="PackedScene" path="res://world/environment/props/ruin_pillar_broken.tscn" id="48_ni111"]
 [ext_resource type="PackedScene" path="res://world/environment/props/ruin_blocks.tscn" id="49_72bxr"]
@@ -61,44 +60,33 @@
 [ext_resource type="PackedScene" path="res://world/environment/props/rock_large.tscn" id="59_60ojh"]
 [ext_resource type="PackedScene" path="res://world/environment/props/rock_flat.tscn" id="60_7pvuh"]
 [ext_resource type="PackedScene" path="res://entities/player/player.tscn" id="61_aogst"]
-[ext_resource type="Script" path="res://entities/player/player.gd" id="62_ojk3d"]
-[ext_resource type="Script" path="res://world/environment/elevation/elevation_agent.gd" id="63_hhfck"]
-[ext_resource type="Script" path="res://world/environment/iso/iso_actor_adapter.gd" id="64_e3nyw"]
+[ext_resource type="Script" uid="uid://bkg3x8a8yu8f" path="res://world/environment/elevation/elevation_agent.gd" id="63_hhfck"]
+[ext_resource type="Script" uid="uid://dbwewm4mllceq" path="res://world/environment/iso/iso_actor_adapter.gd" id="64_e3nyw"]
 [ext_resource type="PackedScene" path="res://features/interaction/examples/notice_board.tscn" id="65_cjall"]
-[ext_resource type="Script" path="res://features/interaction/examples/notice_board.gd" id="66_kxv5v"]
 [ext_resource type="PackedScene" path="res://entities/enemies/training_dummy/training_dummy.tscn" id="67_g3me2"]
-[ext_resource type="Script" path="res://entities/enemies/training_dummy/training_dummy.gd" id="68_ovmo4"]
 [ext_resource type="PackedScene" path="res://entities/enemies/simple_enemy/simple_enemy.tscn" id="69_gito7"]
-[ext_resource type="Script" path="res://entities/enemies/enemy.gd" id="70_8gjwn"]
 [ext_resource type="PackedScene" path="res://world/camera/game_camera.tscn" id="71_s3qe0"]
-[ext_resource type="Script" path="res://world/camera/game_camera.gd" id="72_30bnd"]
 [ext_resource type="PackedScene" path="res://ui/combat/combat_hud.tscn" id="73_kg7gh"]
-[ext_resource type="Script" path="res://ui/combat/combat_hud.gd" id="74_en02k"]
 [ext_resource type="PackedScene" path="res://ui/skills/skill_bar.tscn" id="75_gfpar"]
-[ext_resource type="Script" path="res://ui/skills/skill_bar.gd" id="76_aciw6"]
 [ext_resource type="PackedScene" path="res://ui/interaction/interaction_prompt.tscn" id="77_u7kkg"]
-[ext_resource type="Script" path="res://ui/interaction/interaction_prompt.gd" id="78_4hj6f"]
 [ext_resource type="PackedScene" path="res://ui/interaction/interaction_feedback.tscn" id="79_lm7vw"]
-[ext_resource type="Script" path="res://ui/interaction/interaction_feedback.gd" id="80_sg0ey"]
 [ext_resource type="PackedScene" path="res://ui/progression/progression_panel.tscn" id="81_t636r"]
-[ext_resource type="Script" path="res://ui/progression/progression_panel.gd" id="82_ecfn0"]
 [ext_resource type="PackedScene" path="res://ui/debug/environment_debug_hud.tscn" id="83_pf5uv"]
-[ext_resource type="Script" path="res://ui/debug/environment_debug_hud.gd" id="84_ronaq"]
 
 [sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_0h8ps"]
 blend_mode = 1
 
 [sub_resource type="Gradient" id="Gradient_2h8t4"]
-offsets = PackedFloat32Array(0, 1, 0.5)
-colors = PackedColorArray(1, 0.95, 0.75, 0, 1, 0.95, 0.75, 0, 1, 0.95, 0.75, 0.7)
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(1, 0.95, 0.75, 0, 1, 0.95, 0.75, 0.7, 1, 0.95, 0.75, 0)
 
 [sub_resource type="Curve" id="Curve_g01t5"]
 _data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(0.06, 0.62), 0.0, 0.0, 0, 0, Vector2(1, 0.7), 0.0, 0.0, 0, 0]
 point_count = 3
 
 [sub_resource type="Gradient" id="Gradient_kf1kv"]
-offsets = PackedFloat32Array(0, 1, 0.5)
-colors = PackedColorArray(0.02, 0.04, 0.05, 0, 0.02, 0.04, 0.05, 0, 0.02, 0.04, 0.05, 0.45)
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(0.02, 0.04, 0.05, 0, 0.02, 0.04, 0.05, 0.45, 0.02, 0.04, 0.05, 0)
 
 [sub_resource type="GradientTexture2D" id="GradientTexture2D_rmgd1"]
 gradient = SubResource("Gradient_kf1kv")
@@ -106,8 +94,8 @@ width = 4
 fill_to = Vector2(0, 1)
 
 [sub_resource type="Gradient" id="Gradient_sdjd4"]
-offsets = PackedFloat32Array(0, 1, 0.5)
-colors = PackedColorArray(0.02, 0.04, 0.05, 0, 0.02, 0.04, 0.05, 0, 0.02, 0.04, 0.05, 0.45)
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(0.02, 0.04, 0.05, 0, 0.02, 0.04, 0.05, 0.45, 0.02, 0.04, 0.05, 0)
 
 [sub_resource type="GradientTexture2D" id="GradientTexture2D_5pfis"]
 gradient = SubResource("Gradient_sdjd4")
@@ -153,7 +141,7 @@ progression_panel = NodePath("UILayer/ProgressionPanel")
 [node name="Environment" type="Node2D" parent="." unique_id=978478]
 
 [node name="SunTint" type="CanvasModulate" parent="Environment" unique_id=1497859033]
-color = Color(1, 0.97, 0.9, 1)
+color = Color(1, 0.96, 0.86, 1)
 
 [node name="ScenicBackground" type="Parallax2D" parent="Environment" unique_id=929140061]
 z_index = -100
@@ -168,7 +156,7 @@ texture = ExtResource("2_elyg2")
 centered = false
 
 [node name="ValleyMist0" type="Sprite2D" parent="Environment/ScenicBackground" unique_id=284199269]
-modulate = Color(1, 1, 1, 0.5)
+modulate = Color(1, 0.97, 0.92, 0.5)
 position = Vector2(-900, 120)
 scale = Vector2(2.4, 1)
 texture = ExtResource("3_kiwsh")
@@ -178,7 +166,7 @@ period = 27.6
 alpha_range = Vector2(0.3, 0.5)
 
 [node name="ValleyMist1" type="Sprite2D" parent="Environment/ScenicBackground" unique_id=1302303535]
-modulate = Color(1, 1, 1, 0.5)
+modulate = Color(1, 0.97, 0.92, 0.5)
 position = Vector2(-300, 30)
 scale = Vector2(2.4, 1)
 texture = ExtResource("3_kiwsh")
@@ -188,7 +176,7 @@ period = 25.2
 alpha_range = Vector2(0.3, 0.5)
 
 [node name="ValleyMist2" type="Sprite2D" parent="Environment/ScenicBackground" unique_id=524450009]
-modulate = Color(1, 1, 1, 0.5)
+modulate = Color(1, 0.97, 0.92, 0.5)
 position = Vector2(300, 120)
 scale = Vector2(2.4, 1)
 texture = ExtResource("3_kiwsh")
@@ -198,7 +186,7 @@ period = 25.2
 alpha_range = Vector2(0.3, 0.5)
 
 [node name="ValleyMist3" type="Sprite2D" parent="Environment/ScenicBackground" unique_id=69517992]
-modulate = Color(1, 1, 1, 0.5)
+modulate = Color(1, 0.97, 0.92, 0.5)
 position = Vector2(900, 30)
 scale = Vector2(2.4, 1)
 texture = ExtResource("3_kiwsh")
@@ -211,7 +199,7 @@ alpha_range = Vector2(0.3, 0.5)
 z_index = 40
 
 [node name="LightShaft0" type="Sprite2D" parent="Environment/Atmosphere" unique_id=1207482578]
-modulate = Color(1, 0.95, 0.8, 0.1)
+modulate = Color(1, 0.88, 0.62, 0.13)
 material = SubResource("CanvasItemMaterial_0h8ps")
 position = Vector2(-704, 608)
 rotation = -0.55
@@ -220,10 +208,10 @@ texture = ExtResource("5_ovivh")
 script = ExtResource("4_l5u2a")
 amplitude = Vector2(10, 0)
 period = 11.0
-alpha_range = Vector2(0.05, 0.1)
+alpha_range = Vector2(0.065, 0.13)
 
 [node name="LightShaft1" type="Sprite2D" parent="Environment/Atmosphere" unique_id=1976127327]
-modulate = Color(1, 0.95, 0.8, 0.08)
+modulate = Color(1, 0.88, 0.62, 0.11)
 material = SubResource("CanvasItemMaterial_0h8ps")
 position = Vector2(-640, 768)
 rotation = -0.55
@@ -232,10 +220,10 @@ texture = ExtResource("5_ovivh")
 script = ExtResource("4_l5u2a")
 amplitude = Vector2(10, 0)
 period = 13.0
-alpha_range = Vector2(0.04, 0.08)
+alpha_range = Vector2(0.055, 0.11)
 
 [node name="LightShaft2" type="Sprite2D" parent="Environment/Atmosphere" unique_id=903053121]
-modulate = Color(1, 0.95, 0.8, 0.09)
+modulate = Color(1, 0.88, 0.62, 0.12)
 material = SubResource("CanvasItemMaterial_0h8ps")
 position = Vector2(128, 320)
 rotation = -0.55
@@ -244,10 +232,10 @@ texture = ExtResource("5_ovivh")
 script = ExtResource("4_l5u2a")
 amplitude = Vector2(10, 0)
 period = 15.0
-alpha_range = Vector2(0.045, 0.09)
+alpha_range = Vector2(0.06, 0.12)
 
 [node name="LightShaft3" type="Sprite2D" parent="Environment/Atmosphere" unique_id=848952048]
-modulate = Color(1, 0.95, 0.8, 0.07)
+modulate = Color(1, 0.88, 0.62, 0.1)
 material = SubResource("CanvasItemMaterial_0h8ps")
 position = Vector2(64, 1024)
 rotation = -0.55
@@ -256,10 +244,10 @@ texture = ExtResource("5_ovivh")
 script = ExtResource("4_l5u2a")
 amplitude = Vector2(10, 0)
 period = 17.0
-alpha_range = Vector2(0.035, 0.07)
+alpha_range = Vector2(0.05, 0.1)
 
 [node name="StreamMist14" type="Sprite2D" parent="Environment/Atmosphere" unique_id=294202808]
-modulate = Color(1, 1, 1, 0.13)
+modulate = Color(1, 0.96, 0.86, 0.13)
 position = Vector2(-352, 624)
 scale = Vector2(1.2, 0.5)
 texture = ExtResource("3_kiwsh")
@@ -269,7 +257,7 @@ period = 25.408
 alpha_range = Vector2(0.078, 0.13)
 
 [node name="StreamMist26" type="Sprite2D" parent="Environment/Atmosphere" unique_id=507893754]
-modulate = Color(1, 1, 1, 0.13)
+modulate = Color(1, 0.96, 0.86, 0.13)
 position = Vector2(-16, 840)
 scale = Vector2(1.2, 0.5)
 texture = ExtResource("3_kiwsh")
@@ -362,6 +350,7 @@ color = Color(0.6, 0.68, 0.72, 1)
 polygon = PackedVector2Array(-2400, -1200, 2400, -1200, 2400, 2200, -2400, 2200)
 
 [node name="LandMass" type="Node2D" parent="MapContainer/GladeMap" unique_id=1908211649]
+y_sort_enabled = true
 position = Vector2(17, 1444.8)
 script = ExtResource("11_ofygr")
 tier = 0
@@ -412,7 +401,7 @@ scale = Vector2(1, 0.5)
 texture_repeat = 2
 material = ExtResource("19_1ceo4")
 points = PackedVector2Array(-208, 2064, -195.19995, 1955.2, -224, 1824, -288, 1632, -320, 1510.4, -310.40002, 1430.4, -195.20001, 1315.2, -192, 1216, -240, 1104, -278.4, 1001.6, -273.59998, 961.6)
-width = 54.3
+width = 76.925
 texture = ExtResource("20_12htd")
 texture_mode = 2
 joint_mode = 2
@@ -423,7 +412,7 @@ end_cap_mode = 2
 texture_repeat = 2
 material = ExtResource("19_1ceo4")
 points = PackedVector2Array(-192, 1216, -76.79999, 1292.8, 72, 1288, 232, 1128, 392, 968, 552, 808, 614.4, 729.6)
-width = 45.25
+width = 63.35
 texture = ExtResource("20_12htd")
 texture_mode = 2
 joint_mode = 2
@@ -726,7 +715,7 @@ avoid_nodes = [NodePath("../../../../EntityContainer/Elevation/Plateau"), NodePa
 inside_nodes = [NodePath("../../LandMass")]
 
 [node name="SunPatches" type="Node2D" parent="MapContainer/GladeMap/Details" unique_id=1157573064 node_paths=PackedStringArray("inside_nodes")]
-modulate = Color(1, 0.95, 0.8, 0.16)
+modulate = Color(1, 0.9, 0.66, 0.2)
 material = SubResource("CanvasItemMaterial_b2xhr")
 script = ExtResource("16_u0dlr")
 texture = ExtResource("34_wiykl")
@@ -746,6 +735,7 @@ y_sort_enabled = true
 script = ExtResource("35_nr7n0")
 
 [node name="Plateau" type="Node2D" parent="EntityContainer/Elevation" unique_id=605916933]
+y_sort_enabled = true
 position = Vector2(23, 572.8)
 script = ExtResource("11_ofygr")
 outline = PackedVector2Array(41, -460.8, 425, -268.8, 441, -228.79999, 121, -68.79999, 34.599976, -64, -167, -164.79999, -279, -220.79999, -343, -265.59998, -247, -332.8, -23, -444.8)
@@ -756,6 +746,7 @@ lip_texture = ExtResource("15_1day1")
 base_texture = ExtResource("37_kvdfj")
 
 [node name="Outcrop" type="Node2D" parent="EntityContainer/Elevation" unique_id=1628918599]
+y_sort_enabled = true
 position = Vector2(600, 704)
 script = ExtResource("11_ofygr")
 outline = PackedVector2Array(-20.799988, -270.4, 184, -200, 200, -144, 88, -72, -56, -64, -200, -136, -196.79999, -182.40002)
@@ -772,6 +763,7 @@ script = ExtResource("38_8y02d")
 deck_polygon = PackedVector2Array(-113.600006, -164, 52.799988, -80.80002, 14.399994, -61.600006, -152, -144.80002)
 
 [node name="Visual" type="Node2D" parent="EntityContainer/Elevation/StoneBridge" unique_id=985485810]
+y_sort_enabled = true
 script = ExtResource("39_y5u35")
 texture = ExtResource("40_v6rx5")
 image_offset = Vector2(-149.20001, -163.6)
@@ -798,6 +790,7 @@ top = Vector2(34.399994, -81.20001)
 half_width = Vector2(24, 12)
 
 [node name="Visual" type="Node2D" parent="EntityContainer/Elevation/CliffStairs" unique_id=1931052213]
+y_sort_enabled = true
 script = ExtResource("39_y5u35")
 texture = ExtResource("43_8xh1y")
 image_offset = Vector2(-54, -92)
@@ -828,7 +821,7 @@ end_cap_mode = 2
 texture_repeat = 2
 material = ExtResource("19_1ceo4")
 points = PackedVector2Array(-187.20001, 747.2, -108.79999, 723.2, 19.199982, 761.6, 160, 800, 268.8, 819.2, 315.2, 849.60004)
-width = 49.775
+width = 67.875
 texture = ExtResource("20_12htd")
 texture_mode = 2
 joint_mode = 2
@@ -907,361 +900,273 @@ inside_nodes = [NodePath("../../Plateau"), NodePath("../../Outcrop")]
 [node name="Props" type="Node2D" parent="EntityContainer" unique_id=485205709]
 y_sort_enabled = true
 
-[node name="RuinArch" type="Node2D" parent="EntityContainer/Props" unique_id=1960284209 instance=ExtResource("45_w1y1h")]
-y_sort_enabled = true
+[node name="RuinArch" parent="EntityContainer/Props" unique_id=1960284209 instance=ExtResource("45_w1y1h")]
 position = Vector2(140.8, 249.6)
-script = ExtResource("46_ci0sh")
 elevation_tier = 1
 
-[node name="RuinPillar" type="Node2D" parent="EntityContainer/Props" unique_id=1953351573 instance=ExtResource("47_mna7s")]
+[node name="RuinPillar" parent="EntityContainer/Props" unique_id=1953351573 instance=ExtResource("47_mna7s")]
 position = Vector2(83.20001, 201.6)
-script = ExtResource("46_ci0sh")
 elevation_tier = 1
 
-[node name="RuinPillar2" type="Node2D" parent="EntityContainer/Props" unique_id=1060995222 instance=ExtResource("47_mna7s")]
+[node name="RuinPillar2" parent="EntityContainer/Props" unique_id=1060995222 instance=ExtResource("47_mna7s")]
 position = Vector2(249.59999, 297.6)
-script = ExtResource("46_ci0sh")
 elevation_tier = 1
 
-[node name="RuinPillarBroken" type="Node2D" parent="EntityContainer/Props" unique_id=371148069 instance=ExtResource("48_ni111")]
+[node name="RuinPillarBroken" parent="EntityContainer/Props" unique_id=371148069 instance=ExtResource("48_ni111")]
 position = Vector2(-70.399994, 278.40002)
-script = ExtResource("46_ci0sh")
 elevation_tier = 1
 
-[node name="RuinPillarBroken2" type="Node2D" parent="EntityContainer/Props" unique_id=1326562101 instance=ExtResource("48_ni111")]
+[node name="RuinPillarBroken2" parent="EntityContainer/Props" unique_id=1326562101 instance=ExtResource("48_ni111")]
 position = Vector2(102.399994, 364.8)
-script = ExtResource("46_ci0sh")
 elevation_tier = 1
 
-[node name="RuinBlocks" type="Node2D" parent="EntityContainer/Props" unique_id=681356831 instance=ExtResource("49_72bxr")]
+[node name="RuinBlocks" parent="EntityContainer/Props" unique_id=681356831 instance=ExtResource("49_72bxr")]
 position = Vector2(6.4000244, 368)
-script = ExtResource("46_ci0sh")
 elevation_tier = 1
 
-[node name="RuneStone" type="Node2D" parent="EntityContainer/Props" unique_id=270787763 instance=ExtResource("50_ua3mu")]
+[node name="RuneStone" parent="EntityContainer/Props" unique_id=270787763 instance=ExtResource("50_ua3mu")]
 position = Vector2(275.2, 348.80002)
-script = ExtResource("46_ci0sh")
 elevation_tier = 1
 
-[node name="TreePine" type="Node2D" parent="EntityContainer/Props" unique_id=419708560 instance=ExtResource("51_4ft3x")]
+[node name="TreePine" parent="EntityContainer/Props" unique_id=419708560 instance=ExtResource("51_4ft3x")]
 position = Vector2(57.600006, 144)
-script = ExtResource("46_ci0sh")
 elevation_tier = 1
 
-[node name="TreePine2" type="Node2D" parent="EntityContainer/Props" unique_id=398668100 instance=ExtResource("51_4ft3x")]
+[node name="TreePine2" parent="EntityContainer/Props" unique_id=398668100 instance=ExtResource("51_4ft3x")]
 position = Vector2(415.99997, 329.59998)
-script = ExtResource("46_ci0sh")
 elevation_tier = 1
 
-[node name="TreeOakB" type="Node2D" parent="EntityContainer/Props" unique_id=738934840 instance=ExtResource("52_ur702")]
+[node name="TreeOakB" parent="EntityContainer/Props" unique_id=738934840 instance=ExtResource("52_ur702")]
 position = Vector2(-51.200012, 192)
-script = ExtResource("46_ci0sh")
 elevation_tier = 1
 
-[node name="BushB" type="Node2D" parent="EntityContainer/Props" unique_id=1879137913 instance=ExtResource("53_ki40u")]
+[node name="BushB" parent="EntityContainer/Props" unique_id=1879137913 instance=ExtResource("53_ki40u")]
 position = Vector2(128, 467.2)
-script = ExtResource("46_ci0sh")
 elevation_tier = 1
 
-[node name="BushA" type="Node2D" parent="EntityContainer/Props" unique_id=1191577720 instance=ExtResource("54_xrwt7")]
+[node name="BushA" parent="EntityContainer/Props" unique_id=1191577720 instance=ExtResource("54_xrwt7")]
 position = Vector2(-198.40001, 272)
-script = ExtResource("46_ci0sh")
 elevation_tier = 1
 
-[node name="Fern" type="Node2D" parent="EntityContainer/Props" unique_id=1448490905 instance=ExtResource("55_ryrwm")]
+[node name="Fern" parent="EntityContainer/Props" unique_id=1448490905 instance=ExtResource("55_ryrwm")]
 position = Vector2(38.400024, 448)
-script = ExtResource("46_ci0sh")
 elevation_tier = 1
 
-[node name="RockSmall" type="Node2D" parent="EntityContainer/Props" unique_id=474102387 instance=ExtResource("56_wa2o5")]
+[node name="RockSmall" parent="EntityContainer/Props" unique_id=474102387 instance=ExtResource("56_wa2o5")]
 position = Vector2(-230.40002, 320)
-script = ExtResource("46_ci0sh")
 elevation_tier = 1
 
-[node name="RuinWall" type="Node2D" parent="EntityContainer/Props" unique_id=690777056 instance=ExtResource("57_putcb")]
-y_sort_enabled = true
+[node name="RuinWall" parent="EntityContainer/Props" unique_id=690777056 instance=ExtResource("57_putcb")]
 position = Vector2(608, 540.8)
-script = ExtResource("46_ci0sh")
 elevation_tier = 1
 
-[node name="RuinPillarBroken3" type="Node2D" parent="EntityContainer/Props" unique_id=915742631 instance=ExtResource("48_ni111")]
+[node name="RuinPillarBroken3" parent="EntityContainer/Props" unique_id=915742631 instance=ExtResource("48_ni111")]
 position = Vector2(614.4, 608)
-script = ExtResource("46_ci0sh")
 elevation_tier = 1
 
-[node name="BushA2" type="Node2D" parent="EntityContainer/Props" unique_id=80359078 instance=ExtResource("54_xrwt7")]
+[node name="BushA2" parent="EntityContainer/Props" unique_id=80359078 instance=ExtResource("54_xrwt7")]
 position = Vector2(595.2, 476.80002)
-script = ExtResource("46_ci0sh")
 elevation_tier = 1
 
-[node name="RockSmall2" type="Node2D" parent="EntityContainer/Props" unique_id=1873695298 instance=ExtResource("56_wa2o5")]
+[node name="RockSmall2" parent="EntityContainer/Props" unique_id=1873695298 instance=ExtResource("56_wa2o5")]
 position = Vector2(736, 560)
-script = ExtResource("46_ci0sh")
 elevation_tier = 1
 
-[node name="TreePine3" type="Node2D" parent="EntityContainer/Props" unique_id=663813862 instance=ExtResource("51_4ft3x")]
+[node name="TreePine3" parent="EntityContainer/Props" unique_id=663813862 instance=ExtResource("51_4ft3x")]
 position = Vector2(761.6, 528)
-script = ExtResource("46_ci0sh")
 elevation_tier = 1
 
-[node name="TreeOakA" type="Node2D" parent="EntityContainer/Props" unique_id=1420228959 instance=ExtResource("58_6jhcb")]
+[node name="TreeOakA" parent="EntityContainer/Props" unique_id=1420228959 instance=ExtResource("58_6jhcb")]
 position = Vector2(-41.6, 91.2)
-script = ExtResource("46_ci0sh")
 
-[node name="TreePine4" type="Node2D" parent="EntityContainer/Props" unique_id=110396124 instance=ExtResource("51_4ft3x")]
+[node name="TreePine4" parent="EntityContainer/Props" unique_id=110396124 instance=ExtResource("51_4ft3x")]
 position = Vector2(-192, 160)
-script = ExtResource("46_ci0sh")
 
-[node name="TreeOakB2" type="Node2D" parent="EntityContainer/Props" unique_id=874226611 instance=ExtResource("52_ur702")]
+[node name="TreeOakB2" parent="EntityContainer/Props" unique_id=874226611 instance=ExtResource("52_ur702")]
 position = Vector2(-284.8, 225.6)
-script = ExtResource("46_ci0sh")
 
-[node name="TreeOakA2" type="Node2D" parent="EntityContainer/Props" unique_id=699450387 instance=ExtResource("58_6jhcb")]
+[node name="TreeOakA2" parent="EntityContainer/Props" unique_id=699450387 instance=ExtResource("58_6jhcb")]
 position = Vector2(-432, 280)
-script = ExtResource("46_ci0sh")
 
-[node name="TreePine5" type="Node2D" parent="EntityContainer/Props" unique_id=1721756850 instance=ExtResource("51_4ft3x")]
+[node name="TreePine5" parent="EntityContainer/Props" unique_id=1721756850 instance=ExtResource("51_4ft3x")]
 position = Vector2(-547.2, 350.4)
-script = ExtResource("46_ci0sh")
 
-[node name="TreeOakB3" type="Node2D" parent="EntityContainer/Props" unique_id=160926948 instance=ExtResource("52_ur702")]
+[node name="TreeOakB3" parent="EntityContainer/Props" unique_id=160926948 instance=ExtResource("52_ur702")]
 position = Vector2(-857.6, 499.2)
-script = ExtResource("46_ci0sh")
 
-[node name="TreeOakA3" type="Node2D" parent="EntityContainer/Props" unique_id=1430618327 instance=ExtResource("58_6jhcb")]
+[node name="TreeOakA3" parent="EntityContainer/Props" unique_id=1430618327 instance=ExtResource("58_6jhcb")]
 position = Vector2(-972.8, 569.6)
-script = ExtResource("46_ci0sh")
 
-[node name="TreePine6" type="Node2D" parent="EntityContainer/Props" unique_id=337466924 instance=ExtResource("51_4ft3x")]
+[node name="TreePine6" parent="EntityContainer/Props" unique_id=337466924 instance=ExtResource("51_4ft3x")]
 position = Vector2(-1097.6, 619.2)
-script = ExtResource("46_ci0sh")
 
-[node name="TreeOakA4" type="Node2D" parent="EntityContainer/Props" unique_id=635905469 instance=ExtResource("58_6jhcb")]
+[node name="TreeOakA4" parent="EntityContainer/Props" unique_id=635905469 instance=ExtResource("58_6jhcb")]
 position = Vector2(76.799995, 108.8)
-script = ExtResource("46_ci0sh")
 
-[node name="TreePine7" type="Node2D" parent="EntityContainer/Props" unique_id=1487049857 instance=ExtResource("51_4ft3x")]
+[node name="TreePine7" parent="EntityContainer/Props" unique_id=1487049857 instance=ExtResource("51_4ft3x")]
 position = Vector2(-979.2, 630.4)
-script = ExtResource("46_ci0sh")
 
-[node name="TreePine8" type="Node2D" parent="EntityContainer/Props" unique_id=532008740 instance=ExtResource("51_4ft3x")]
+[node name="TreePine8" parent="EntityContainer/Props" unique_id=532008740 instance=ExtResource("51_4ft3x")]
 position = Vector2(192, 160)
-script = ExtResource("46_ci0sh")
 
-[node name="TreeOakB4" type="Node2D" parent="EntityContainer/Props" unique_id=494009619 instance=ExtResource("52_ur702")]
+[node name="TreeOakB4" parent="EntityContainer/Props" unique_id=494009619 instance=ExtResource("52_ur702")]
 position = Vector2(345.6, 243.2)
-script = ExtResource("46_ci0sh")
 
-[node name="TreePine9" type="Node2D" parent="EntityContainer/Props" unique_id=290528318 instance=ExtResource("51_4ft3x")]
+[node name="TreePine9" parent="EntityContainer/Props" unique_id=290528318 instance=ExtResource("51_4ft3x")]
 position = Vector2(496, 312)
-script = ExtResource("46_ci0sh")
 
-[node name="TreeOakA5" type="Node2D" parent="EntityContainer/Props" unique_id=1137651071 instance=ExtResource("58_6jhcb")]
+[node name="TreeOakA5" parent="EntityContainer/Props" unique_id=1137651071 instance=ExtResource("58_6jhcb")]
 position = Vector2(748.8, 457.6)
-script = ExtResource("46_ci0sh")
 
-[node name="TreePine10" type="Node2D" parent="EntityContainer/Props" unique_id=1458424409 instance=ExtResource("51_4ft3x")]
+[node name="TreePine10" parent="EntityContainer/Props" unique_id=1458424409 instance=ExtResource("51_4ft3x")]
 position = Vector2(979.2, 566.4)
-script = ExtResource("46_ci0sh")
 
-[node name="TreeOakB5" type="Node2D" parent="EntityContainer/Props" unique_id=1108989938 instance=ExtResource("52_ur702")]
+[node name="TreeOakB5" parent="EntityContainer/Props" unique_id=1108989938 instance=ExtResource("52_ur702")]
 position = Vector2(1040, 648)
-script = ExtResource("46_ci0sh")
 
-[node name="TreeOakA6" type="Node2D" parent="EntityContainer/Props" unique_id=918894430 instance=ExtResource("58_6jhcb")]
+[node name="TreeOakA6" parent="EntityContainer/Props" unique_id=918894430 instance=ExtResource("58_6jhcb")]
 position = Vector2(864, 752)
-script = ExtResource("46_ci0sh")
 
-[node name="TreePine11" type="Node2D" parent="EntityContainer/Props" unique_id=309136259 instance=ExtResource("51_4ft3x")]
+[node name="TreePine11" parent="EntityContainer/Props" unique_id=309136259 instance=ExtResource("51_4ft3x")]
 position = Vector2(672, 816)
-script = ExtResource("46_ci0sh")
 
-[node name="TreeOakA7" type="Node2D" parent="EntityContainer/Props" unique_id=668879732 instance=ExtResource("58_6jhcb")]
+[node name="TreeOakA7" parent="EntityContainer/Props" unique_id=668879732 instance=ExtResource("58_6jhcb")]
 position = Vector2(-816, 600)
-script = ExtResource("46_ci0sh")
 
-[node name="TreeOakB6" type="Node2D" parent="EntityContainer/Props" unique_id=1253022416 instance=ExtResource("52_ur702")]
+[node name="TreeOakB6" parent="EntityContainer/Props" unique_id=1253022416 instance=ExtResource("52_ur702")]
 position = Vector2(-736, 720)
-script = ExtResource("46_ci0sh")
 
-[node name="TreePine12" type="Node2D" parent="EntityContainer/Props" unique_id=1426713293 instance=ExtResource("51_4ft3x")]
+[node name="TreePine12" parent="EntityContainer/Props" unique_id=1426713293 instance=ExtResource("51_4ft3x")]
 position = Vector2(-672, 832)
-script = ExtResource("46_ci0sh")
 
-[node name="TreeOakA8" type="Node2D" parent="EntityContainer/Props" unique_id=1971061680 instance=ExtResource("58_6jhcb")]
+[node name="TreeOakA8" parent="EntityContainer/Props" unique_id=1971061680 instance=ExtResource("58_6jhcb")]
 position = Vector2(-512, 928)
-script = ExtResource("46_ci0sh")
 
-[node name="TreeOakB7" type="Node2D" parent="EntityContainer/Props" unique_id=946672711 instance=ExtResource("52_ur702")]
+[node name="TreeOakB7" parent="EntityContainer/Props" unique_id=946672711 instance=ExtResource("52_ur702")]
 position = Vector2(-912, 744)
-script = ExtResource("46_ci0sh")
 
-[node name="RockLarge" type="Node2D" parent="EntityContainer/Props" unique_id=1676222408 instance=ExtResource("59_60ojh")]
+[node name="RockLarge" parent="EntityContainer/Props" unique_id=1676222408 instance=ExtResource("59_60ojh")]
 position = Vector2(-544, 672)
-script = ExtResource("46_ci0sh")
 
-[node name="RockSmall3" type="Node2D" parent="EntityContainer/Props" unique_id=766918701 instance=ExtResource("56_wa2o5")]
+[node name="RockSmall3" parent="EntityContainer/Props" unique_id=766918701 instance=ExtResource("56_wa2o5")]
 position = Vector2(-531.2, 700.80005)
-script = ExtResource("46_ci0sh")
 
-[node name="RockFlat" type="Node2D" parent="EntityContainer/Props" unique_id=986881284 instance=ExtResource("60_7pvuh")]
+[node name="RockFlat" parent="EntityContainer/Props" unique_id=986881284 instance=ExtResource("60_7pvuh")]
 position = Vector2(-624, 568)
-script = ExtResource("46_ci0sh")
 
-[node name="RuinPillarBroken4" type="Node2D" parent="EntityContainer/Props" unique_id=175432685 instance=ExtResource("48_ni111")]
+[node name="RuinPillarBroken4" parent="EntityContainer/Props" unique_id=175432685 instance=ExtResource("48_ni111")]
 position = Vector2(-726.4, 539.2)
-script = ExtResource("46_ci0sh")
 
-[node name="RuinBlocks2" type="Node2D" parent="EntityContainer/Props" unique_id=154103586 instance=ExtResource("49_72bxr")]
+[node name="RuinBlocks2" parent="EntityContainer/Props" unique_id=154103586 instance=ExtResource("49_72bxr")]
 position = Vector2(-710.39996, 566.39996)
-script = ExtResource("46_ci0sh")
 
-[node name="BushA3" type="Node2D" parent="EntityContainer/Props" unique_id=1196326851 instance=ExtResource("54_xrwt7")]
+[node name="BushA3" parent="EntityContainer/Props" unique_id=1196326851 instance=ExtResource("54_xrwt7")]
 position = Vector2(-848, 568)
-script = ExtResource("46_ci0sh")
 
-[node name="BushB2" type="Node2D" parent="EntityContainer/Props" unique_id=1435160806 instance=ExtResource("53_ki40u")]
+[node name="BushB2" parent="EntityContainer/Props" unique_id=1435160806 instance=ExtResource("53_ki40u")]
 position = Vector2(-688, 632)
-script = ExtResource("46_ci0sh")
 
-[node name="BushA4" type="Node2D" parent="EntityContainer/Props" unique_id=795773595 instance=ExtResource("54_xrwt7")]
+[node name="BushA4" parent="EntityContainer/Props" unique_id=795773595 instance=ExtResource("54_xrwt7")]
 position = Vector2(-592, 760)
-script = ExtResource("46_ci0sh")
 
-[node name="BushB3" type="Node2D" parent="EntityContainer/Props" unique_id=200876688 instance=ExtResource("53_ki40u")]
+[node name="BushB3" parent="EntityContainer/Props" unique_id=200876688 instance=ExtResource("53_ki40u")]
 position = Vector2(-464, 840)
-script = ExtResource("46_ci0sh")
 
-[node name="BushB4" type="Node2D" parent="EntityContainer/Props" unique_id=162819432 instance=ExtResource("53_ki40u")]
+[node name="BushB4" parent="EntityContainer/Props" unique_id=162819432 instance=ExtResource("53_ki40u")]
 position = Vector2(-448, 464)
-script = ExtResource("46_ci0sh")
 
-[node name="BushB5" type="Node2D" parent="EntityContainer/Props" unique_id=1652051701 instance=ExtResource("53_ki40u")]
+[node name="BushB5" parent="EntityContainer/Props" unique_id=1652051701 instance=ExtResource("53_ki40u")]
 position = Vector2(-307.2, 569.6)
-script = ExtResource("46_ci0sh")
 
-[node name="Fern2" type="Node2D" parent="EntityContainer/Props" unique_id=1374774566 instance=ExtResource("55_ryrwm")]
+[node name="Fern2" parent="EntityContainer/Props" unique_id=1374774566 instance=ExtResource("55_ryrwm")]
 position = Vector2(-697.6, 508.8)
-script = ExtResource("46_ci0sh")
 
-[node name="Fern3" type="Node2D" parent="EntityContainer/Props" unique_id=537128125 instance=ExtResource("55_ryrwm")]
+[node name="Fern3" parent="EntityContainer/Props" unique_id=537128125 instance=ExtResource("55_ryrwm")]
 position = Vector2(-521.6, 596.8)
-script = ExtResource("46_ci0sh")
 
-[node name="Fern4" type="Node2D" parent="EntityContainer/Props" unique_id=1959762965 instance=ExtResource("55_ryrwm")]
+[node name="Fern4" parent="EntityContainer/Props" unique_id=1959762965 instance=ExtResource("55_ryrwm")]
 position = Vector2(-176, 808)
-script = ExtResource("46_ci0sh")
 
-[node name="Fern5" type="Node2D" parent="EntityContainer/Props" unique_id=38317810 instance=ExtResource("55_ryrwm")]
+[node name="Fern5" parent="EntityContainer/Props" unique_id=38317810 instance=ExtResource("55_ryrwm")]
 position = Vector2(-480, 752)
-script = ExtResource("46_ci0sh")
 
-[node name="RockLarge2" type="Node2D" parent="EntityContainer/Props" unique_id=598702767 instance=ExtResource("59_60ojh")]
+[node name="RockLarge2" parent="EntityContainer/Props" unique_id=598702767 instance=ExtResource("59_60ojh")]
 position = Vector2(-134.40002, 547.2)
-script = ExtResource("46_ci0sh")
 
-[node name="RockSmall4" type="Node2D" parent="EntityContainer/Props" unique_id=2042927351 instance=ExtResource("56_wa2o5")]
+[node name="RockSmall4" parent="EntityContainer/Props" unique_id=2042927351 instance=ExtResource("56_wa2o5")]
 position = Vector2(-102.39996, 569.6)
-script = ExtResource("46_ci0sh")
 
-[node name="BushA5" type="Node2D" parent="EntityContainer/Props" unique_id=1234267710 instance=ExtResource("54_xrwt7")]
+[node name="BushA5" parent="EntityContainer/Props" unique_id=1234267710 instance=ExtResource("54_xrwt7")]
 position = Vector2(-352, 419.2)
-script = ExtResource("46_ci0sh")
 
-[node name="Fern6" type="Node2D" parent="EntityContainer/Props" unique_id=2540106 instance=ExtResource("55_ryrwm")]
+[node name="Fern6" parent="EntityContainer/Props" unique_id=2540106 instance=ExtResource("55_ryrwm")]
 position = Vector2(-179.20001, 505.6)
-script = ExtResource("46_ci0sh")
 
-[node name="RockSmall5" type="Node2D" parent="EntityContainer/Props" unique_id=777778250 instance=ExtResource("56_wa2o5")]
+[node name="RockSmall5" parent="EntityContainer/Props" unique_id=777778250 instance=ExtResource("56_wa2o5")]
 position = Vector2(166.40002, 608)
-script = ExtResource("46_ci0sh")
 
-[node name="BushB6" type="Node2D" parent="EntityContainer/Props" unique_id=905843436 instance=ExtResource("53_ki40u")]
+[node name="BushB6" parent="EntityContainer/Props" unique_id=905843436 instance=ExtResource("53_ki40u")]
 position = Vector2(524.8, 454.4)
-script = ExtResource("46_ci0sh")
 
-[node name="TreeOakA9" type="Node2D" parent="EntityContainer/Props" unique_id=1904593152 instance=ExtResource("58_6jhcb")]
+[node name="TreeOakA9" parent="EntityContainer/Props" unique_id=1904593152 instance=ExtResource("58_6jhcb")]
 position = Vector2(32, 976)
-script = ExtResource("46_ci0sh")
 
-[node name="TreePine13" type="Node2D" parent="EntityContainer/Props" unique_id=1656060930 instance=ExtResource("51_4ft3x")]
+[node name="TreePine13" parent="EntityContainer/Props" unique_id=1656060930 instance=ExtResource("51_4ft3x")]
 position = Vector2(144, 1032)
-script = ExtResource("46_ci0sh")
 
-[node name="TreeOakB8" type="Node2D" parent="EntityContainer/Props" unique_id=1560460490 instance=ExtResource("52_ur702")]
+[node name="TreeOakB8" parent="EntityContainer/Props" unique_id=1560460490 instance=ExtResource("52_ur702")]
 position = Vector2(192, 1104)
-script = ExtResource("46_ci0sh")
 
-[node name="TreeOakA10" type="Node2D" parent="EntityContainer/Props" unique_id=1889106862 instance=ExtResource("58_6jhcb")]
+[node name="TreeOakA10" parent="EntityContainer/Props" unique_id=1889106862 instance=ExtResource("58_6jhcb")]
 position = Vector2(-32, 1072)
-script = ExtResource("46_ci0sh")
 
-[node name="TreePine14" type="Node2D" parent="EntityContainer/Props" unique_id=1266697723 instance=ExtResource("51_4ft3x")]
+[node name="TreePine14" parent="EntityContainer/Props" unique_id=1266697723 instance=ExtResource("51_4ft3x")]
 position = Vector2(-16, 1160)
-script = ExtResource("46_ci0sh")
 
-[node name="TreeOakB9" type="Node2D" parent="EntityContainer/Props" unique_id=214848919 instance=ExtResource("52_ur702")]
+[node name="TreeOakB9" parent="EntityContainer/Props" unique_id=214848919 instance=ExtResource("52_ur702")]
 position = Vector2(-208, 1096)
-script = ExtResource("46_ci0sh")
 
-[node name="TreeOakA11" type="Node2D" parent="EntityContainer/Props" unique_id=1965340733 instance=ExtResource("58_6jhcb")]
-position = Vector2(496, 952)
-script = ExtResource("46_ci0sh")
+[node name="TreeOakA11" parent="EntityContainer/Props" unique_id=1965340733 instance=ExtResource("58_6jhcb")]
+position = Vector2(-134, 679)
 
-[node name="TreePine15" type="Node2D" parent="EntityContainer/Props" unique_id=1883283287 instance=ExtResource("51_4ft3x")]
+[node name="TreePine15" parent="EntityContainer/Props" unique_id=1883283287 instance=ExtResource("51_4ft3x")]
 position = Vector2(432, 872)
-script = ExtResource("46_ci0sh")
 
-[node name="TreeOakB10" type="Node2D" parent="EntityContainer/Props" unique_id=926535690 instance=ExtResource("52_ur702")]
+[node name="TreeOakB10" parent="EntityContainer/Props" unique_id=926535690 instance=ExtResource("52_ur702")]
 position = Vector2(288, 816)
-script = ExtResource("46_ci0sh")
 
-[node name="TreeOakA12" type="Node2D" parent="EntityContainer/Props" unique_id=1341874499 instance=ExtResource("58_6jhcb")]
+[node name="TreeOakA12" parent="EntityContainer/Props" unique_id=1341874499 instance=ExtResource("58_6jhcb")]
 position = Vector2(208, 744)
-script = ExtResource("46_ci0sh")
 
-[node name="TreePine16" type="Node2D" parent="EntityContainer/Props" unique_id=1811636265 instance=ExtResource("51_4ft3x")]
-position = Vector2(368, 984)
-script = ExtResource("46_ci0sh")
+[node name="TreePine16" parent="EntityContainer/Props" unique_id=1811636265 instance=ExtResource("51_4ft3x")]
+position = Vector2(368, 948)
 
-[node name="BushA6" type="Node2D" parent="EntityContainer/Props" unique_id=587938574 instance=ExtResource("54_xrwt7")]
+[node name="BushA6" parent="EntityContainer/Props" unique_id=587938574 instance=ExtResource("54_xrwt7")]
 position = Vector2(16, 1032)
-script = ExtResource("46_ci0sh")
 
-[node name="BushB7" type="Node2D" parent="EntityContainer/Props" unique_id=2104281024 instance=ExtResource("53_ki40u")]
+[node name="BushB7" parent="EntityContainer/Props" unique_id=2104281024 instance=ExtResource("53_ki40u")]
 position = Vector2(64, 1104)
-script = ExtResource("46_ci0sh")
 
-[node name="BushB8" type="Node2D" parent="EntityContainer/Props" unique_id=2039434887 instance=ExtResource("53_ki40u")]
+[node name="BushB8" parent="EntityContainer/Props" unique_id=2039434887 instance=ExtResource("53_ki40u")]
 position = Vector2(192, 848)
-script = ExtResource("46_ci0sh")
 
-[node name="BushB9" type="Node2D" parent="EntityContainer/Props" unique_id=1739055713 instance=ExtResource("53_ki40u")]
+[node name="BushB9" parent="EntityContainer/Props" unique_id=1739055713 instance=ExtResource("53_ki40u")]
 position = Vector2(320, 896)
-script = ExtResource("46_ci0sh")
 
-[node name="BushB10" type="Node2D" parent="EntityContainer/Props" unique_id=196115275 instance=ExtResource("53_ki40u")]
+[node name="BushB10" parent="EntityContainer/Props" unique_id=196115275 instance=ExtResource("53_ki40u")]
 position = Vector2(64, 768)
-script = ExtResource("46_ci0sh")
 
-[node name="RockLarge3" type="Node2D" parent="EntityContainer/Props" unique_id=155826621 instance=ExtResource("59_60ojh")]
+[node name="RockLarge3" parent="EntityContainer/Props" unique_id=155826621 instance=ExtResource("59_60ojh")]
 position = Vector2(140.79999, 825.6)
-script = ExtResource("46_ci0sh")
 
-[node name="RuinWall2" type="Node2D" parent="EntityContainer/Props" unique_id=1547206085 instance=ExtResource("57_putcb")]
-y_sort_enabled = true
+[node name="RuinWall2" parent="EntityContainer/Props" unique_id=1547206085 instance=ExtResource("57_putcb")]
 position = Vector2(-352, 992)
-script = ExtResource("46_ci0sh")
 
-[node name="RuinPillar3" type="Node2D" parent="EntityContainer/Props" unique_id=263549957 instance=ExtResource("47_mna7s")]
+[node name="RuinPillar3" parent="EntityContainer/Props" unique_id=263549957 instance=ExtResource("47_mna7s")]
 position = Vector2(-428.80005, 982.4)
-script = ExtResource("46_ci0sh")
 
-[node name="Player" type="CharacterBody2D" parent="EntityContainer" unique_id=2126152150 groups=["test_resettable"] instance=ExtResource("61_aogst")]
+[node name="Player" parent="EntityContainer" unique_id=2126152150 instance=ExtResource("61_aogst")]
 position = Vector2(-153.6, 928)
-collision_layer = 2
-motion_mode = 1
-script = ExtResource("62_ojk3d")
 
 [node name="ElevationAgent" type="Node" parent="EntityContainer/Player" unique_id=47264511]
 script = ExtResource("63_hhfck")
@@ -1272,19 +1177,12 @@ shadow = NodePath("../Visual/Shadow")
 facing_pivot = NodePath("../Visual/FacingPivot")
 body_shape = NodePath("../CollisionShape2D")
 
-[node name="NoticeBoard" type="Area2D" parent="EntityContainer" unique_id=1593350418 instance=ExtResource("65_cjall")]
+[node name="NoticeBoard" parent="EntityContainer" unique_id=1593350418 instance=ExtResource("65_cjall")]
 position = Vector2(-192, 940.8)
-collision_layer = 4
-collision_mask = 0
-monitoring = false
-script = ExtResource("66_kxv5v")
 message = "Environment Prototype (VISUAL-02, isometric): theo đường đất qua cầu gỗ, lên bậc thang đá tới quảng trường tàn tích; đi qua lối trên vòm sang mỏm đá, hoặc theo đường nhánh chui dưới gầm vòm. Nút góc phải trên bật lưới Terrain Logic."
-interaction_name = "Bảng thông báo"
-interaction_prompt = "Đọc"
 
-[node name="TrainingDummy" type="Node2D" parent="EntityContainer" unique_id=650323826 groups=["test_resettable"] instance=ExtResource("67_g3me2")]
+[node name="TrainingDummy" parent="EntityContainer" unique_id=650323826 instance=ExtResource("67_g3me2")]
 position = Vector2(-323.2, 945.6)
-script = ExtResource("68_ovmo4")
 
 [node name="ElevationAgent" type="Node" parent="EntityContainer/TrainingDummy" unique_id=1838855269]
 script = ExtResource("63_hhfck")
@@ -1294,13 +1192,9 @@ script = ExtResource("64_e3nyw")
 shadow = NodePath("../Visual/Shadow")
 body_shape = NodePath("../BlockingBody/CollisionShape2D")
 
-[node name="SimpleEnemy" type="CharacterBody2D" parent="EntityContainer" unique_id=662707432 node_paths=PackedStringArray("target", "attack") groups=["enemies", "test_resettable"] instance=ExtResource("69_gito7")]
+[node name="SimpleEnemy" parent="EntityContainer" unique_id=662707432 node_paths=PackedStringArray("target") instance=ExtResource("69_gito7")]
 position = Vector2(-752, 664)
-collision_layer = 8
-motion_mode = 1
-script = ExtResource("70_8gjwn")
 target = NodePath("../Player")
-attack = NodePath("MeleeAttack")
 
 [node name="ElevationAgent" type="Node" parent="EntityContainer/SimpleEnemy" unique_id=506294020]
 script = ExtResource("63_hhfck")
@@ -1314,88 +1208,34 @@ body_shape = NodePath("../CollisionShape2D")
 
 [node name="CameraContainer" type="Node2D" parent="." unique_id=1090960829]
 
-[node name="GameCamera" type="Camera2D" parent="CameraContainer" unique_id=1263280977 instance=ExtResource("71_s3qe0")]
-zoom = Vector2(2, 2)
-process_callback = 0
-position_smoothing_enabled = true
-position_smoothing_speed = 8.0
-script = ExtResource("72_30bnd")
+[node name="GameCamera" parent="CameraContainer" unique_id=1263280977 instance=ExtResource("71_s3qe0")]
 max_zoom = 3.0
 zoom_step = 0.25
 
 [node name="UILayer" type="CanvasLayer" parent="." unique_id=157487558]
 layer = 2
 
-[node name="CombatHUD" type="Control" parent="UILayer" unique_id=1409758316 instance=ExtResource("73_kg7gh")]
-layout_mode = 3
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-script = ExtResource("74_en02k")
+[node name="CombatHUD" parent="UILayer" unique_id=1409758316 instance=ExtResource("73_kg7gh")]
+offset_left = 77.0
+offset_top = -65.0
+offset_right = 77.0
+offset_bottom = -65.0
 
-[node name="SkillBar" type="VBoxContainer" parent="UILayer" unique_id=1925085793 instance=ExtResource("75_gfpar")]
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -364.0
-offset_top = -124.0
-offset_right = -12.0
-offset_bottom = -12.0
-grow_horizontal = 0
-grow_vertical = 0
-mouse_filter = 2
-alignment = 2
-script = ExtResource("76_aciw6")
+[node name="SkillBar" parent="UILayer" unique_id=1925085793 instance=ExtResource("75_gfpar")]
 
-[node name="InteractionPrompt" type="PanelContainer" parent="UILayer" unique_id=1517200476 instance=ExtResource("77_u7kkg")]
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_top = -72.0
-offset_bottom = -40.0
-grow_horizontal = 2
-grow_vertical = 0
-mouse_filter = 2
-script = ExtResource("78_4hj6f")
+[node name="InteractionPrompt" parent="UILayer" unique_id=1517200476 instance=ExtResource("77_u7kkg")]
 
-[node name="InteractionFeedback" type="PanelContainer" parent="UILayer" unique_id=612995959 instance=ExtResource("79_lm7vw")]
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_top = 24.0
-offset_bottom = 56.0
-grow_horizontal = 2
-mouse_filter = 2
-script = ExtResource("80_sg0ey")
+[node name="InteractionFeedback" parent="UILayer" unique_id=612995959 instance=ExtResource("79_lm7vw")]
 
-[node name="ProgressionPanel" type="PanelContainer" parent="UILayer" unique_id=653805938 instance=ExtResource("81_t636r")]
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -560.0
-offset_top = 64.0
-offset_right = -12.0
-offset_bottom = 516.0
-grow_horizontal = 0
+[node name="ProgressionPanel" parent="UILayer" unique_id=653805938 instance=ExtResource("81_t636r")]
+offset_left = -820.0
+offset_top = -57.0
+offset_right = -272.0
+offset_bottom = 395.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
-script = ExtResource("82_ecfn0")
 
-[node name="EnvironmentDebugHud" type="PanelContainer" parent="UILayer" unique_id=1874632721 node_paths=PackedStringArray("agent", "terrain_logic", "camera", "tracked_body") instance=ExtResource("83_pf5uv")]
+[node name="EnvironmentDebugHud" parent="UILayer" unique_id=1874632721 node_paths=PackedStringArray("agent", "terrain_logic", "camera", "tracked_body") instance=ExtResource("83_pf5uv")]
 anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -300.0
-offset_top = 12.0
-offset_right = -12.0
-grow_horizontal = 0
-script = ExtResource("84_ronaq")
 agent = NodePath("../../EntityContainer/Player/ElevationAgent")
 terrain_logic = NodePath("../../MapContainer/GladeMap/TerrainLogic")
 camera = NodePath("../../CameraContainer/GameCamera")

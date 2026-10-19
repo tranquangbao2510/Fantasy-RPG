@@ -2,7 +2,7 @@
 
 Tài liệu cho đồ họa môi trường. Mục **[provisional]** là thông số chưa được xác nhận bằng asset thật.
 
-> Trạng thái: toàn bộ art trong `world/environment/art/` là **placeholder sinh bằng code** (`tools/placeholder_art/`), không phải production art. Placeholder đã **đúng góc và đúng tỉ lệ** để làm khuôn cho art thật.
+> Trạng thái (VISUAL-02.2): phần lớn art trong `world/environment/art/` đã là **art vẽ tay** (gen AI + hậu kỳ thủ công, quy trình ở mục 11.1). Còn lại **sinh bằng code** (`tools/placeholder_art/`): bóng/đốm sáng mềm, FX (sương, tia nắng, bụi sáng, glow, noise nước) và tile lưới logic — danh sách ở mục 11.2. Kích thước mọi file vẫn đúng như placeholder ban đầu.
 >
 > Map cũ `world/maps/test_map/` và `world/sandbox/` vẫn ở góc top-down/oblique cũ (pixel art, Nearest). Sẽ chuyển sang isometric ở task sau.
 
@@ -22,7 +22,7 @@ Tài liệu cho đồ họa môi trường. Mục **[provisional]** là thông s
 | Công thức chiếu | `x = (i − j) × 32`, `y = (i + j) × 16 − z` (i, j theo tile, z = độ cao px). Code: `IsoProjection.to_screen()` |
 | Chiều cao | Đùn **thẳng xuống màn hình** (không nghiêng) |
 | Mặt nhìn thấy | Mặt trên + mặt **tây nam (SW, trái-dưới)** + mặt **đông nam (SE, phải-dưới)**. Mặt NW/NE bị che |
-| Di chuyển | WASD theo hướng màn hình; vận tốc dọc × 0.5 (`Player.vertical_speed_scale`) → tốc độ đều trên mặt đất, nhấn chéo đi đúng theo trục lưới |
+| Di chuyển | WASD theo hướng màn hình; vận tốc dọc × **0.7** (`IsoActorAdapter.vertical_speed_scale` → `Player`/`Enemy.vertical_speed_scale`). 0.5 là tốc độ đều tuyệt đối trên mặt đất, nhưng đi dọc cảm giác chậm; 0.7 chọn qua thử nghiệm bằng slider (VISUAL-02.2) |
 
 Mọi object có **origin tại điểm chạm đất** (sorting anchor), xem mục 5.
 
@@ -31,7 +31,7 @@ Mọi object có **origin tại điểm chạm đất** (sorting anchor), xem m�
 | Thông số | Giá trị |
 |---|---|
 | Tile logic | Thoi **64 × 32 px** world (cạnh thoi ≈ 35.8 px) |
-| Mật độ texel **[provisional]** | 2 texel / 1 px world → sprite `scale = 0.5`; zoom 2× hiển thị 1:1 |
+| Mật độ texel **[provisional]** | 2 texel / 1 px world → sprite `scale = 0.5`; zoom 2× hiển thị 1:1 **so với viewport gốc 1152×648**. Cửa sổ mặc định 1920×1080 (stretch `canvas_items`) phóng thêm ×1.67 → ở zoom 2× art bị phóng ~1.67 lần (hơi mềm); muốn sắc nét 1:1 ở 1080p cần art ~3.3 texel/px (chưa quyết định) |
 | Chiều cao 1 tầng | **64 px** màn hình (= 2 lần chiều cao một ô thoi) |
 | Vách vực quanh map | 192 px (3 tầng), tan vào sương |
 | Nhân vật placeholder | thân ~28 px cao, footprint ellipse 14 × 7 px. **Sprite nhân vật phải thấp hơn 64 px** (tầng), nếu không thứ tự vẽ với vách bị sai |
@@ -83,7 +83,9 @@ Mọi object có **origin tại điểm chạm đất** (sorting anchor), xem m�
 
 - **Nguồn sáng chính: trên-trái màn hình** (giữ như VISUAL-01). Độ sáng mặt: **trên 1.15 > SW 0.95 > SE 0.66** (hệ số so với màu gốc).
 - Bóng đổ: ellipse 2:1 trên mặt đất, lệch **xuống-phải** (≈ +14% bề ngang sang phải, +4% xuống).
-- Painted lighting + `CanvasModulate` ấm nhẹ; 1 `PointLight2D` (đá rune); tia nắng additive alpha ≤ 0.1.
+- Painted lighting + `CanvasModulate` ấm nhẹ; 1 `PointLight2D` (đá rune); tia nắng additive alpha ≤ 0.13.
+- Giá trị hiện tại (VISUAL-02.2, nắng vàng ấm theo ảnh tham chiếu, không cháy sáng): `SunTint` `(1, 0.96, 0.86)`; tia nắng màu `(1, 0.88, 0.62)`, alpha 0.10–0.13 (dao động xuống ½); đốm nắng trên cỏ `(1, 0.9, 0.66)` alpha 0.2 (additive); sương suối `(1, 0.96, 0.86)` alpha 0.13; sương thung lũng xa `(1, 0.97, 0.92)` alpha 0.5. Sương vực và thác giữ trắng (vực mát, tách lớp xa).
+- Không đẩy `SunTint` ấm hơn nữa: nó nhân lên mọi pixel nên làm lệch màu art; muốn thêm nắng thì tăng tia nắng/đốm nắng cục bộ.
 
 ## 8. Lọc texture
 
@@ -104,6 +106,9 @@ Mọi object có **origin tại điểm chạm đất** (sorting anchor), xem m�
 | Atlas | Mỗi ô có lề trong suốt ≥ 4 texel |
 | Texture lặp | Liền mạch ở mép; kích thước lũy thừa 2 **[provisional]** |
 | Overlay mềm | Alpha về 0 trước mép ảnh |
+| Ngoại lệ | `terrain/terrain_logic_tiles.png` (atlas tile debug của lưới logic, ẩn khi chơi): **không** mipmap để ô tile không lem màu nhau |
+
+Khi ghi đè file PNG thủ công, file `.import` cũ được giữ nguyên nên thiết lập không đổi. Kiểm tra lại sau mỗi đợt thay art (VISUAL-02.2: mọi texture còn lại đều đúng bảng trên).
 
 ## 11. Hướng dẫn gen art bằng AI
 
@@ -133,3 +138,26 @@ Dùng kèm ảnh placeholder tương ứng trong `world/environment/art/` làm *
 | Phông xa | 1024 × 768 | liền mạch theo chiều ngang; trên: trời + núi + lâu đài mờ; dưới: tan vào màu sương `#99ADB8` |
 
 **Hậu kỳ bắt buộc:** xóa nền hoàn toàn (không viền trắng/halo), thêm lề trong suốt ≥ 4 texel, kiểm tra hướng sáng trên-trái, kiểm tra đỉnh thoi khớp lưới (đặt ảnh lên khuôn placeholder ở 50% opacity), xuất PNG RGBA 8-bit, thay đúng tên file placeholder để scene tự nhận.
+
+### 11.1. Quy trình đã dùng thật (VISUAL-02.2)
+
+Quy trình tạo đợt art vẽ tay đầu tiên (commit `780e684` + `ruin_arch.png`):
+
+1. **Gen bằng ChatGPT** (tạo ảnh), theo prompt/kích thước ở bảng trên, placeholder cùng tên làm khuôn góc/tỉ lệ.
+2. **Nền magenta `#FF00FF`** (phẳng, một màu) thay cho nền trong suốt khi gen sprite có alpha.
+3. **Xóa nền + dọn viền:** xóa nền magenta, dọn viền ám hồng/halo ở mép, giữ lề trong suốt ≥ 4 texel.
+4. **File phải đúng y kích thước placeholder** (cùng chiều rộng × cao, cùng vị trí neo). Sprite được neo bằng `image_offset` tính từ **góc trên-trái** ảnh (`FootprintSortedSprite`, prop scene, cầu, cầu thang) → chỉ cần lệch kích thước hoặc lệch chỗ đặt chân là vật bị trôi khỏi footprint/collision. Cách làm: đặt ảnh gen lên canvas đúng kích thước placeholder, căn chân/đỉnh thoi theo placeholder ở 50% opacity rồi mới xuất.
+5. **Chỉnh màu theo tông chung** của cả bộ art, giữ hướng sáng trên-trái.
+6. **Texture nền (cỏ, đất, đá lát) vẽ top-down và seamless:** gen nhìn thẳng xuống, liền mạch 4 cạnh (nên kiểm tra bằng cách lát 2×2 trước khi ghi đè).
+7. Ghi đè PNG cùng tên → Godot import lại (giữ `.import` cũ) → kiểm tra trong Environment Prototype ở zoom 1× và 2×.
+
+Tinh chỉnh phía engine sau khi thay art (không sửa PNG): đường đất dùng `sand_color`/`sand_mix` trong `terrain_path.gdshader` để sáng và giảm tương phản đốm đậm của `dirt_base.png`, mép mờ rộng (`edge_start` 0.3) + noise 2 tầng (`edge_detail`) cho cỏ lấn; đường rộng 1.7 / 1.4 / 1.5 tile (chính / nhánh / trên plateau).
+
+### 11.2. Trạng thái asset
+
+| Trạng thái | Asset |
+|---|---|
+| **Art vẽ tay** (AI + hậu kỳ) | `cliff/` (cliff_base, cliff_face, cliff_lip); `ground/` (dirt_base, grass_base, stone_floor); `decals/` dirt_patch, flowers, grass_tufts, leaf_litter, moss_patch, pebbles; `props/` tất cả 15 (bush_a/b, fern, rock_flat/large/small, ruin_arch, ruin_blocks, ruin_pillar, ruin_pillar_broken, ruin_wall, rune_stone, tree_oak_a/b, tree_pine); `scenery/` foreground_leaves, valley_far; `structures/` cliff_stairs, footbridge, stone_bridge |
+| **Còn sinh bằng code** (`tools/placeholder_art/`) | `decals/` shadow_soft, light_patch, canopy_shadow (bóng/đốm sáng mềm — gradient, không cần vẽ tay); `fx/` glow, light_shaft, mist, mote, water_noise (hiệu ứng/noise dùng trong shader); `terrain/terrain_logic_tiles.png` (tile debug) |
+
+Chạy lại `generate_environment_art.gd` **sẽ ghi đè art vẽ tay** — chỉ chạy với `ART_ONLY=decals,fx,logic`… cho nhóm còn sinh bằng code, và lưu ý nhóm `decals` gồm cả decal đã vẽ tay (commit trước khi chạy).

@@ -1,7 +1,7 @@
-[gd_resource type="Resource" script_class="ComboDefinition" format=3]
+[gd_resource type="Resource" script_class="ComboDefinition" format=3 uid="uid://psnuey1ytaku"]
 
-[ext_resource type="Script" path="res://features/combat/weapons/combo_definition.gd" id="1_o26kw"]
-[ext_resource type="Script" path="res://features/combat/weapons/combo_step_definition.gd" id="2_24pio"]
+[ext_resource type="Script" uid="uid://ca8pg5cy0caq8" path="res://features/combat/weapons/combo_definition.gd" id="1_o26kw"]
+[ext_resource type="Script" uid="uid://bgppfnwfvf3cc" path="res://features/combat/weapons/combo_step_definition.gd" id="2_24pio"]
 
 [sub_resource type="Resource" id="Resource_b1ov2"]
 script = ExtResource("2_24pio")

@@ -34,7 +34,7 @@ func _process(delta: float) -> void:
 
 
 func _refresh() -> void:
-	var lines: PackedStringArray = PackedStringArray(["Environment Prototype — placeholder art"])
+	var lines: PackedStringArray = PackedStringArray(["Environment Prototype — art vẽ tay (bản đầu)"])
 	if agent != null:
 		lines.append("Tầng: %d%s" % [agent.get_tier(), " (đang chuyển tầng)" if agent.is_transitioning() else ""])
 	if terrain_logic != null and tracked_body != null:

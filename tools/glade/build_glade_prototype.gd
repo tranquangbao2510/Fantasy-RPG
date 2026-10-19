@@ -201,7 +201,7 @@ func ground_material(path: String, albedo: String, tiles: float, anti_tiling: fl
 	return save_res(m, ENV + "terrain/" + path) as ShaderMaterial
 
 
-func path_material(file: String, albedo: String, tint: Color, edge_start: float, rim: float) -> ShaderMaterial:
+func path_material(file: String, albedo: String, tint: Color, edge_start: float, rim: float, extra: Dictionary = {}) -> ShaderMaterial:
 	var m: ShaderMaterial = ShaderMaterial.new()
 	m.shader = load(ENV + "terrain/terrain_path.gdshader")
 	m.set_shader_parameter("albedo", tex(albedo))
@@ -209,6 +209,8 @@ func path_material(file: String, albedo: String, tint: Color, edge_start: float,
 	m.set_shader_parameter("tint", tint)
 	m.set_shader_parameter("edge_start", edge_start)
 	m.set_shader_parameter("rim_darken", rim)
+	for key: String in extra:
+		m.set_shader_parameter(key, extra[key])
 	return save_res(m, ENV + "terrain/" + file) as ShaderMaterial
 
 
@@ -219,12 +221,12 @@ func ambient(node: Node2D, amplitude: Vector2, period: float, alpha_range: Vecto
 	node.set("alpha_range", alpha_range)
 
 
-func mist(pos: Vector2, scl: Vector2, alpha: float) -> Sprite2D:
+func mist(pos: Vector2, scl: Vector2, alpha: float, tint: Color = Color.WHITE) -> Sprite2D:
 	var m: Sprite2D = Sprite2D.new()
 	m.texture = tex("fx/mist.png")
 	m.position = pos
 	m.scale = scl
-	m.modulate = Color(1, 1, 1, alpha)
+	m.modulate = Color(tint, alpha)
 	ambient(m, Vector2(30, 5), 24.0 + absf(pos.x) * 0.004, Vector2(alpha * 0.6, alpha))
 	return m
 
@@ -415,7 +417,8 @@ func _build_world() -> void:
 	mat_ground = ground_material("ground_grass.tres", "ground/grass_base.png", 6.0, 1.0, Color(1.0, 1.0, 0.97), Color(1.06, 1.0, 0.82))
 	mat_ground_high = ground_material("ground_grass_upper.tres", "ground/grass_base.png", 6.0, 1.0, Color(1.08, 1.06, 0.95), Color(1.12, 1.04, 0.84))
 	mat_stone = ground_material("ground_stone_plaza.tres", "ground/stone_floor.png", 8.0, 0.0, Color(1, 1, 1), Color(0.96, 0.95, 0.9))
-	mat_dirt = path_material("path_dirt.tres", "ground/dirt_base.png", Color(1, 1, 1), 0.5, 0.2)
+	# Đường đất sáng, mép mềm có cỏ lấn (VISUAL-02.2): pha màu cát, mép mờ rộng + noise 2 tầng.
+	mat_dirt = path_material("path_dirt.tres", "ground/dirt_base.png", Color(1.05, 1.02, 0.97), 0.3, 0.06, {"sand_color": Color(0.88, 0.79, 0.6), "sand_mix": 0.45, "edge_noise_strength": 0.55, "edge_noise_scale": 2.0, "edge_detail": 0.45})
 	var environment: Node2D = node2d(sroot, "Environment")
 	var map_container: Node2D = node2d(sroot, "MapContainer")
 	var entities: Node2D = node2d(sroot, "EntityContainer")
@@ -611,7 +614,7 @@ func _elevation(entities: Node2D) -> Node2D:
 	add(upper, plaza, "StonePlaza")
 	var plaza_edge: Line2D = ground_line(upper, "PlazaEdge", PLAZA + PackedVector2Array([PLAZA[0]]), 0.15, null, null, H)
 	plaza_edge.visible = false
-	var upath: Line2D = ground_line(upper, "UpperPath", PATH_UPPER, 1.1, tex("ground/dirt_base.png"), mat_dirt, H)
+	var upath: Line2D = ground_line(upper, "UpperPath", PATH_UPPER, 1.5, tex("ground/dirt_base.png"), mat_dirt, H)
 	var tops: Array = [plateau, outcrop]
 	_scatter(upper, "PlazaEdgeTufts", "decals/grass_tufts.png", 4, 140, 31, Vector2(0.4, 0.6), [], [], [], plaza_edge, Vector2(-6, 4))
 	_scatter(upper, "UpperPathTufts", "decals/grass_tufts.png", 4, 110, 32, Vector2(0.4, 0.6), [], [], tops, upath, Vector2(-8, 3))
@@ -646,8 +649,8 @@ func _ground(g: Node2D) -> void:
 	_scatter(trans, "DirtPatches", "decals/dirt_patch.png", 1, 12, 2, Vector2(0.5, 0.9), [], avoid_terr, [land], null, Vector2.ZERO, true)
 
 	var paths: Node2D = node2d(g, "Paths")
-	var pm: Line2D = ground_line(paths, "MainPath", PATH_MAIN, 1.2, tex("ground/dirt_base.png"), mat_dirt)
-	var pb: Line2D = ground_line(paths, "BranchPath", PATH_BRANCH, 1.0, tex("ground/dirt_base.png"), mat_dirt)
+	var pm: Line2D = ground_line(paths, "MainPath", PATH_MAIN, 1.7, tex("ground/dirt_base.png"), mat_dirt)
+	var pb: Line2D = ground_line(paths, "BranchPath", PATH_BRANCH, 1.4, tex("ground/dirt_base.png"), mat_dirt)
 
 	var stream: Node2D = Node2D.new()
 	stream.set_script(load(ENV + "water/stream.gd"))
@@ -749,7 +752,7 @@ func _ground(g: Node2D) -> void:
 	var add_mat: CanvasItemMaterial = CanvasItemMaterial.new()
 	add_mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
 	(lp as CanvasItem).material = add_mat
-	(lp as CanvasItem).modulate = Color(1, 0.95, 0.8, 0.16)
+	(lp as CanvasItem).modulate = Color(1, 0.9, 0.66, 0.2)
 	lp.set("tint_variation", 0.0)
 
 
@@ -781,7 +784,7 @@ func _front_chain(outline_global: PackedVector2Array) -> PackedVector2Array:
 
 func _environment(env: Node2D) -> void:
 	var cm: CanvasModulate = CanvasModulate.new()
-	cm.color = Color(1.0, 0.97, 0.9)
+	cm.color = Color(1.0, 0.96, 0.86)
 	add(env, cm, "SunTint")
 	var bg: Parallax2D = Parallax2D.new()
 	bg.scroll_scale = Vector2(0.82, 0.86)
@@ -796,13 +799,13 @@ func _environment(env: Node2D) -> void:
 	valley.position = Vector2(-1331, -1250)
 	add(bg, valley, "ValleyFar")
 	for i: int in 4:
-		add(bg, mist(Vector2(-900 + i * 600, 120 - (i % 2) * 90), Vector2(2.4, 1.0), 0.5), "ValleyMist%d" % i)
+		add(bg, mist(Vector2(-900 + i * 600, 120 - (i % 2) * 90), Vector2(2.4, 1.0), 0.5, Color(1, 0.97, 0.92)), "ValleyMist%d" % i)
 
 	var atmo: Node2D = node2d(env, "Atmosphere")
 	atmo.z_index = 40
 	var add_mat: CanvasItemMaterial = CanvasItemMaterial.new()
 	add_mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
-	var shafts: Array[Vector3] = [Vector3(8, 30, 0.1), Vector3(14, 34, 0.08), Vector3(12, 8, 0.09), Vector3(33, 31, 0.07)]
+	var shafts: Array[Vector3] = [Vector3(8, 30, 0.13), Vector3(14, 34, 0.11), Vector3(12, 8, 0.12), Vector3(33, 31, 0.1)]
 	for i: int in shafts.size():
 		var s: Sprite2D = Sprite2D.new()
 		s.texture = tex("fx/light_shaft.png")
@@ -810,11 +813,11 @@ func _environment(env: Node2D) -> void:
 		s.position = iso(shafts[i].x, shafts[i].y)
 		s.rotation = -0.55
 		s.scale = Vector2(3.4, 1.6)
-		s.modulate = Color(1, 0.95, 0.8, shafts[i].z)
+		s.modulate = Color(1, 0.88, 0.62, shafts[i].z)
 		ambient(s, Vector2(10, 0), 11.0 + i * 2.0, Vector2(shafts[i].z * 0.5, shafts[i].z))
 		add(atmo, s, "LightShaft%d" % i)
 	for gp: Vector2 in [Vector2(14, 25), Vector2(26, 26.5)]:
-		add(atmo, mist(iso(gp.x, gp.y), Vector2(1.2, 0.5), 0.13), "StreamMist%d" % int(gp.x))
+		add(atmo, mist(iso(gp.x, gp.y), Vector2(1.2, 0.5), 0.13, Color(1, 0.96, 0.86)), "StreamMist%d" % int(gp.x))
 	var motes: CPUParticles2D = CPUParticles2D.new()
 	motes.position = iso(8, 31)
 	motes.amount = 36

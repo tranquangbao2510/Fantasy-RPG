@@ -1,7 +1,8 @@
 class_name IsoActorAdapter
 extends Node
 ## Cấu hình một actor placeholder (Player, enemy, bù nhìn) cho map isometric, lúc _ready, không sửa scene gốc:
-## - Di chuyển: đặt `vertical_speed_scale` của actor (nếu có) — 0.5 = tốc độ đều trên mặt đất 2:1. Chỉnh ở đây
+## - Di chuyển: đặt `vertical_speed_scale` của actor (nếu có) — 0.5 = tốc độ đều trên mặt đất 2:1; mặc định 0.7
+##   (VISUAL-02.2, chọn qua thử nghiệm: đi dọc nhanh hơn, đỡ "lê"). Chỉnh ở đây
 ##   (hoặc ô debug trên EnvironmentDebugHud lúc chạy) để thử cảm giác.
 ## - Combat: gọi set_ground_squash(GROUND_SQUASH) trên mọi node con có hàm này (đòn đánh, enemy AI, kỹ năng) →
 ##   tầm đánh/hitbox/đạn/vùng kỹ năng tính trên mặt phẳng đất, gốc dời về chân; Hurtbox đổi sang ellipse 2:1 tại chân.
@@ -16,8 +17,8 @@ extends Node
 @export var body_radius: float = 7.0
 ## Bán kính (trên mặt đất) của vùng nhận đòn tại chân.
 @export var hurtbox_radius: float = 10.0
-## Hệ số vận tốc dọc áp cho actor (Player/Enemy.vertical_speed_scale). Mặc định 0.5 cho map isometric 2:1.
-@export var vertical_speed_scale: float = 0.5
+## Hệ số vận tốc dọc áp cho actor (Player/Enemy.vertical_speed_scale). Mặc định 0.7 cho map isometric 2:1 (0.5 = đều tuyệt đối trên mặt đất).
+@export var vertical_speed_scale: float = 0.7
 
 
 func _ready() -> void:

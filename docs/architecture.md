@@ -148,7 +148,7 @@ Player (CharacterBody2D, motion_mode = Floating) ── player.gd
 
 - **Origin = chân nhân vật**, nên Y-sort trong `EntityContainer` dựa trên điểm tiếp xúc mặt đất. Visual vẽ phía trên origin. Không dùng Z-index.
 - **Input Map** (`project.godot`): `move_up` W/↑, `move_down` S/↓, `move_left` A/←, `move_right` D/→. Dùng physical keycode (đúng vị trí WASD trên mọi layout bàn phím). Script chỉ đọc action, không kiểm tra phím vật lý.
-- **Di chuyển:** `_physics_process` → `Input.get_vector()` → `velocity = direction * move_speed` → `move_and_slide()`. `vertical_speed_scale` (mặc định 1) nhân vào thành phần dọc — map isometric đặt 0.5 (2k). Liên tục, 8 hướng, chéo được chuẩn hóa (|v| ≤ `move_speed`), thả phím thì dừng ngay; không tăng tốc/quán tính.
+- **Di chuyển:** `_physics_process` → `Input.get_vector()` → `velocity = direction * move_speed` → `move_and_slide()`. `vertical_speed_scale` (mặc định 1) nhân vào thành phần dọc — map isometric đặt 0.7 qua `IsoActorAdapter` (2k). Liên tục, 8 hướng, chéo được chuẩn hóa (|v| ≤ `move_speed`), thả phím thì dừng ngay; không tăng tốc/quán tính.
 - `move_speed` (`@export`, mặc định **160 px/s**) — giá trị thử nghiệm.
 - **Spawn:** đặt trực tiếp trong `world.tscn` tại (480, 320), giữa quảng trường đá. Chưa có SpawnManager/checkpoint.
 - Placeholder: toàn bộ visual, kích thước collision, tốc độ, vị trí spawn.
@@ -172,7 +172,7 @@ GameCamera (Camera2D, class_name GameCamera) ── game_camera.gd
 
 Hạn chế pixel-art hiện tại:
 
-- Stretch `canvas_items` + `expand` (từ TASK 01) giữ nguyên. Khi cửa sổ khác 1152×648 theo tỉ lệ không nguyên (vd. 1920×1080 = 1.67×), một pixel nghệ thuật không còn là số nguyên pixel màn hình → kích thước pixel có thể không đều. Sẽ xử lý khi chốt độ phân giải thiết kế.
+- Stretch `canvas_items` + `expand` (từ TASK 01) giữ nguyên; viewport gốc 1152×648, **cửa sổ mặc định 1920×1080** (`window/size/window_*_override`, VISUAL-02.2 — Godot tự thu nhỏ nếu màn hình không đủ chỗ). Khi cửa sổ khác 1152×648 theo tỉ lệ không nguyên (vd. 1920×1080 = 1.67×), một pixel nghệ thuật không còn là số nguyên pixel màn hình → kích thước pixel có thể không đều. Sẽ xử lý khi chốt độ phân giải thiết kế.
 - Vị trí camera khi smoothing là số thực; chưa bật pixel snap toàn cục (`snap_2d_transforms_to_pixel`) vì có thể gây rung player so với camera. Ưu tiên chuyển động mượt.
 
 ## 2e. Interaction System [Đã triển khai]
@@ -542,9 +542,9 @@ ui/debug/combat_debug_panel.gd/.tscn — CombatDebugPanel (F3)
 
 **Giới hạn:** không pathfinding (enemy kẹt sau vật cản); ranged chỉ lùi thẳng, có thể lùi vào tường; đạn không có hiệu ứng nổ; knockback Player chưa có; reset thử nghiệm hồi cooldown; tình huống "bị hạ gục khi vận sức" phụ thuộc nhịp enemy (thao tác thủ công); Debug Panel và sandbox chỉ dành cho kiểm thử.
 
-## 2k. Environment Visual Foundation & Prototype — isometric [Đã triển khai, prototype — TASK VISUAL-01, VISUAL-02]
+## 2k. Environment Visual Foundation & Prototype — isometric [Đã triển khai, prototype — TASK VISUAL-01, VISUAL-02, VISUAL-02.1, VISUAL-02.2]
 
-Định hướng đồ họa môi trường: **High-Resolution Hand-Painted 2D, góc isometric dimetric 2:1** (VISUAL-02 thay góc oblique của VISUAL-01). Thông số đầy đủ + hướng dẫn gen art: [visual/environment-style-guide.md](visual/environment-style-guide.md). Art hiện tại là **placeholder sinh bằng code** (`tools/placeholder_art/`), đúng góc/tỉ lệ nhưng chưa phải production art.
+Định hướng đồ họa môi trường: **High-Resolution Hand-Painted 2D, góc isometric dimetric 2:1** (VISUAL-02 thay góc oblique của VISUAL-01). Thông số đầy đủ + hướng dẫn gen art: [visual/environment-style-guide.md](visual/environment-style-guide.md). Art: phần lớn đã là **art vẽ tay** (gen AI bằng ChatGPT + hậu kỳ, commit `780e684` + `ruin_arch.png` ở VISUAL-02.2), cùng kích thước file với placeholder; còn **sinh bằng code** (`tools/placeholder_art/`): decal bóng/đốm sáng mềm (`shadow_soft`, `light_patch`, `canopy_shadow`), `fx/*` và tile lưới logic. Danh sách + quy trình: style guide mục 11.
 
 **Map cũ giữ góc cũ:** `world/maps/test_map/` và `world/sandbox/` (top-down/oblique, pixel art) chưa chuyển sang isometric — sẽ làm ở task sau. Các thay đổi chung đều có mặc định giữ hành vi cũ (`Player.vertical_speed_scale = 1`, `GameCamera.zoom_step = 1`).
 
@@ -557,14 +557,14 @@ world/environment/
 ├── terrain/    terrain_ground/terrain_path.gdshader (toạ độ lưới iso), decal_scatter.gd (@tool), terrain_logic.gd + tileset isometric, material .tres
 ├── water/      stream.gd, footbridge.gd (@tool), water_surface/waterfall.gdshader + material
 ├── atmosphere/ ambient_drift.gd
-└── art/        PNG placeholder isometric
+└── art/        PNG isometric (phần lớn vẽ tay; bóng mềm, fx, tile logic sinh bằng code)
 world/environment_prototype/environment_prototype.tscn — khu "Glade" isometric 40×40 ô (script world.gd)
 ui/debug/environment_debug_hud.gd/.tscn · tests/environment/test_environment_prototype.gd · tools/placeholder_art/
 ```
 
 **Truy cập:** Main Scene → **Environment Prototype (Visual 01)**, hoặc mở `environment_prototype.tscn` + F6.
 
-**Phép chiếu:** `x = (i − j)·32, y = (i + j)·16 − z`. Physics/collision ở không gian màn hình; footprint mặt đất là thoi/ellipse 2:1. Di chuyển: WASD theo màn hình, Player trong map iso có `vertical_speed_scale = 0.5` (tốc độ đều trên mặt đất; nhấn chéo đi đúng trục lưới). Hướng nhìn/đòn đánh theo con trỏ như cũ. `IsoActorAdapter` (chỉ trong map iso): bóng ellipse 2:1, marker hướng nhìn nằm trên mặt đất (nén dọc 0.5), collision thân ellipse 14×7.
+**Phép chiếu:** `x = (i − j)·32, y = (i + j)·16 − z`. Physics/collision ở không gian màn hình; footprint mặt đất là thoi/ellipse 2:1. Di chuyển: WASD theo màn hình, Player trong map iso có `vertical_speed_scale = 0.7` (VISUAL-02.2; 0.5 là tốc độ đều tuyệt đối trên mặt đất + nhấn chéo đi đúng trục lưới, nhưng đi dọc cảm giác chậm). Hướng nhìn/đòn đánh theo con trỏ như cũ. `IsoActorAdapter` (chỉ trong map iso): bóng ellipse 2:1, marker hướng nhìn nằm trên mặt đất (nén dọc 0.5), collision thân ellipse 14×7.
 
 **Bố cục Glade:** khối đất nổi trên vực (`LandMass`, vách vực 192 px ở mép SE/SW, mép cỏ ở NW/NE, tường `LandEdge`); plateau tầng 1 với **quảng trường đá lát thoi** + tàn tích (vòm, cột, đá rune) và **đường đất chạy xéo** dọc mép vách; **cầu thang đá** chéo trên vách SW; **lối đi tầng 1 trên vòm** sang mỏm đá phía đông, đường nhánh tầng 0 **chui dưới vòm**; suối + **cầu gỗ chéo** ở tầng thấp, suối **đổ thác qua mép vực** có sương; phông xa parallax (núi, lâu đài mờ) + nền sương lấp đầy (`AbyssHaze`) nên camera ra mép không lộ khoảng trống.
 
@@ -583,7 +583,7 @@ ui/debug/environment_debug_hud.gd/.tscn · tests/environment/test_environment_pr
 
 - `GroundSpace` (`features/combat/ground_space.gd`): toán học mặt phẳng đất với `squash` (1 = map cũ, 0.5 = iso). Tầm đánh, bề rộng, bán kính, tầm bay đo **trên mặt đất**; hình tròn trên đất = ellipse 2:1 trên màn hình.
 - Component combat có `set_ground_squash(s)`: `BasicAttackController`, `AttackComponent` (`MeleeAttack`, `RangedAttack`), `SkillCastingController`, `Enemy`. Khi `s < 1`: node không xoay theo hướng đòn; hitbox/visual là hình chữ nhật trên mặt đất (polygon màn hình), knockback theo hướng mặt đất; `Projectile` bay với tốc độ/tầm đo trên mặt đất, thân ellipse; `SkillTarget.ground_squash` → executor dựng vùng ellipse/hình bình hành, góc quạt so trên mặt đất, indicator vẽ đúng hình đó. `s = 1` đi đúng nhánh code cũ → `test_map`/sandbox không đổi hành vi.
-- `IsoActorAdapter` (chỉ map iso) gọi `set_ground_squash(0.5)`, dời gốc các node đòn đánh/kỹ năng từ ngang ngực về chân, đổi Hurtbox sang ellipse 2:1 bán kính 10 tại chân, đặt `vertical_speed_scale` (export trên adapter, mặc định **0.5**) cho Player và enemy. Enemy: `vertical_speed_scale` (export, mặc định 1, cùng cơ chế Player) + khoảng cách AI đo trên mặt đất.
+- `IsoActorAdapter` (chỉ map iso) gọi `set_ground_squash(0.5)`, dời gốc các node đòn đánh/kỹ năng từ ngang ngực về chân, đổi Hurtbox sang ellipse 2:1 bán kính 10 tại chân, đặt `vertical_speed_scale` (export trên adapter, mặc định **0.7** từ VISUAL-02.2, trước là 0.5) cho Player và enemy. Enemy: `vertical_speed_scale` (export, mặc định 1, cùng cơ chế Player) + khoảng cách AI đo trên mặt đất.
 - **Lọc theo tầng:** `DamageInfo.tier_mask` / `Hurtbox.tier_mask` (bit `1 << tầng`, 0 = không lọc — map cũ). Chỉ trúng khi hai mask giao nhau. `ElevationAgent` gọi `set_elevation(tier_mask, obstacle_mask, ground_z)` trên mọi node con có hàm đó (duck-typing — module combat không phụ thuộc world). Đòn đánh, kỹ năng (`SkillEffectExecutor.execute(..., tier_mask)`), đạn (DamageInfo của người bắn) đều mang tầng người tấn công. Bù nhìn cũng có ElevationAgent.
 - **Hành lang cầu thang:** thực thể đang chuyển tầng có `tier_mask = tầng dưới | tầng trên` của connector → đánh trúng và bị đánh bởi **cả hai tầng**; `obstacle_mask = 0` (đạn bắn ra không bị vách chặn ngay tại chỗ); indicator vẽ ở tầng trên.
 - **Indicator kỹ năng:** `SkillAreaVisual` là `top_level` nên `z_index` tuyệt đối; `SkillCastingController.set_elevation()` đặt z = `tier × 10 − 3` (trên mặt đất + chi tiết mặt đất của tầng, dưới occupant/prop của tầng).
@@ -591,6 +591,13 @@ ui/debug/environment_debug_hud.gd/.tscn · tests/environment/test_environment_pr
 - **Debug:** `EnvironmentDebugHud` có thanh trượt "[Debug] Tốc độ dọc" (0.3–1.0) chỉnh `vertical_speed_scale` của Player và mọi enemy lúc chạy; không lưu.
 
 **Kiểm thử** (headless, thoát mã 1 nếu fail; lệnh chạy trong README và `tools/README.txt`): `tests/environment/test_iso_combat.gd` — 30 ca: tỉ lệ vận tốc dọc enemy = Player (map cũ = 1), tầm đánh/vùng kỹ năng/tầm bay đạn đo trên mặt đất, lọc tầng cho đòn đánh/kỹ năng/đạn, hành lang cầu thang thuộc cả hai tầng, z indicator theo tầng, đạn bị vách chặn và bay qua nước, hồi quy map cũ (tầm theo màn hình). `tests/environment/test_environment_prototype.gd` — 17 ca: lên/xuống cầu thang, vách chặn tầng 0 (SW, SE) và tầng 1 (SW, SE), đi trên vòm sang mỏm đá, chui dưới vòm, nước chặn, qua cầu gỗ, thân cây chặn, mép vực SW, mép NE, fade sau cây / không fade trước cây, cầu mờ khi đứng dưới gầm / không mờ khi đứng trên cầu. Render (máy dev, zoom 1×): 60 FPS, ~127 draw call, ~26 MB texture.
+
+**Tinh chỉnh sau production art [VISUAL-02.2]:**
+
+- Đường đất: `terrain_path.gdshader` thêm `sand_color`/`sand_mix` (pha màu cát → sáng, giảm tương phản đốm đậm) và `edge_detail` (noise mép 2 tầng → cỏ lấn). `path_dirt.tres`: tint `(1,1,1)` → `(1.05,1.02,0.97)`, `sand_mix` 0.45, `edge_start` 0.5 → 0.3, `edge_noise_strength` 0.35 → 0.55, `edge_noise_scale` 3 → 2, `rim_darken` 0.2 → 0.06. Bề rộng Line2D (tile): chính 1.2 → 1.7, nhánh 1.0 → 1.4, trên plateau 1.1 → 1.5. `shore_mud.tres` giữ nguyên (mặc định shader mới cho kết quả cũ). Không đổi collision; lưới `TerrainLogic` vẫn phân loại "dirt" trong bán kính 0.6 tile quanh tâm đường (chỉ dùng cho HUD debug).
+- Ánh sáng: `SunTint` `(1,0.97,0.9)` → `(1,0.96,0.86)`; tia nắng màu `(1,0.95,0.8)` → `(1,0.88,0.62)`, alpha 0.07–0.10 → 0.10–0.13; đốm nắng `(1,0.95,0.8)` α 0.16 → `(1,0.9,0.66)` α 0.2; sương suối/thung lũng ngả ấm nhẹ. Giá trị trong style guide mục 7.
+- Cửa sổ mặc định 1920×1080; **viewport gốc giữ 1152×648**: stretch `canvas_items` phóng đều ×1.67 nên khung hình, zoom camera (test_map 2×, Combat Sandbox 2×, Environment Prototype 2×, bước 0.25) và bố cục UI không đổi. Đổi viewport gốc sang 1920×1080 cho ảnh y hệt nếu nhân mọi zoom ×1.67 (art vẽ tay chỉ có 2 texel/px nên không nét hơn), còn nếu giữ zoom thì nhân vật nhỏ đi 1.67× so với ảnh tham chiếu, UI nhỏ lại và map pixel art cũ phải chỉnh zoom — không có lợi.
+- Script dựng `tools/glade/build_glade_prototype.gd` đã cập nhật cùng giá trị (chạy lại ra đúng scene hiện tại).
 
 **Giới hạn:** enemy không pathfinding (kẹt ở chân vách khi Player lên tầng cao); combat có chiều cao như nhau cho mọi thực thể (không có độ cao bay/nhảy — đạn bay sát mặt đất, mọi vùng đòn nằm trên mặt đất); đạn tầng 1 bắn ra mép plateau bị tường mép tầng 1 chặn (không bắn xuống tầng 0 được — cũng không trúng do lọc tầng); `EnemyDebugView` (vòng detection, chỉ bật trong sandbox) vẫn vẽ hình tròn màn hình; số sát thương/HitSpark hiện tại chân vì Hurtbox iso nằm ở chân; sprite nhân vật phải thấp hơn 64 px; vật cao tầng 0 không được chồng lên mặt tầng 1; mép đáy vách vực là đường thẳng tan vào sương (chưa có chiều sâu thật); thác là shader đơn giản (VISUAL-03).
 
@@ -657,7 +664,7 @@ Resource dùng chung giữa nhiều instance **không được** bị sửa tron
 
 Các mục sau sẽ quyết định trong task riêng, không tự chọn trước:
 
-- Độ phân giải pixel-art gốc, viewport scale, chế độ stretch cuối cùng. (Môi trường mới theo hướng hand-painted độ phân giải cao — 2k; độ phân giải thiết kế cuối cùng vẫn chưa chốt.)
+- Độ phân giải pixel-art gốc, viewport scale, chế độ stretch cuối cùng. (Môi trường mới theo hướng hand-painted độ phân giải cao — 2k. Đã có: cửa sổ mặc định 1920×1080, viewport gốc vẫn 1152×648 — mục 2k; độ phân giải thiết kế cuối cùng vẫn chưa chốt.)
 - Độ phân giải thiết kế / stretch mode cuối cùng (ảnh hưởng zoom và pixel-perfect).
 - Điều khiển nhân vật chính thức (animation, dodge, gamepad, remapping). Input Map di chuyển cơ bản đã có (mục 2c).
 - Luồng chuyển scene / menu.

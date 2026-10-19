@@ -61,8 +61,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			_show_feedback("Đã lưu (slot %d)." % SaveService.DEFAULT_SLOT)
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed(&"quick_load"):
-		SaveService.load_game()
+		# Đánh dấu đã xử lý TRƯỚC khi tải: load_game() gỡ scene hiện tại khỏi cây ngay, sau đó get_viewport() là null.
 		get_viewport().set_input_as_handled()
+		SaveService.load_game()
 
 
 func get_environment_container() -> Node2D:

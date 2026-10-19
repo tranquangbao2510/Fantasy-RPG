@@ -1,4 +1,4 @@
-# Environment Style Guide (TASK VISUAL-01 → VISUAL-02 isometric)
+# Environment Style Guide (TASK VISUAL-01 → VISUAL-02 isometric, nhân vật: CHAR-01)
 
 Tài liệu cho đồ họa môi trường. Mục **[provisional]** là thông số chưa được xác nhận bằng asset thật.
 
@@ -34,7 +34,7 @@ Mọi object có **origin tại điểm chạm đất** (sorting anchor), xem m�
 | Mật độ texel **[provisional]** | 2 texel / 1 px world → sprite `scale = 0.5`; zoom 2× hiển thị 1:1 **so với viewport gốc 1152×648**. Cửa sổ mặc định 1920×1080 (stretch `canvas_items`) phóng thêm ×1.67 → ở zoom 2× art bị phóng ~1.67 lần (hơi mềm); muốn sắc nét 1:1 ở 1080p cần art ~3.3 texel/px (chưa quyết định) |
 | Chiều cao 1 tầng | **64 px** màn hình (= 2 lần chiều cao một ô thoi) |
 | Vách vực quanh map | 192 px (3 tầng), tan vào sương |
-| Nhân vật placeholder | thân ~28 px cao, footprint ellipse 14 × 7 px. **Sprite nhân vật phải thấp hơn 64 px** (tầng), nếu không thứ tự vẽ với vách bị sai |
+| Nhân vật | Player (CHAR-01): sprite cao ~39 px world (idle), footprint ellipse 14 × 7 px; enemy placeholder thân ~28 px. **Sprite nhân vật phải thấp hơn 64 px** (tầng), nếu không thứ tự vẽ với vách bị sai — xem mục 12 |
 | Cây lớn | 190–230 px cao, tán rộng 150–180 px (≈ 5–8× chiều cao nhân vật) |
 | Bụi | 55–90 px rộng; đá lớn ~110 px; cột tàn tích ~150 px cao, bệ 0.78 tile |
 | Cầu thang | rộng 1.5 tile, chạy 1.75 tile, 7 bậc, cao 1 tầng |
@@ -161,3 +161,28 @@ Tinh chỉnh phía engine sau khi thay art (không sửa PNG): đường đất 
 | **Còn sinh bằng code** (`tools/placeholder_art/`) | `decals/` shadow_soft, light_patch, canopy_shadow (bóng/đốm sáng mềm — gradient, không cần vẽ tay); `fx/` glow, light_shaft, mist, mote, water_noise (hiệu ứng/noise dùng trong shader); `terrain/terrain_logic_tiles.png` (tile debug) |
 
 Chạy lại `generate_environment_art.gd` **sẽ ghi đè art vẽ tay** — chỉ chạy với `ART_ONLY=decals,fx,logic`… cho nhóm còn sinh bằng code, và lưu ý nhóm `decals` gồm cả decal đã vẽ tay (commit trước khi chạy).
+
+## 12. Nhân vật — sprite 8 hướng (TASK CHAR-01)
+
+Hiện chỉ Player có sprite thật; enemy/bù nhìn vẫn là polygon placeholder.
+
+| Thông số | Giá trị |
+|---|---|
+| Nguồn | Sprite sheet render từ model 3D, file trong `entities/player/art/`: `hero_<animation>.png` + mô tả `hero_sprites.json` |
+| Góc camera | Iso 30° (cao độ camera 30° → mặt đất nén sin 30° = **0.5**, khớp map 2:1) |
+| Hướng | **8 hướng trên mặt đất**, mỗi hàng sheet một hướng theo thứ tự `S, SW, W, NW, N, NE, E, SE` (S = quay mặt về camera, theo chiều kim đồng hồ trên màn hình); mỗi cột một frame |
+| Mật độ texel | `texel_scale = 0.5` (2 texel / 1 px world, như asset môi trường) |
+| Cỡ | Nhân vật cao ~78 texel = **~39 px world** (idle), luôn < 64 px (1 tầng). Frame lớn hơn ở đòn đánh/death là do kiếm/tư thế, không phải do nhân vật cao hơn |
+| Anchor | `anchor` (px texel trong frame) = **điểm chân** chạm đất; trùng origin Player (Y-sort theo chân) |
+| Animation | `idle`, `walk`, `run` (loop); `attack_1/2/3`, `cast`, `hit`, `death` (không loop); `fps` gốc ghi trong JSON |
+| Import | Như mục 10: mipmaps bật, `fix_alpha_border` bật, Lossless; node dùng lọc **Linear Mipmap** |
+
+**Quy trình:** model 3D → gắn animation bằng **Mixamo** → **render trong Blender** theo 8 hướng ở góc iso 30° → ghép thành sheet (hàng = hướng, cột = frame) + ghi `hero_sprites.json` (`frame_size`, `frames`, `rows`, `anchor`, `fps`, `loop`, `directions`, `texel_scale`). Sau đó trong project:
+
+1. Chép PNG + JSON vào `entities/player/art/`, chạy `--import` (file `.import` mới: bật `mipmaps/generate`).
+2. Chạy `tools/player_sprites/build_player_sprite_frames.gd` → sinh lại `hero_sprite_frames.tres` (không nhập frame bằng tay). Tool kiểm tra kích thước sheet khớp `frame_size × frames × rows`.
+3. Chạy `tests/player/test_player_sprite.gd`.
+
+Đổi `anchor`/`frame_size` chỉ cần sinh lại `.tres` — tool đệm mọi frame về một canvas chung để điểm chân trùng nhau, `PlayerSprite` lấy offset từ metadata.
+
+**Giới hạn hiện tại:** kiếm vẽ liền trong sheet, chỉ có ở `attack_1/2/3` (chưa có lớp vũ khí tách riêng → idle/walk/run/cast tay không; đổi vũ khí không đổi hình); vạch vũ khí/vùng vung đòn placeholder vẫn vẽ chồng lên để đọc hitbox.

@@ -17,3 +17,9 @@ Chạy từ thư mục gốc project (Godot 4.7.2 console):
 3. Kiểm tra sau khi dựng lại:
      Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/environment/test_environment_prototype.gd
      Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/environment/test_iso_combat.gd
+
+4. Sinh lại SpriteFrames của Player (CHAR-01) sau khi đổi sheet trong entities/player/art/ (PNG + hero_sprites.json):
+     Godot_v4.7.2-stable_win64_console.exe --headless --path . --import      (nếu có PNG mới; bật mipmaps/generate trong .import)
+     Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tools/player_sprites/build_player_sprite_frames.gd
+   Ghi đè entities/player/art/hero_sprite_frames.tres. Kiểm tra:
+     Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/player/test_player_sprite.gd

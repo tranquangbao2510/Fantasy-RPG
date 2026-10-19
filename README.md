@@ -36,11 +36,12 @@ Quy ước commit: [docs/git_conventions.md](docs/git_conventions.md).
   Godot_v4.7.2-stable_win64_console.exe --headless --path . --quit-after 30
   ```
 
-- Kiểm thử môi trường (headless, thoát mã 1 nếu có ca thất bại):
+- Kiểm thử môi trường và nhân vật (headless, thoát mã 1 nếu có ca thất bại):
 
   ```sh
   Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/environment/test_environment_prototype.gd
   Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/environment/test_iso_combat.gd
+  Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/player/test_player_sprite.gd
   ```
 
 ## Trạng thái hiện tại
@@ -73,4 +74,6 @@ Quy ước commit: [docs/git_conventions.md](docs/git_conventions.md).
 
 - TASK VISUAL-02.2 — Environment Prototype dùng **art vẽ tay** (gen AI + hậu kỳ) cho nền, vách, prop, cầu, decal, phông xa; bóng mềm, FX (sương, tia nắng, bụi sáng) và lưới logic vẫn sinh bằng code (danh sách: style guide mục 11.2). Đường đất sáng và rộng hơn, mép mềm có cỏ lấn; nắng vàng ấm hơn. Tốc độ đi dọc trong map isometric 0.7 (trước 0.5). Cửa sổ game mặc định **1920×1080** (viewport gốc vẫn 1152×648, mọi scene giữ khung hình cũ).
 
-Chưa có ultimate, mana/stamina, animation, inventory, hội thoại, quest hay save. Mọi chỉ số combat, vũ khí, kỹ năng, class và EXP là placeholder.
+- TASK CHAR-01 — Player dùng **sprite 8 hướng** render từ model 3D (`entities/player/art/`): idle / run / walk, combo attack_1/2/3 (tua khớp nhịp đòn từng vũ khí), cast, hit, death; hướng chọn theo mặt đất (map iso và map cũ). SpriteFrames sinh bằng tool (`tools/player_sprites/`), quy trình model 3D → Mixamo → Blender: [style guide](docs/visual/environment-style-guide.md) mục 12. Enemy vẫn là placeholder.
+
+Chưa có ultimate, mana/stamina, animation enemy, inventory, hội thoại, quest hay save. Mọi chỉ số combat, vũ khí, kỹ năng, class và EXP là placeholder.

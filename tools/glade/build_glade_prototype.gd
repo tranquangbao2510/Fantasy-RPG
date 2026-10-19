@@ -928,7 +928,7 @@ func _props(entities: Node2D) -> void:
 func _entities(entities: Node2D) -> Node:
 	var player: Node = instance(entities, "res://entities/player/player.tscn", iso(26.6, 31.4), "Player")
 	_agent(player)
-	_adapter(player, "Visual/Shadow", "Visual/FacingPivot", "CollisionShape2D")
+	_adapter(player, "Visual/Shadow", "", "CollisionShape2D")
 	var board: Node = instance(entities, "res://features/interaction/examples/notice_board.tscn", iso(26.4, 32.4), "NoticeBoard")
 	board.set("message", "Environment Prototype (VISUAL-02, isometric): theo đường đất qua cầu gỗ, lên bậc thang đá tới quảng trường tàn tích; đi qua lối trên vòm sang mỏm đá, hoặc theo đường nhánh chui dưới gầm vòm. Nút góc phải trên bật lưới Terrain Logic.")
 	var dummy: Node = instance(entities, "res://entities/enemies/training_dummy/training_dummy.tscn", iso(24.5, 34.6), "TrainingDummy")

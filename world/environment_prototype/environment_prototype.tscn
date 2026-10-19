@@ -1171,10 +1171,9 @@ position = Vector2(-153.6, 928)
 [node name="ElevationAgent" type="Node" parent="EntityContainer/Player" unique_id=47264511]
 script = ExtResource("63_hhfck")
 
-[node name="IsoActorAdapter" type="Node" parent="EntityContainer/Player" unique_id=1409010674 node_paths=PackedStringArray("shadow", "facing_pivot", "body_shape")]
+[node name="IsoActorAdapter" type="Node" parent="EntityContainer/Player" unique_id=1409010674 node_paths=PackedStringArray("shadow", "body_shape")]
 script = ExtResource("64_e3nyw")
 shadow = NodePath("../Visual/Shadow")
-facing_pivot = NodePath("../Visual/FacingPivot")
 body_shape = NodePath("../CollisionShape2D")
 
 [node name="NoticeBoard" parent="EntityContainer" unique_id=1593350418 instance=ExtResource("65_cjall")]

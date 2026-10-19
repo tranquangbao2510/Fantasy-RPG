@@ -75,6 +75,11 @@ func get_step_count() -> int:
 	return _combo.get_step_count() if _combo != null else 0
 
 
+## Dữ liệu bước `index` (0-based) của combo vũ khí hiện tại; null nếu không có. Chỉ đọc (vd. visual tua animation).
+func get_step(index: int) -> ComboStepDefinition:
+	return _combo.get_step(index) if _combo != null else null
+
+
 func is_attacking() -> bool:
 	return _phase == Phase.WINDUP or _phase == Phase.ACTIVE or _phase == Phase.RECOVERY
 

@@ -1,0 +1,151 @@
+{
+  "texel_scale": 0.5,
+  "directions": [
+    "S",
+    "SW",
+    "W",
+    "NW",
+    "N",
+    "NE",
+    "E",
+    "SE"
+  ],
+  "direction_note": "hướng theo mặt đất (ground plane), quay theo chiều kim đồng hồ trên màn hình bắt đầu từ S (nhìn về camera)",
+  "animations": {
+    "idle": {
+      "file": "hero_idle.png",
+      "frame_size": [
+        48,
+        94
+      ],
+      "frames": 16,
+      "rows": 8,
+      "anchor": [
+        24,
+        81
+      ],
+      "fps": 1.61,
+      "loop": true
+    },
+    "walk": {
+      "file": "hero_walk.png",
+      "frame_size": [
+        70,
+        95
+      ],
+      "frames": 8,
+      "rows": 8,
+      "anchor": [
+        35,
+        80
+      ],
+      "fps": 7.74,
+      "loop": true
+    },
+    "run": {
+      "file": "hero_run.png",
+      "frame_size": [
+        94,
+        98
+      ],
+      "frames": 10,
+      "rows": 8,
+      "anchor": [
+        47,
+        82
+      ],
+      "fps": 15.79,
+      "loop": true
+    },
+    "attack_1": {
+      "file": "hero_attack_1.png",
+      "frame_size": [
+        164,
+        107
+      ],
+      "frames": 12,
+      "rows": 8,
+      "anchor": [
+        82,
+        88
+      ],
+      "fps": 5.45,
+      "loop": false
+    },
+    "attack_2": {
+      "file": "hero_attack_2.png",
+      "frame_size": [
+        158,
+        124
+      ],
+      "frames": 12,
+      "rows": 8,
+      "anchor": [
+        79,
+        105
+      ],
+      "fps": 5.9,
+      "loop": false
+    },
+    "attack_3": {
+      "file": "hero_attack_3.png",
+      "frame_size": [
+        176,
+        155
+      ],
+      "frames": 12,
+      "rows": 8,
+      "anchor": [
+        88,
+        133
+      ],
+      "fps": 5.29,
+      "loop": false
+    },
+    "cast": {
+      "file": "hero_cast.png",
+      "frame_size": [
+        96,
+        100
+      ],
+      "frames": 16,
+      "rows": 8,
+      "anchor": [
+        48,
+        81
+      ],
+      "fps": 3.75,
+      "loop": false
+    },
+    "hit": {
+      "file": "hero_hit.png",
+      "frame_size": [
+        74,
+        95
+      ],
+      "frames": 8,
+      "rows": 8,
+      "anchor": [
+        37,
+        76
+      ],
+      "fps": 4.53,
+      "loop": false
+    },
+    "death": {
+      "file": "hero_death.png",
+      "frame_size": [
+        120,
+        112
+      ],
+      "frames": 16,
+      "rows": 8,
+      "anchor": [
+        60,
+        81
+      ],
+      "fps": 2.77,
+      "loop": false
+    }
+  }
+}

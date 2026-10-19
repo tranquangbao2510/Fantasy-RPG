@@ -1,7 +1,7 @@
 class_name Player
 extends CharacterBody2D
-## Player placeholder: di chuyển liên tục 8 hướng và điều phối các component (combat, interaction, health).
-## Origin đặt tại chân nhân vật để Y-sort đúng trong EntityContainer.
+## Player: di chuyển liên tục 8 hướng và điều phối các component (combat, interaction, health).
+## Origin đặt tại chân nhân vật để Y-sort đúng trong EntityContainer. Hình: Visual/Sprite (PlayerSprite, 8 hướng).
 ## Combo đánh thường nằm trong BasicAttackController (dữ liệu từ vũ khí đang trang bị), HP trong HealthComponent;
 ## Class/passive/progression nằm trong ClassManager, PassiveController, CharacterLevel.
 ## script này chỉ đọc input và nối trạng thái.
@@ -17,7 +17,7 @@ var _spawn_position: Vector2
 ## Khi một bảng UI đang nhận input (vd. Progression Panel): bỏ qua đánh thường và kỹ năng.
 var _combat_input_blocked: bool = false
 
-@onready var _facing_pivot: Node2D = $Visual/FacingPivot
+@onready var _sprite: PlayerSprite = $Visual/Sprite
 @onready var _passives: PassiveController = $PassiveController
 @onready var _classes: ClassManager = $ClassManager
 @onready var _health: HealthComponent = $HealthComponent
@@ -112,7 +112,7 @@ func _get_attack_direction() -> Vector2:
 
 func _set_facing(direction: Vector2) -> void:
 	_facing = direction.normalized()
-	_facing_pivot.rotation = _facing.angle()
+	_sprite.set_facing(_facing)
 	_skills.fallback_direction = _facing
 
 

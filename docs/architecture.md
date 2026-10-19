@@ -26,9 +26,9 @@ Mã nguồn được tổ chức theo **tính năng** (feature) thay vì theo lo
 | `data/` | Dữ liệu game dùng chung (`.tres` Resource) | Chưa triển khai |
 | `assets/` | Tài nguyên dùng chung (sprite, âm thanh, font) | Chưa triển khai |
 | `save/` | Logic lưu / tải game | Chưa triển khai |
-| `tests/` | Kiểm thử headless (SceneTree script) | Đã triển khai (`environment/`, 2k) |
+| `tests/` | Kiểm thử headless (SceneTree script) | Đã triển khai (`environment/`, 2k; `player/`, 2c) |
 | `addons/` | Plugin bên thứ ba (chỉ khi thật sự cần) | Chưa triển khai |
-| `tools/` | Công cụ phát triển chạy ngoài game (có `.gdignore`), vd. sinh placeholder art | Đã triển khai (`placeholder_art/`, 2k) |
+| `tools/` | Công cụ phát triển chạy ngoài game (có `.gdignore`), vd. sinh placeholder art | Đã triển khai (`placeholder_art/`, 2k; `player_sprites/`, 2c) |
 
 Thư mục chỉ được tạo khi có nội dung thực tế. Không tạo thư mục, script hoặc class rỗng để "giữ chỗ".
 
@@ -132,16 +132,14 @@ world/maps/test_map/
 - Vật cản hiện tại **thấp**, không Y-sort; entity luôn vẽ đè lên vật cản. Đây là giới hạn được chấp nhận.
 - Hướng xử lý vật thể cao (cây, tường) cho task sau: đặt chúng chung một node cha có Y-sort với entity (vd. TileMapLayer có `y_sort_enabled` cùng cấp Y-sort với entity, hoặc scene vật thể riêng trong cùng cây Y-sort). Không dùng Z-index tùy tiện.
 
-## 2c. Player [Đã triển khai, placeholder]
+## 2c. Player [Đã triển khai, placeholder — hình: sprite 8 hướng (CHAR-01)]
 
 ```
 entities/player/player.tscn
 Player (CharacterBody2D, motion_mode = Floating) ── player.gd
 ├── Visual (Node2D)
 │   ├── Shadow (Polygon2D)        — bóng ellipse tại chân
-│   ├── Body (Polygon2D)          — khối xanh 16×26 phía trên chân
-│   └── FacingPivot (Node2D)      — xoay theo hướng di chuyển cuối
-│       └── Marker (Polygon2D)    — tam giác vàng chỉ hướng trước mặt
+│   └── Sprite (AnimatedSprite2D) — player_sprite.gd (PlayerSprite): sprite 8 hướng, chân = origin (CHAR-01)
 ├── CollisionShape2D              — CircleShape2D r=6, tâm (0,-6): chạm tới chân
 └── InteractionDetector, HealthComponent, Hurtbox, HitFlash, WeaponEquipment, BasicAttackController, DebugWeaponSwitcher, SkillLoadout, SkillCastingController, PassiveController, ClassManager, CharacterLevel — xem 2e–2i
 ```
@@ -151,8 +149,27 @@ Player (CharacterBody2D, motion_mode = Floating) ── player.gd
 - **Di chuyển:** `_physics_process` → `Input.get_vector()` → `velocity = direction * move_speed` → `move_and_slide()`. `vertical_speed_scale` (mặc định 1) nhân vào thành phần dọc — map isometric đặt 0.7 qua `IsoActorAdapter` (2k). Liên tục, 8 hướng, chéo được chuẩn hóa (|v| ≤ `move_speed`), thả phím thì dừng ngay; không tăng tốc/quán tính.
 - `move_speed` (`@export`, mặc định **160 px/s**) — giá trị thử nghiệm.
 - **Spawn:** đặt trực tiếp trong `world.tscn` tại (480, 320), giữa quảng trường đá. Chưa có SpawnManager/checkpoint.
-- Placeholder: toàn bộ visual, kích thước collision, tốc độ, vị trí spawn.
+- Placeholder: kích thước collision, tốc độ, vị trí spawn. Visual (sprite) là art production — xem mục "Player visual" dưới đây.
 - `player.gd` chỉ đọc input (`basic_attack` → `BasicAttackController.request_attack()`), chặn điều khiển khi chết và cung cấp `is_dead()`, `reset_state()`, `get_aim_direction(world_point)`, `set_combat_input_blocked(bool)` (UI đang mở: bỏ qua đánh thường/kỹ năng, hủy ngắm/vận sức/combo; di chuyển vẫn được). Tốc độ = `move_speed` × hệ số passive. Logic HP/đòn đánh/class nằm trong component.
+
+**Player visual [CHAR-01]** — `entities/player/player_sprite.gd` (`PlayerSprite`, AnimatedSprite2D trong `Visual`, cạnh bóng `Shadow`). Chỉ hiển thị, không đổi logic/chỉ số combat.
+
+- **Dữ liệu:** `entities/player/art/hero_*.png` + `hero_sprites.json` (render từ model 3D, quy trình: style guide mục 12). `tools/player_sprites/build_player_sprite_frames.gd` sinh `hero_sprite_frames.tres`: animation `<tên>_<hướng>` (9 × 8 = 72, fps/loop gốc), frame là AtlasTexture đệm `margin` về một canvas chung 176 × 164 texel để mọi frame cùng điểm chân; metadata `anchor` (88, 133), `texel_scale` 0.5, `directions`. `PlayerSprite._ready()` đặt `offset = −anchor`, `scale = texel_scale`, lọc Linear Mipmap → điểm chân trùng origin Player.
+- **Hướng:** `player.gd._set_facing()` gọi `PlayerSprite.set_facing(dir)`. Hướng màn hình → mặt đất (`GroundSpace.to_ground`, `squash` nhận qua `set_ground_squash()` — `IsoActorAdapter` gọi 0.5; map cũ giữ 1) → làm tròn về 1 trong 8 hàng (`direction_index()`). Đi: theo hướng phím; đánh: theo hướng đòn (con trỏ, chốt mỗi bước); cast: theo mục tiêu. attack/cast/death khóa hướng tới khi xong.
+- **Trạng thái → animation** (ưu tiên death > attack / cast (cái sau thắng) > hit > locomotion), cập nhật mỗi physics tick (chạy sau `Player._physics_process`):
+
+| Trạng thái | Animation | Thời lượng |
+|---|---|---|
+| Đứng yên / đi | `idle` / `run` (tốc độ trên mặt đất ≥ `run_speed_threshold` 110 px/s) / `walk` (thấp hơn, vd. passive làm chậm, trượt dọc tường) | fps gốc |
+| Bước combo i (`BasicAttackController.step_started`) | `attack_1/2/3` (vũ khí > 3 bước quay vòng: Dagger bước 4 → `attack_1`) | tua = windup + active + recovery của bước (`get_step(i)`), kết thúc khi controller hết `is_attacking()` |
+| Kỹ năng `cast_started(slot, cast_time)` | `cast` | tua = max(cast_time, `min_cast_duration` 0.35 s); `cast_cancelled` → dừng |
+| `HealthComponent.damaged` (không đang đánh/cast) | `hit` | tua về `hit_duration` 0.3 s; chỉ hiển thị, không chặn input |
+| `died` | `death` | tua về `death_duration` 1.5 s, giữ frame cuối; `revived` (reset R) → idle |
+
+- `HitFlash` vẫn đổi `modulate` của `Visual` (nháy đỏ, tô xám khi chết). `WeaponVisual`/`SwingVisual` của BasicAttackController (vạch vũ khí, vùng vung đòn placeholder) vẫn vẽ.
+- `BasicAttackController.get_step(index)` (mới, chỉ đọc) để visual đọc nhịp bước.
+- **Kiểm thử:** `tests/player/test_player_sprite.gd` — 53 ca: SpriteFrames đủ 72 animation khớp JSON, anchor chung, sheet có mipmaps, nhân vật cao 39 px world; 8 vector mặt đất → đúng hàng (iso + map cũ), làm tròn; idle/run/walk theo phím; attack_1/2/3 tua khớp từng bước của Sword/Dagger/Heavy và tới frame cuối đúng lúc hết recovery; cast tua theo cast time, hủy cast; hit không chặn di chuyển, không ngắt đòn; death giữ frame cuối, reset về idle_S; map cũ squash 1.
+- **Giới hạn:** kiếm chỉ có trong `attack_1/2/3` (vẽ liền trong sheet, chưa có lớp vũ khí tách riêng; đổi vũ khí không đổi hình); `run`/`walk` phát ở fps gốc, không khớp sải chân với tốc độ thật; Player chỉ có một tốc độ nên bình thường luôn `run`; enemy/bù nhìn vẫn là polygon.
 
 ## 2d. Camera — GameCamera [Đã triển khai]
 
@@ -290,7 +307,7 @@ Giới hạn prototype:
 - Hurtbox được nối vào HUD lúc `World._ready()`; thực thể sinh ra lúc chạy gọi `World.register_entity(node)` (không nối trùng).
 - Không i-frame: enemy đánh trúng mỗi lần hết cooldown. Knockback chỉ có ở SimpleEnemy (Player và dummy không bị đẩy).
 - Enemy không pathfinding, không tránh vật cản; Player và enemy có thể chồng lên nhau.
-- Vùng tấn công là hình chữ nhật; chưa có animation chính thức.
+- Vùng tấn công là hình chữ nhật; Player có animation sprite (2c, CHAR-01), enemy chưa.
 - `get_global_mouse_position()` đọc con trỏ thật nên kiểm thử tự động không giả lập được hướng chuột (đã tách `get_aim_direction()` để kiểm thử).
 
 ## 2g. Weapon & basic attack combo [Đã triển khai, placeholder]
@@ -348,7 +365,7 @@ Runtime state (bước hiện tại, phase, thời gian, buffer, hướng, shape
 
 **Tạo vũ khí mới:** FileSystem → New Resource → `ComboStepDefinition`/`ComboDefinition` (hoặc nhân bản `combo_test_*.tres`) → chỉnh các bước; New Resource → `WeaponDefinition`, đặt `weapon_id`, `weapon_type_id`, gán `combo`. Gán vào `WeaponEquipment.starting_weapon` hoặc thêm vào mảng `DebugWeaponSwitcher.weapons`. Không cần sửa code.
 
-Giới hạn: hitbox mỗi bước là hình chữ nhật (chưa có arc thật); chưa có animation; enemy vẫn dùng MeleeAttack đơn (không combo). Luật class ↔ vũ khí: xem 2i.
+Giới hạn: hitbox mỗi bước là hình chữ nhật (chưa có arc thật); animation Player attack_1/2/3 tua theo nhịp bước (2c), enemy chưa có animation; enemy vẫn dùng MeleeAttack đơn (không combo). Luật class ↔ vũ khí: xem 2i.
 
 ## 2h. Active skill framework [Đã triển khai, placeholder]
 
@@ -564,7 +581,7 @@ ui/debug/environment_debug_hud.gd/.tscn · tests/environment/test_environment_pr
 
 **Truy cập:** Main Scene → **Environment Prototype (Visual 01)**, hoặc mở `environment_prototype.tscn` + F6.
 
-**Phép chiếu:** `x = (i − j)·32, y = (i + j)·16 − z`. Physics/collision ở không gian màn hình; footprint mặt đất là thoi/ellipse 2:1. Di chuyển: WASD theo màn hình, Player trong map iso có `vertical_speed_scale = 0.7` (VISUAL-02.2; 0.5 là tốc độ đều tuyệt đối trên mặt đất + nhấn chéo đi đúng trục lưới, nhưng đi dọc cảm giác chậm). Hướng nhìn/đòn đánh theo con trỏ như cũ. `IsoActorAdapter` (chỉ trong map iso): bóng ellipse 2:1, marker hướng nhìn nằm trên mặt đất (nén dọc 0.5), collision thân ellipse 14×7.
+**Phép chiếu:** `x = (i − j)·32, y = (i + j)·16 − z`. Physics/collision ở không gian màn hình; footprint mặt đất là thoi/ellipse 2:1. Di chuyển: WASD theo màn hình, Player trong map iso có `vertical_speed_scale = 0.7` (VISUAL-02.2; 0.5 là tốc độ đều tuyệt đối trên mặt đất + nhấn chéo đi đúng trục lưới, nhưng đi dọc cảm giác chậm). Hướng nhìn/đòn đánh theo con trỏ như cũ. `IsoActorAdapter` (chỉ trong map iso): bóng ellipse 2:1, marker hướng nhìn (`facing_pivot`, nếu actor có) nằm trên mặt đất (nén dọc 0.5), collision thân ellipse 14×7; gọi `set_ground_squash(0.5)` cả trên `PlayerSprite` để chọn hướng sprite theo mặt đất (CHAR-01 bỏ marker của Player).
 
 **Bố cục Glade:** khối đất nổi trên vực (`LandMass`, vách vực 192 px ở mép SE/SW, mép cỏ ở NW/NE, tường `LandEdge`); plateau tầng 1 với **quảng trường đá lát thoi** + tàn tích (vòm, cột, đá rune) và **đường đất chạy xéo** dọc mép vách; **cầu thang đá** chéo trên vách SW; **lối đi tầng 1 trên vòm** sang mỏm đá phía đông, đường nhánh tầng 0 **chui dưới vòm**; suối + **cầu gỗ chéo** ở tầng thấp, suối **đổ thác qua mép vực** có sương; phông xa parallax (núi, lâu đài mờ) + nền sương lấp đầy (`AbyssHaze`) nên camera ra mép không lộ khoảng trống.
 

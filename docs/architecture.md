@@ -19,16 +19,16 @@ Mã nguồn được tổ chức theo **tính năng** (feature) thay vì theo lo
 | `app/` | Main scene, khởi động và vòng đời ứng dụng | Đã triển khai (`main.tscn`, `main.gd` — màn hình tạm) |
 | `docs/` | Tài liệu kỹ thuật | Đã triển khai |
 | `core/` | Thành phần kỹ thuật dùng chung, không phụ thuộc gameplay cụ thể | Chưa triển khai |
-| `features/` | Module gameplay (mỗi tính năng một thư mục con, vd. `features/combat/`) | Đã triển khai (`interaction/`, `combat/`, `character/`, `skills/`, `classes/`) |
+| `features/` | Module gameplay (mỗi tính năng một thư mục con, vd. `features/combat/`) | Đã triển khai (`interaction/`, `combat/`, `character/`, `skills/`, `classes/`, `items/`, `inventory/` — 2l) |
 | `entities/` | Player, NPC, enemy (scene ghép từ component) | Đã triển khai (`player/`, `enemies/` — placeholder) |
 | `world/` | Bản đồ, môi trường, camera | Đã triển khai (`world.tscn`, `world.gd`, `maps/test_map/`, `camera/`, `sandbox/`, `environment/` (gồm `iso/`), `environment_prototype/` — 2k, isometric) |
-| `ui/` | Thành phần giao diện | Đã triển khai (`interaction/`, `combat/`, `skills/`, `progression/`, `debug/`, `common/`) |
+| `ui/` | Thành phần giao diện | Đã triển khai (`interaction/`, `combat/`, `skills/`, `progression/`, `debug/`, `common/`, `inventory/` — 2l) |
 | `data/` | Dữ liệu game dùng chung (`.tres` Resource) | Chưa triển khai |
 | `assets/` | Tài nguyên dùng chung (sprite, âm thanh, font) | Chưa triển khai |
-| `save/` | Logic lưu / tải game | Chưa triển khai |
-| `tests/` | Kiểm thử headless (SceneTree script) | Đã triển khai (`environment/`, 2k; `player/`, 2c) |
+| `save/` | Logic lưu / tải game | Đã triển khai (`save_service.gd` — Autoload SaveService, 2l) |
+| `tests/` | Kiểm thử headless (SceneTree script) | Đã triển khai (`environment/`, 2k; `player/`, 2c; `inventory/`, `save/`, 2l) |
 | `addons/` | Plugin bên thứ ba (chỉ khi thật sự cần) | Chưa triển khai |
-| `tools/` | Công cụ phát triển chạy ngoài game (có `.gdignore`), vd. sinh placeholder art | Đã triển khai (`placeholder_art/`, 2k; `player_sprites/`, 2c) |
+| `tools/` | Công cụ phát triển chạy ngoài game (có `.gdignore`), vd. sinh placeholder art | Đã triển khai (`placeholder_art/`, 2k; `player_sprites/`, 2c; `item_icons/`, 2l) |
 
 Thư mục chỉ được tạo khi có nội dung thực tế. Không tạo thư mục, script hoặc class rỗng để "giữ chỗ".
 
@@ -43,6 +43,7 @@ Main (Control) ── main.gd
         ├── StatusLabel (Label)
         ├── EnterButton (Button "Vào game")
         └── SandboxButton (Button "Combat Sandbox (thử nghiệm)") → world/sandbox/combat_sandbox.tscn (2j)
+        ├── ContinueButton (Button "Tiếp tục") → SaveService.load_game(1) (2l; mờ nếu chưa có save)
         └── EnvironmentButton (Button "Environment Prototype (Visual 01)") → world/environment_prototype/environment_prototype.tscn (2k)
             └─ nhấn → SceneTree.change_scene_to_file("res://world/world.tscn")
 
@@ -63,12 +64,15 @@ World (Node2D) ── world.gd
     ├── SkillBar
     ├── InteractionPrompt
     ├── InteractionFeedback
-    └── ProgressionPanel        — bảng Class/Progression thử nghiệm (2i)
+    ├── ProgressionPanel        — bảng Class/Progression thử nghiệm (2i)
+    ├── PickupToast             — "+3 Gỗ" (2l)
+    └── InventoryWindow         — túi đồ / rương (2l)
 ```
 
 - **Main Scene** là entry point: màn hình khởi động tạm và chuyển vào World. Không giữ trạng thái game.
 - **World Scene** là gốc của môi trường game. Không phụ thuộc Main Scene, mở và chạy độc lập bằng F6.
 - `world.gd` cung cấp public API trả về các container (`get_map_container()`, `get_entity_container()`, ...) và `get_map_rect()`; nối camera với target/map và InteractionDetector với UI lúc `_ready` (qua các export trong `world.tscn`). Không chứa logic gameplay.
+- Từ M1 (2l): `map_id` (khóa trong MapCatalog, rỗng = không lưu được), nối túi đồ/rương/vật phẩm trên đất với UI (`inventory_window`, `pickup_layer`, `pickup_toast` — tùy chọn), `drop_item(stack)`, F5/F9 lưu/tải nhanh, khóa combat khi có bảng UI mở. world.tscn: `map_id = test_map`, `EntityContainer/Items` (ItemPickupLayer).
 - Chuyển scene dùng trực tiếp `change_scene_to_file()`; chưa có SceneManager, loading screen hay hiệu ứng chuyển cảnh.
 
 Nguyên tắc đặt node vào World:
@@ -141,7 +145,8 @@ Player (CharacterBody2D, motion_mode = Floating) ── player.gd
 │   ├── Shadow (Polygon2D)        — bóng ellipse tại chân
 │   └── Sprite (AnimatedSprite2D) — player_sprite.gd (PlayerSprite): sprite 8 hướng, chân = origin (CHAR-01)
 ├── CollisionShape2D              — CircleShape2D r=6, tâm (0,-6): chạm tới chân
-└── InteractionDetector, HealthComponent, Hurtbox, HitFlash, WeaponEquipment, BasicAttackController, DebugWeaponSwitcher, SkillLoadout, SkillCastingController, PassiveController, ClassManager, CharacterLevel — xem 2e–2i
+└── InteractionDetector, HealthComponent, Hurtbox, HitFlash, WeaponEquipment, BasicAttackController, DebugWeaponSwitcher, SkillLoadout, SkillCastingController, PassiveController, ClassManager, CharacterLevel — xem 2e–2i;
+    Inventory (24 ô), EquipmentSlots (weapon, head) — xem 2l. Player trong group `saveable` (save id `player`, global)
 ```
 
 - **Origin = chân nhân vật**, nên Y-sort trong `EntityContainer` dựa trên điểm tiếp xúc mặt đất. Visual vẽ phía trên origin. Không dùng Z-index.
@@ -361,7 +366,7 @@ Runtime state (bước hiện tại, phase, thời gian, buffer, hướng, shape
 | Test Dagger | 4 | 6 / 6 / 7 / 12 | 22–26 × 16–24 | ~0.03 / 0.07 / 0.08–0.20 s | 0.15 s |
 | Test Heavy Weapon | 2 | 30 / 45 | 40–44 × 44–52 | 0.25–0.32 / 0.14–0.16 / 0.40–0.55 s | 0.25 s |
 
-**Phím debug** (không phải phím chính thức): `1` Sword, `2` Dagger, `3` Heavy (`debug_weapon_1..3`, xử lý bởi `DebugWeaponSwitcher`; xóa node này khi có quy trình trang bị chính thức).
+**Phím debug** (không phải phím chính thức): `1` Sword, `2` Dagger, `3` Heavy (`debug_weapon_1..3`, xử lý bởi `DebugWeaponSwitcher`; xóa node này khi có quy trình trang bị chính thức). Từ M1 ô `weapon` của `EquipmentSlots` tự đồng bộ theo (2l).
 
 **Tạo vũ khí mới:** FileSystem → New Resource → `ComboStepDefinition`/`ComboDefinition` (hoặc nhân bản `combo_test_*.tres`) → chỉnh các bước; New Resource → `WeaponDefinition`, đặt `weapon_id`, `weapon_type_id`, gán `combo`. Gán vào `WeaponEquipment.starting_weapon` hoặc thêm vào mảng `DebugWeaponSwitcher.weapons`. Không cần sửa code.
 
@@ -618,6 +623,71 @@ ui/debug/environment_debug_hud.gd/.tscn · tests/environment/test_environment_pr
 
 **Giới hạn:** enemy không pathfinding (kẹt ở chân vách khi Player lên tầng cao); combat có chiều cao như nhau cho mọi thực thể (không có độ cao bay/nhảy — đạn bay sát mặt đất, mọi vùng đòn nằm trên mặt đất); đạn tầng 1 bắn ra mép plateau bị tường mép tầng 1 chặn (không bắn xuống tầng 0 được — cũng không trúng do lọc tầng); `EnemyDebugView` (vòng detection, chỉ bật trong sandbox) vẫn vẽ hình tròn màn hình; số sát thương/HitSpark hiện tại chân vì Hurtbox iso nằm ở chân; sprite nhân vật phải thấp hơn 64 px; vật cao tầng 0 không được chồng lên mặt tầng 1; mép đáy vách vực là đường thẳng tan vào sương (chưa có chiều sâu thật); thác là shader đơn giản (VISUAL-03).
 
+## 2l. Item, Inventory, Rương, Vật phẩm trên đất, Save/Load [Đã triển khai, prototype — TASK M1]
+
+Mốc M1 của lộ trình ([design/game_design.md](design/game_design.md) mục 6). Nền cho các hệ thống sau (sinh tồn, chế tạo, trồng trọt, NPC, nhiệm vụ). Quy tắc: dữ liệu thiết kế (`.tres`) chỉ đọc; trạng thái người chơi là Dictionary/JSON riêng; mọi thứ được lưu có **ID string ổn định** (không lưu đường dẫn node/scene).
+
+```
+features/items/      item_definition.gd (ItemDefinition), item_database.gd (ItemDatabase), item_stack.gd (ItemStack)
+                     data/ (10 item thử + item_database.tres), icons/ (placeholder sinh bằng tools/item_icons/)
+features/inventory/  inventory.gd (Inventory), equipment_slots.gd (EquipmentSlots)
+                     pickup/ item_pickup.gd/.tscn (ItemPickup), item_pickup_layer.gd (ItemPickupLayer)
+                     chest/  chest.gd/.tscn (Chest)
+ui/inventory/        inventory_window.gd/.tscn (InventoryWindow), item_slot_view.gd (ItemSlotView), pickup_toast.gd/.tscn (PickupToast)
+save/                save_service.gd — Autoload `SaveService` (duy nhất trong project)
+world/maps/          map_catalog.gd/.tres (MapCatalog: map_id → scene)
+```
+
+**Item data** — `ItemDefinition` (Resource): `id`, `display_name`, `description`, `icon`, `category` (MATERIAL, FOOD, TOOL, WEAPON, ARMOR, SEED, QUEST, MISC), `max_stack`, `sell_price`, `tags`, `equip_slot` (`&"weapon"` / `&"head"` / rỗng), `weapon` (WeaponDefinition có sẵn, cho item vũ khí). `get_validation_errors()`: id/tên rỗng, max_stack < 1, item vũ khí thiếu weapon, item trang bị phải max_stack 1. `ItemDatabase` (Resource, **không phải Autoload** — gán bằng export cho Inventory, EquipmentSlots, pickup layer, như ClassManager nhận danh sách class): `get_item(id)`, `get_max_stack(id)`, `find_by_weapon(weapon)`; index dựng ở lần tra đầu, lúc đó `push_error` mọi lỗi (item null, item lỗi, **id trùng**, **id thiếu**); item lỗi/trùng không vào index. Item thử: gỗ, đá, thảo dược, quả mọng, thịt sống, 3 vũ khí (item id = weapon_id: test_sword/dagger/heavy), mũ thử, mảnh cổ vật (quest). Icon placeholder: `tools/item_icons/generate_item_icons.gd` (ô màu theo loại + chữ cái đầu, font bitmap 5×7 trong code).
+
+**Inventory** (Node component, logic thuần, không biết UI) — N ô (`size`), mỗi ô `ItemStack` (`item_id`, `count`, `data` dự phòng độ bền…; chỉ gộp khi cùng id + cùng data) hoặc trống. API: `add(id, n) -> số dư` (lấp stack cũ trước, rồi ô trống), `add_stack`, `add_to_slot`, `remove(id, n) -> số đã bớt`, `remove_at(slot, n)`, `replace_at`, `move` (trống → chuyển, cùng loại → gộp, khác → đổi chỗ), `swap`, `merge`, `split(slot, n)` / `split_half`, `transfer_to(slot, other, slot)` (rương ↔ túi), `quick_transfer(slot, other)`, `has`, `count_of`, `space_for`, `first_empty_slot`, `is_full`; signal `changed` (một lần mỗi thao tác). Getter trả bản sao. `to_dict()` / `load_dict()` (bỏ qua có cảnh báo: item không tồn tại, ô ngoài phạm vi/trùng; kẹp theo max_stack). Player: 24 ô; rương: 20 ô.
+
+**Trang bị** — `EquipmentSlots` (trên Player): ô `weapon`, `head`. `equip_from_inventory(slot, [ô])` (món đang mặc đổi chỗ về đúng ô túi đó), `unequip_to_inventory(ô, [slot])`, `get_equip_block_reason()` (sai ô, item lạ, luật vũ khí của `WeaponEquipment` — tức luật class 2i). Ô weapon **đồng bộ hai chiều** với `WeaponEquipment`: trang bị item → `equip_weapon(item.weapon)`; vũ khí đổi từ nơi khác (phím debug 1/2/3) → ô nhận item tương ứng (`find_by_weapon`; item cũ bị bỏ — chỉ là debug); vũ khí bị gỡ (đổi class) → item về túi, túi đầy thì `overflow_handler` (World: vứt xuống đất). Mũ chỉ lưu + hiển thị (chưa chỉ số/ngoại hình).
+
+**Vật phẩm trên đất** — `ItemPickup` (Node2D, origin = chân, Y-sort; icon nổi lên xuống + bóng; `ElevationAgent` con → z theo tầng). `ItemPickupLayer` (một node/map, trong cây Y-sort của EntityContainer, group `saveable`, id `world_items`): mỗi physics tick, pickup **cùng tầng** trong `magnet_radius` 36 px (đo trên mặt đất, `ground_squash` 0.5 ở Glade) bị hút về Player, nhặt khi ≤ `collect_radius` 8 px; túi đủ một phần → nhặt phần vừa; hết chỗ → không hút, `pickup_blocked` (giãn cách 2 s). Pickup đặt sẵn có `pickup_id` (kiểm tra trùng lúc `_ready`); đã nhặt → vào `collected`, không xuất hiện lại sau khi load. `spawn_drop(stack, vị trí, tầng)` cho đồ vứt ra; pickup vứt ra "chưa armed" tới khi Player ra khỏi vùng hút (không nhặt lại ngay).
+
+**Rương** — `Chest` (Interactable, phím E): `chest_id`, `starting_items` (item → số lượng, nội dung ban đầu), Inventory con 20 ô. Tương tác phát `open_requested(chest)`; World nối vào `InventoryWindow.open_chest`. Save id `chest:<chest_id>`.
+
+**UI** — `InventoryWindow` (UILayer, style tạm): `inventory_toggle` (**I** / **Tab**) mở/đóng, `ui_cancel` (**Esc**) đóng. Bảng túi 6×4 + ô Vũ khí/Mũ; mở rương thì thêm bảng rương 5×4. Kéo thả giữa ô (túi ↔ túi/rương/trang bị), **chuột phải** = tách nửa stack, **Shift+click** = chuyển nhanh túi ↔ rương, **nhấp đúp** = trang bị/tháo, kéo ra ngoài cửa sổ = vứt xuống đất dưới chân (`drop_requested` → `World.drop_item`), tooltip tên/loại/mô tả. Đi xa rương > 80 px → tự đóng. Khi cửa sổ (hoặc Progression Panel) mở: `World._refresh_combat_block()` → `Player.set_combat_input_blocked(true)` (khóa đánh thường + kỹ năng); **di chuyển vẫn được** (giống Progression Panel; rương tự đóng khi đi xa). `PickupToast`: "+3 Gỗ" (cộng dồn khi nhặt liên tiếp), "Túi đầy — không nhặt được.".
+
+**Save/Load** — `SaveService` (Autoload duy nhất, `save/save_service.gd`). Không biết chi tiết hệ thống: node trong group **`saveable`** có `get_save_id() -> String`, `save_state() -> Dictionary`, `load_state(Dictionary)`, tùy chọn `is_save_global() -> bool` (Player: true — đi theo người chơi qua mọi map; còn lại thuộc map hiện tại). Map lưu được = scene hiện tại là World có `map_id` (export mới) có trong `MapCatalog` (`glade` = Environment Prototype, `test_map` = world.tscn; Combat Sandbox không lưu).
+
+| | |
+|---|---|
+| File | `user://saves/slot_<n>.json` (+ `slot_<n>.json.bak`) — M1 chỉ dùng slot 1 |
+| Cấu trúc | `{schema_version, saved_at, playtime, map_id, global: {save_id: state}, maps: {map_id: {save_id: state}}}`; trạng thái map khác đã có trong phiên được giữ khi lưu |
+| Ghi an toàn | ghi `.tmp` → đổi file cũ thành `.bak` → đổi `.tmp` thành file chính |
+| Đọc | JSON lỗi / không phải object / thiếu file → thử `.bak`; cả hai hỏng → `failed`, không crash, giữ scene hiện tại. Field gốc thiếu/sai kiểu → mặc định (cảnh báo); field của từng hệ thống do hệ thống đó tự mặc định |
+| Version | `SCHEMA_VERSION = 1`; `migrate()` chạy từng bước `register_migration(from, callable)` (khung, chưa có migration thật); save mới hơn bản game → từ chối |
+| Tải | `load_game(slot)`: đọc → `change_scene_to_file(map)` (scene mới hoàn toàn) → chờ `scene_changed` + 1 frame (setup hoãn của map chạy xong) → `apply()` → `loaded`. World nghe `loaded`: camera nhảy về Player, thông báo |
+| Kích hoạt | **F5** (`quick_save`) lưu nhanh, **F9** (`quick_load`) tải nhanh (debug, xử lý trong World); Main menu **Tiếp tục** (slot 1, mờ nếu chưa có save; các nút khác gọi `new_session()`); tự lưu khi đóng cửa sổ (`NOTIFICATION_WM_CLOSE_REQUEST`, nếu đang ở map lưu được) |
+| playtime | cộng dồn khi scene hiện tại là map lưu được |
+
+Nội dung lưu M1: `global.player` = vị trí, tầng (`ElevationAgent.set_tier` mới), HP (`HealthComponent.restore` mới; HP ≤ 0 → hồi đầy), `CharacterLevel`, `ClassManager.to_dict()` (class đã mở, class đang dùng, mastery, kỹ năng đã học + level/nhánh/cast mode, passive, loadout — khôi phục bằng `ClassManager.load_dict()` mới; cooldown/charges không lưu), trang bị, túi. `maps.<map_id>` = `chest:<id>` (nội dung rương), `world_items` (`collected` + `dropped`). Thứ tự khôi phục trong Player: level/class (passive đổi max HP) → trang bị (luật vũ khí theo class) → túi → HP → vị trí/tầng.
+
+Ví dụ (rút gọn từ file thật):
+
+```json
+{
+  "schema_version": 1, "saved_at": "2026-10-20 00:17:07", "playtime": 312.4, "map_id": "glade",
+  "global": {"player": {
+    "position": [-160.0, 886.4], "tier": 0, "health": 105, "level": {"level": 1, "exp": 0},
+    "classes": {"version": 1, "active_class": "test_fighter", "classes": {"test_fighter": {"mastery": {"level": 1, "exp": 0}, "skills": {"test_arc_slash": {"level": 1, "branch": "", "cast_mode": 0}}, "loadout": ["test_arc_slash", "test_linear_strike", "", ""], "unlocked_passives": [], "equipped_passives": []}}},
+    "equipment": {"version": 1, "slots": {"weapon": {"id": "test_sword", "count": 1}, "head": {"id": "test_helmet", "count": 1}}},
+    "inventory": {"version": 1, "size": 24, "slots": [{"slot": 0, "id": "wood", "count": 5}]}}},
+  "maps": {"glade": {
+    "chest:glade_chest": {"inventory": {"version": 1, "size": 20, "slots": [{"slot": 0, "id": "berry", "count": 3}]}},
+    "world_items": {"version": 1, "collected": ["glade_wood_1"],
+                    "dropped": [{"id": "herb", "count": 2, "position": [-130.0, 892.4], "tier": 0}]}}}
+}
+```
+
+**Trong Glade (Environment Prototype):** `EntityContainer/Chest` (`glade_chest`: 3 quả mọng, dao găm, 10 gỗ) cạnh đường đất gần spawn; `EntityContainer/Items` với 7 pickup (gỗ, đá, thảo dược, quả mọng, thịt sống, mũ ở tầng 0; mảnh cổ vật trên quảng trường tầng 1). Script dựng `tools/glade/build_glade_prototype.gd` đã thêm phần này. test_map có `Items` (để vứt đồ) + UI, không có pickup đặt sẵn.
+
+**Kiểm thử:** `tests/inventory/test_inventory.gd` (52 ca: database hợp lệ + phát hiện id trùng/rỗng/null/vũ khí thiếu weapon; add/stack/tràn/số dư khi đầy/remove/move/swap/merge/split/transfer/quick transfer; to_dict/load_dict với dữ liệu lỗi; trang bị + đồng bộ WeaponEquipment). `tests/save/test_save_load.gd` (57 ca: nhặt khi chạm/hút, ngoài tầm, túi đầy + thông báo, khác tầng, đồ vứt; rương mở bằng E, khóa combat, tự đóng; thao tác cửa sổ; vòng lưu → đổi scene → tải đủ mọi phần; `.bak`/`.tmp`; file hỏng → `.bak`/báo lỗi; field thiếu → mặc định; schema mới hơn/migration; tự lưu khi đóng; Sandbox không lưu). Test là SceneTree script được biên dịch **trước** khi Autoload đăng ký: không dùng tên `SaveService` trực tiếp (preload script + `/root/SaveService`) và nạp scene trong `call_deferred` (đã sửa `test_environment_prototype.gd` + script dựng Glade theo cách này).
+
+**Giới hạn:** một slot (chưa có UI chọn slot); ô weapon nhận vũ khí từ phím debug mà không trả item cũ về túi; cooldown/charges kỹ năng, enemy (HP/vị trí), bù nhìn không được lưu (về trạng thái của scene khi tải); không có hotbar/chế tạo/ăn uống/độ bền/tiền/chỉ số trang phục; icon là placeholder; `MapCatalog` mới có 2 map, chưa có chuyển map trong game; vứt đồ luôn rơi dưới chân Player; pickup kiểm tra tầng nhưng không kiểm tra vật cản giữa Player và pickup.
+
 ## 3. Quy ước đặt tên [Đã quyết định]
 
 Theo [GDScript style guide](https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/gdscript_styleguide.html):
@@ -663,19 +733,19 @@ Code mới không được để lại các cảnh báo này.
 | Ví dụ | Máu tối đa của một loại enemy | Máu hiện tại của một enemy cụ thể |
 | Lưu ở | Custom Resource (`.tres`) | Biến trong node/component |
 | Thay đổi khi chơi | Không | Có |
-| Được lưu vào save | Không (chỉ tham chiếu ID/đường dẫn) | Có |
+| Được lưu vào save | Không (chỉ tham chiếu ID) | Có |
 
 Resource dùng chung giữa nhiều instance **không được** bị sửa trong lúc chạy. Nếu cần giá trị riêng, sao chép sang runtime state hoặc `duplicate()` có chủ đích.
 
 ## 9. Autoload [Đã quyết định]
 
-- Hiện tại **không có Autoload nào**.
+- Có đúng **một** Autoload: `SaveService` (`save/save_service.gd`, TASK M1, người dùng đã đồng ý) — xem 2l. Không thêm Autoload khác khi chưa được đồng ý. Item database **không** phải Autoload.
 - Chỉ thêm Autoload khi có nhu cầu thực sự mang tính toàn cục (vd. dịch vụ save, điều phối chuyển scene) và phải được người dùng đồng ý.
 - Không dùng Autoload làm "manager" chứa logic gameplay hoặc làm kho trạng thái tùy tiện.
 
-## 10. Save / Load [Chưa triển khai]
+## 10. Save / Load [Đã triển khai — TASK M1, chi tiết 2l]
 
-Định hướng: lưu **runtime state** ra file JSON trong `user://`, logic nằm ở `save/`. File save chỉ chứa dữ liệu thuần (số, chuỗi, ID), tham chiếu dữ liệu thiết kế bằng ID/đường dẫn, không serialize trực tiếp Resource hay node. Định dạng có trường phiên bản để hỗ trợ migrate.
+lưu **runtime state** ra file JSON trong `user://`, logic nằm ở `save/`. File save chỉ chứa dữ liệu thuần (số, chuỗi, ID), tham chiếu dữ liệu thiết kế bằng ID/đường dẫn, không serialize trực tiếp Resource hay node. Định dạng có trường phiên bản (`schema_version`) để hỗ trợ migrate. Hệ thống mới muốn được lưu: thêm node vào group `saveable` + 3 hàm `get_save_id` / `save_state` / `load_state` (ID ổn định), không sửa SaveService.
 
 ## 11. Những gì chưa được quyết định
 

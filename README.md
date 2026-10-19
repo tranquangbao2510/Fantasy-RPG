@@ -17,6 +17,7 @@ Game Fantasy Action RPG 2D, môi trường phong cách High-Resolution Hand-Pain
 | Quản lý mã nguồn | Git |
 
 Chi tiết kiến trúc: [docs/architecture.md](docs/architecture.md).
+Thiết kế game (đọc trước mỗi task): [docs/design/game_design.md](docs/design/game_design.md).
 Quy tắc cộng tác cho AI agent: [docs/agent_rules.md](docs/agent_rules.md).
 Quy ước commit: [docs/git_conventions.md](docs/git_conventions.md).
 
@@ -36,12 +37,14 @@ Quy ước commit: [docs/git_conventions.md](docs/git_conventions.md).
   Godot_v4.7.2-stable_win64_console.exe --headless --path . --quit-after 30
   ```
 
-- Kiểm thử môi trường và nhân vật (headless, thoát mã 1 nếu có ca thất bại):
+- Kiểm thử môi trường, nhân vật, túi đồ và save (headless, thoát mã 1 nếu có ca thất bại):
 
   ```sh
   Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/environment/test_environment_prototype.gd
   Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/environment/test_iso_combat.gd
   Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/player/test_player_sprite.gd
+  Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/inventory/test_inventory.gd
+  Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/save/test_save_load.gd
   ```
 
 ## Trạng thái hiện tại
@@ -76,4 +79,6 @@ Quy ước commit: [docs/git_conventions.md](docs/git_conventions.md).
 
 - TASK CHAR-01 — Player dùng **sprite 8 hướng** render từ model 3D (`entities/player/art/`): idle / run / walk, combo attack_1/2/3 (tua khớp nhịp đòn từng vũ khí), cast, hit, death; hướng chọn theo mặt đất (map iso và map cũ). SpriteFrames sinh bằng tool (`tools/player_sprites/`), quy trình model 3D → Mixamo → Blender: [style guide](docs/visual/environment-style-guide.md) mục 12. Enemy vẫn là placeholder.
 
-Chưa có ultimate, mana/stamina, animation enemy, inventory, hội thoại, quest hay save. Mọi chỉ số combat, vũ khí, kỹ năng, class và EXP là placeholder.
+- TASK M1 — Nền tảng dữ liệu (`features/items/`, `features/inventory/`, `save/`, `ui/inventory/`): item database (10 item thử), túi đồ 24 ô + ô trang bị **Vũ khí / Mũ**, vật phẩm trên đất (đi chạm để nhặt), rương (**E**), Save/Load JSON. Phím: **I** hoặc **Tab** mở/đóng túi đồ (**Esc** đóng) — kéo thả để chuyển, **chuột phải** tách nửa stack, **Shift+click** chuyển nhanh túi ↔ rương, **nhấp đúp** trang bị/tháo, kéo ra ngoài cửa sổ để vứt; **F5** lưu nhanh, **F9** tải nhanh (slot 1); màn hình chính có **Tiếp tục**; tự lưu khi đóng game. Rương + 7 vật phẩm thử đặt trong Environment Prototype. Save ở `%APPDATA%/Godot/app_userdata/Fantasy RPG/saves/`. Chi tiết: [architecture.md](docs/architecture.md) mục 2l.
+
+Chưa có ultimate, mana/stamina, animation enemy, hotbar, chế tạo, hội thoại hay quest. Mọi chỉ số combat, vũ khí, kỹ năng, class và EXP là placeholder.

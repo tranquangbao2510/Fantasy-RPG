@@ -1,7 +1,7 @@
 # Game Design — Fantasy RPG
 
 > Tài liệu định hướng thiết kế. **Mọi task mới phải đọc file này trước** để biết hệ thống đang làm phục vụ mục tiêu gì.
-> Trạng thái: bản nháp v0.1 (2026-10-19). Mục **[Chưa quyết định]** chưa được chốt, không tự chọn thay chủ dự án.
+> Trạng thái: bản nháp v0.1 (2026-10-19); cập nhật trạng thái sau M1 (2026-10-20). Mục **[Chưa quyết định]** chưa được chốt, không tự chọn thay chủ dự án.
 
 ---
 
@@ -89,9 +89,9 @@ Ký hiệu trạng thái: ✅ đã có (prototype) · 🟡 có một phần · �
 - Công thức (recipe) dạng dữ liệu `.tres`: nguyên liệu → sản phẩm, yêu cầu trạm, yêu cầu mở khóa.
 - Mở khóa công thức qua: nhặt sách/bản vẽ, NPC dạy, lên cấp mastery.
 
-### 4.7 Túi đồ, trang bị & sưu tầm ⬜
-- **Inventory** dạng ô có giới hạn, vật phẩm chồng (stack) được. **Rương** ở nhà để cất.
-- **Trang bị:** vũ khí (đã có data vũ khí ✅), mũ, áo, quần, giày, phụ kiện. Mỗi món có chỉ số.
+### 4.7 Túi đồ, trang bị & sưu tầm 🟡
+- **Inventory** dạng ô có giới hạn, vật phẩm chồng (stack) được. **Rương** ở nhà để cất. ✅ (M1: item database 10 item thử, túi 24 ô, rương 20 ô, nhặt vật phẩm trên đất, vứt đồ — `docs/architecture.md` mục 2l)
+- **Trang bị:** vũ khí (đã có data vũ khí ✅), mũ, áo, quần, giày, phụ kiện. Mỗi món có chỉ số. 🟡 (M1: ô Vũ khí nối hệ thống vũ khí + ô Mũ chỉ lưu/hiện; chưa có chỉ số, chưa có áo/quần/giày/phụ kiện)
 - **Sưu tầm:** sổ tay (codex) ghi lại vũ khí/trang phục/quái/cây trồng đã gặp. Đây là động lực khám phá.
 - **Ngoại hình:** trang phục đổi ngoại hình nhân vật. **[Kỹ thuật cần giải]** Sprite nhân vật hiện render sẵn từ 3D (CHAR-01). Đổi trang phục cần render nhiều lớp (thân, áo, quần, vũ khí) chồng lên nhau, xem mục 7.
 
@@ -115,8 +115,8 @@ Ký hiệu trạng thái: ✅ đã có (prototype) · 🟡 có một phần · �
 - Ngày/đêm đổi ánh sáng, đổi quái (ban đêm nguy hiểm hơn), đổi lịch NPC.
 - Cây trồng, node tài nguyên, cửa hàng dựa vào ngày.
 
-### 4.12 Lưu game ⬜
-- Lưu khi ngủ ở giường (và autosave khi thoát). Lưu: vị trí, chỉ số, túi đồ, rương, trang bị, class/kỹ năng, vườn, node đã khai thác, NPC, nhiệm vụ, thời gian.
+### 4.12 Lưu game 🟡
+- Lưu khi ngủ ở giường (và autosave khi thoát). 🟡 (M1: khung SaveService JSON + `.bak` + schema_version/migration, F5/F9, "Tiếp tục", autosave khi thoát; lưu vị trí/tầng, HP, túi, trang bị, class/kỹ năng, rương, vật phẩm đã nhặt/vứt. Chưa có giường, chưa có nhiều slot) Lưu: vị trí, chỉ số, túi đồ, rương, trang bị, class/kỹ năng, vườn, node đã khai thác, NPC, nhiệm vụ, thời gian.
 - **Quy tắc kỹ thuật cho mọi hệ thống từ giờ:** dữ liệu người chơi tách khỏi dữ liệu thiết kế (`.tres` chỉ đọc), mọi thứ cần lưu có **ID ổn định** (string), không lưu đường dẫn node.
 
 ### 4.13 Kinh tế ⬜
@@ -149,7 +149,7 @@ Mỗi hệ thống có **một bản nhỏ nhưng chạy thật**, nối thành 
 
 | Mốc | Thời gian | Nội dung | Kết quả kiểm chứng |
 |---|---|---|---|
-| **M1 — Nền tảng dữ liệu** | 11–12/2026 | Item database (ID, loại, stack, icon), Inventory + UI, nhặt vật phẩm, rương, **khung Save/Load** (lưu vị trí + túi đồ) | Nhặt đồ, cất rương, thoát game vào lại còn nguyên |
+| **M1 — Nền tảng dữ liệu** ✅ | 11–12/2026 (xong 10/2026) | Item database (ID, loại, stack, icon), Inventory + UI, nhặt vật phẩm, rương, **khung Save/Load** (lưu vị trí + túi đồ) | Nhặt đồ, cất rương, thoát game vào lại còn nguyên |
 | **M2 — Thời gian & sinh tồn** | 01–02/2027 | Đồng hồ, ngày/đêm, ngủ, đói/thể lực, ăn uống, mana/stamina + né | Một ngày chơi trọn vẹn: đói → ăn, tối → ngủ |
 | **M3 — Lượm nhặt & chế tạo** | 03–04/2027 | Công cụ, node tài nguyên + mọc lại, công thức, 3 trạm chế tạo, trang bị trang phục | Chặt cây → chế rìu tốt hơn → khai thác quặng → chế vũ khí |
 | **M4 — Nhà & trồng trọt** | 05/2027 | Map làng/nhà, vườn, 4 loại cây, nâng cấp nhà cơ bản | Gieo → tưới → thu hoạch → nấu ăn |

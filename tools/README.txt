@@ -23,3 +23,8 @@ Chạy từ thư mục gốc project (Godot 4.7.2 console):
      Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tools/player_sprites/build_player_sprite_frames.gd
    Ghi đè entities/player/art/hero_sprite_frames.tres. Kiểm tra:
      Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/player/test_player_sprite.gd
+
+5. Sinh icon placeholder cho item (M1; ô màu theo loại + chữ cái đầu) từ features/items/data/item_database.tres:
+     Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tools/item_icons/generate_item_icons.gd
+   Ghi đè features/items/icons/<id>.png (chỉ một số item: biến môi trường ICON_ONLY=wood,stone). Sau đó --import,
+   bật mipmaps/generate trong .import của icon mới và gán `icon` cho item. Icon thật: thay PNG cùng tên, đừng chạy lại tool.

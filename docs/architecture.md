@@ -711,9 +711,9 @@ save/                save_migrations.gd (SaveMigrations: v1 → v2)
 
 **Đồng hồ** — `GameClock` (Node trong World, **không** Autoload; group `saveable`, global id `clock`). `total_minutes` tính từ 0:00 ngày 1; ngày mới lúc **0:00**. Chạy trong `_process` → dừng khi `SceneTree.paused` (mở túi đồ không pause; game chưa có menu hệ thống — đã chốt với chủ dự án). `advance(phút, sleeping)` là đường duy nhất làm thời gian trôi: phát `time_passed(phút, sleeping)`, `hour_changed` cho **từng** giờ vượt qua, `day_started(day)` mỗi nửa đêm, `phase_changed` cho **từng** mốc phase (dawn 5:00 → day 7:00 → dusk 17:00 → night 19:00), `minute_changed`. Debug (chỉ build debug): **F7** bật/tắt tua ×10, **F8** +1 giờ.
 
-**Ngày/đêm & tầm nhìn đêm** — `DayNightLighting` (một node/map) đọc GameClock mỗi frame: `darkness` 0 (ngày) → 1 (đêm), chuyển mượt (smoothstep) trong bình minh/hoàng hôn; `SunTint` (CanvasModulate) = ngày → hoàng hôn → đêm `(0.03, 0.035, 0.07)`; node group `daylight_fx` (tia nắng, đốm nắng) mờ theo darkness; mọi `VisionLight` (group `vision_light`) sáng theo darkness. Phát `darkness_changed` cho quái đêm (M6).
+**Ngày/đêm & tầm nhìn đêm** — `DayNightLighting` (một node/map) đọc GameClock mỗi frame: `darkness` 0 (ngày) → 1 (đêm), chuyển mượt (smoothstep) trong bình minh/hoàng hôn; `SunTint` (CanvasModulate) = ngày → hoàng hôn → đêm (M2: `(0.03, 0.035, 0.07)` gần đen; M3: ánh trăng `moonlight` 0.16 — xem 2n); node group `daylight_fx` (tia nắng, đốm nắng) mờ theo darkness; mọi `VisionLight` (group `vision_light`) sáng theo darkness. Phát `darkness_changed` cho quái đêm (M6).
 
-- **Kỹ thuật (M2 — TASK M4 thay bằng NightOverlay, xem 2o; mô hình số `cover_at` / `get_visibility` giữ nguyên):** `CanvasModulate` gần đen ban đêm (mọi thứ trên canvas của map — địa hình, quái, item — chìm vào bóng tối thật; UI ở CanvasLayer riêng không bị ảnh hưởng) + `PointLight2D` (blend Add) cộng sáng lại vùng quanh nguồn sáng. Texture là `GradientTexture2D` radial tạo bằng code (sáng đều tới `inner_ratio` 0.6 rồi mờ dần tới mép), node light nén dọc theo `ground_squash` → vùng sáng là **hình tròn trên mặt đất** (ellipse 2:1 trên map iso). Chọn vì: chạy sẵn trên renderer Compatibility (Light2D 2D hỗ trợ trên GLES3), không cần shader mask/SDF hay SubViewport, nguồn sáng mới chỉ là thêm một node; cùng một mô hình số (`VisionLight.cover_at`, `DayNightLighting.get_visibility / is_point_visible`) dùng cho logic + test.
+- **Kỹ thuật (M2 — TASK M4 thay bằng NightOverlay, xem 2o; mô hình số `cover_at` / `get_visibility` giữ nguyên):** `CanvasModulate` gần đen ban đêm (mọi thứ trên canvas của map — địa hình, quái, item — chìm vào bóng tối thật; UI ở CanvasLayer riêng không bị ảnh hưởng) + `PointLight2D` (M2: blend Add cộng sáng; M3 đổi sang Mix — 2n; M4 bỏ hẳn, thay bằng NightOverlay — 2o) sáng lại vùng quanh nguồn sáng. Texture là `GradientTexture2D` radial tạo bằng code (sáng đều tới `inner_ratio` 0.6 rồi mờ dần tới mép), node light nén dọc theo `ground_squash` → vùng sáng là **hình tròn trên mặt đất** (ellipse 2:1 trên map iso). Chọn vì: chạy sẵn trên renderer Compatibility (Light2D 2D hỗ trợ trên GLES3), không cần shader mask/SDF hay SubViewport, nguồn sáng mới chỉ là thêm một node; cùng một mô hình số (`VisionLight.cover_at`, `DayNightLighting.get_visibility / is_point_visible`) dùng cho logic + test.
 - **Bán kính:** `DayNightSettings.base_vision_radius` 160 px mặt đất (≈ 3.5 ô lưới) — đủ thấy quái tới gần, phải chuẩn bị đèn/đi đường quen. Đèn lồng ở ô **offhand**: `ItemDefinition.light_radius` +96 (→ 256) + màu ấm `light_color`; chưa tốn dầu. Nguồn sáng thế giới: đá rune (VisionLight 140 px, xanh), đèn cạnh giường nhà (96 px, ấm).
 - **Hiệu năng** (máy dev: AMD Radeon Graphics tích hợp, `gl_compatibility`, cửa sổ 1152×648, zoom 2×, tắt vsync): ngày 144 FPS, đêm 142 FPS, đêm + đèn lồng 131 FPS (vsync bật: 60 cố định cả ba). Số đo sau khi đổi kỹ thuật ở M4: 2o.
 
@@ -723,21 +723,21 @@ save/                save_migrations.gd (SaveMigrations: v1 → v2)
 |---|---|---|
 | Mana (`mana_settings.tres`) | max 100, hồi 4/s sau 1 s kể từ lần tiêu cuối | 4 kỹ năng thử tốn 10–25 → spam liên tục cạn trong ~10 s, nghỉ ~25 s là đầy: đánh nhau phải chọn chiêu |
 | `SkillDefinition.mana_cost` | Arc Slash 15, Ground Burst 25, Linear Strike 10, Self Heal 20 | Tỉ lệ theo sát thương/hiệu quả; không đổi chỉ số combat khác. Thiếu mana: không cast, Skill Bar ghi "Thiếu mana (N)" + tô xanh |
-| Stamina (`stamina_settings.tres`) | max 100, hồi 30/s sau 0.6 s; chạy 20/s; né 25/lần; kiệt sức (về 0) → chỉ chạy/né lại khi hồi ≥ 30 | Chạy liên tục ~5 s, né 4 lần liền; hồi đầy ~3.5 s nên giữa các đợt đánh luôn có lại |
+| Stamina (`stamina_settings.tres`) | max 100, hồi 30/s sau 0.6 s; chạy **12/s** (M3; M2: 20/s); né 25/lần; kiệt sức (về 0) → chỉ chạy/né lại khi hồi ≥ 30 | Chạy liên tục ~8.3 s (M3: 20/s cạn quá nhanh), né 4 lần liền; hồi đầy ~3.5 s nên giữa các đợt đánh luôn có lại |
 | Chạy / né (`player_mobility.tres`) | đi 160 px/s (giữ nguyên), Shift ×1.5 = 240; né 72 px mặt đất trong 0.2 s, bất tử 0.3 s, hồi né 0.5 s | Đi bộ giữ cảm giác cũ (đã chốt); né ≈ 2 lần bề rộng đòn kiếm để thoát đòn, i-frame dài hơn lướt một chút cho dễ canh |
-| Đói (`hunger_settings.tres`) | 0–100; −4/giờ game khi thức, −2/giờ khi ngủ; chạy 0.08/s, né 0.5, mỗi đòn 0.15, mỗi kỹ năng 0.4; < 25: không hồi stamina; = 0: −1 HP mỗi 3 phút game; ≥ 95: "đang no" | Một ngày thức (~18 h) mất ~72 + hoạt động → 2–3 bữa/ngày; đói lả mất ~20 HP/giờ game — đủ chậm để kịp tìm đồ ăn |
-| Ngủ (`sleep_settings.tres`) | ngủ 18:00 → trước 6:00; dậy 6:00; ngất lúc 2:00; ngủ hồi 50% HP + 100% mana; hồi sinh 50% HP; mờ 0.8 s, "Ngày N" 1.5 s | Bám v0.2 (4.6): ngủ = qua đêm an toàn + hồi + tự lưu |
+| Đói (`hunger_settings.tres`) | 0–100; −4/giờ game khi thức, −2/giờ khi ngủ; chạy 0.08/s, né 0.5, mỗi đòn 0.15, mỗi kỹ năng 0.4; < 25: không hồi stamina; = 0: mất **6 % HP tối đa mỗi giờ game** (M3; M2: −1 HP mỗi 3 phút game); ≥ 95: "đang no" | Một ngày thức (~18 h) mất ~72 + hoạt động → 2–3 bữa/ngày; đói lả: đầy HP → chết sau ~13.9 phút thực (công thức ở 2n) — đủ chậm để kịp tìm đồ ăn |
+| Ngủ (`sleep_settings.tres`) | ngủ 18:00 → trước 6:00; dậy 6:00; ngất lúc 2:00 (M3: tỉnh tại chỗ, đói −10); ngủ hồi HP **giường 100 % / lều 70 %** (M3; M2: 50 %) + 100% mana; hồi sinh 50% HP; mờ 0.8 s, "Ngày N" 1.5 s | Bám v0.2 (4.6): ngủ = qua đêm an toàn + hồi + tự lưu |
 | Đồng hồ (`time_settings.tres`) | 1 ngày = 1200 s thực (20 phút), bắt đầu 6:00 ngày 1 | Theo prompt M2 / v0.2 |
 
 Chạy (Shift) và né (Space) qua `Player`: tốc độ chạy × buff MOVE_SPEED; né đi bằng `move_and_slide` nên vách, nước, tầng vẫn chặn; quãng lướt đo trên mặt đất (`set_ground_squash`); né hủy combo + vận sức; i-frame qua `Hurtbox.set_invulnerable()`. Hoạt động (chạy/né/đánh/kỹ năng) báo `HungerComponent.exert(Activity.Kind)`. `PlayerSprite`: đi = `walk`, Shift = `run` (tua theo tốc độ thật so với mốc 120 / 240 px/s), né = `run` tua cho vừa 0.2 s (chưa có animation né riêng).
 
 **Ăn uống / dùng item** — `ItemDefinition.consumable: ConsumableEffect` (hunger, health, mana + `buff: BuffDefinition` tùy chọn; số âm = trừ). M3 thêm món chỉ cần item + ConsumableEffect. `ItemUser` (trên Player): đói ≥ 95 thì không ăn món có hồi đói; HP âm không làm chết (còn tối thiểu 1). Item thử: quả mọng (+8 đói, +2 HP), thịt sống (+10 đói, −3 HP), bánh mì (+30, +5 HP), thịt nướng (+40, +15 HP, buff "Ấm bụng" hồi stamina ×1.5 trong 120 s). Cửa sổ túi đồ: **chuột phải** = menu Dùng/Dựng · Trang bị · Tháo · Tách nửa · Vứt (thay cho tách nửa trực tiếp của M1 — đã chốt); **F** (`item_use`) khi rê chuột lên ô hoặc **nhấp đúp** = hành động chính. Ô trang bị mới: **Tay phụ** (`offhand`).
 
-**Ngủ** — `RestSpot` (Interactable, `spot_id`): `Bed` (E → ngủ; `home` = "nhà" tạm trong Glade, chuyển vào nhà ở M5) và `Tent`. `SleepController` (node trong World): `try_sleep` chỉ trong khung giờ → khóa điều khiển, đồng hồ dừng, mờ → `advance(tới 6:00, sleeping=true)` (đói giảm nhịp ngủ) → hồi HP/mana → chỗ ngủ thành **điểm tỉnh dậy / hồi sinh** (`Player.respawn_point = {map_id, kind, id}`) → **tự lưu** (SaveService) → "Ngày N" → sáng lại. Còn thức lúc 2:00 → ngất (hoãn `call_deferred` khỏi signal giờ): tỉnh ở điểm tỉnh dậy lúc 6:00, không hồi, không tự lưu. Điểm tỉnh dậy không còn (lều đã thu) → giường `home` gần nhất → tại chỗ.
+**Ngủ** — `RestSpot` (Interactable, `spot_id`): `Bed` (E → ngủ; `home` = "nhà" tạm trong Glade, chuyển vào nhà ở M5) và `Tent`. `SleepController` (node trong World): `try_sleep` chỉ trong khung giờ → khóa điều khiển, đồng hồ dừng, mờ → `advance(tới 6:00, sleeping=true)` (đói giảm nhịp ngủ) → hồi HP/mana → chỗ ngủ thành **điểm tỉnh dậy / hồi sinh** (`Player.respawn_point = {map_id, kind, id}`) → **tự lưu** (SaveService) → "Ngày N" → sáng lại. Còn thức lúc 2:00 → ngất (hoãn `call_deferred` khỏi signal giờ): M2 tỉnh ở điểm tỉnh dậy lúc 6:00, không hồi, không tự lưu → **M3: tỉnh TẠI CHỖ lúc 6:00**, không hồi, không tự lưu, đói −10 (cộng phần giảm theo nhịp ngủ). Điểm tỉnh dậy không còn (lều đã thu) → giường `home` gần nhất → tại chỗ.
 
 **Lều** — item `tent` (`ItemDefinition.deploy_scene` = `tent.tscn`). Dùng từ túi → `World._deploy_item`: chỉ **một lều** dựng cùng lúc; không trên cầu thang; `PlacementCheck`: đúng tầng (ElevationMap), không phải nước/vách/vực (TerrainLogic), footprint ellipse 14 px không chạm vật cản tầng đó / enemy / vật tương tác khác (rương, giường...). Lều dựng tại chỗ Player đứng, không có thân va chạm. E → menu **Ngủ / Thu lều** (thu: vào túi, điểm tỉnh dậy về nhà). Lưu trong `world_items.deployed`.
 
-**Chết & hồi sinh** — `DeathController` (chỉ map có save; Combat Sandbox giữ "bị hạ gục / R"): HP về 0 → khóa → mờ → **toàn bộ túi đồ** thành một `DeathBag` tại chỗ chết, cùng tầng (đồ đang mặc giữ nguyên, không mất tiền) → hồi sinh ở điểm tỉnh dậy với 50% HP → sáng lại. Chết tiếp khi chưa nhặt túi cũ → túi mới, túi cũ còn. `DeathBag` (Interactable, E): đồ về túi, phần không vừa rơi xuống đất cạnh đó. `DeathBagMarker` (HUD): dấu trên túi trong màn hình, mũi tên ở mép màn hình + khoảng cách cho túi ngoài màn hình. Lưu trong `world_items.death_bags`.
+**Chết & hồi sinh** — `DeathController` (chỉ map có save; Combat Sandbox giữ "bị hạ gục / R"): HP về 0 → khóa → mờ → **toàn bộ túi đồ** thành một `DeathBag` tại chỗ chết, cùng tầng (đồ đang mặc giữ nguyên, không mất tiền) → hồi sinh ở điểm tỉnh dậy với 50% HP → sáng lại. Chết tiếp khi chưa nhặt túi cũ → túi mới, túi cũ còn (M3: tối đa 5 túi/map, túi thứ 6 → túi cũ nhất biến mất + thông báo; túi rỗng tự xóa khỏi map và save). `DeathBag` (Interactable, E): đồ về túi, phần không vừa rơi xuống đất cạnh đó. `DeathBagMarker` (HUD): dấu trên túi trong màn hình, mũi tên ở mép màn hình + khoảng cách cho túi ngoài màn hình. Lưu trong `world_items.death_bags`.
 
 **HUD** (`CombatHUD`, gộp vào cột trái): "Ngày N · HH:MM · phase" + ô màu phase, HP, thanh Mana (xanh) / Stamina (vàng, đỏ khi kiệt sức), "Đói x / 100" (đỏ nhấp nháy + "cần ăn!" khi < 25), buff đang có; dòng gợi ý phím thứ 3. Bảng "bị hạ gục" tắt ở map có DeathController. (Đã bỏ độ lệch (77, −65) của CombatHUD trong scene Glade — do Godot Editor lưu vào ở commit 619f391 — vì đẩy dòng trên cùng của HUD ra ngoài màn hình.)
 
@@ -760,49 +760,98 @@ Chạy (Shift) và né (Space) qua `Player`: tốc độ chạy × buff MOVE_SPE
 
 **Giới hạn:** chưa có menu hệ thống/pause (đồng hồ chỉ theo SceneTree.paused); đèn lồng chưa tốn dầu; chưa có animation né riêng (dùng run tua nhanh); ngủ lều không có rủi ro; (buff, quái đêm, enemy: làm ở TASK M4 — 2o); giường "nhà" tạm đặt trong Glade; DeathBag không biến mất theo thời gian; vùng sáng là hình tròn trên mặt đất nên vật cao (cây) bị cắt theo vòng sáng, không có bóng đổ; dưới gầm cầu không dựng được lều (điểm thuộc tầng cao).
 
-## 2n. Khai thác, công cụ, chế tạo, lửa trại & đuốc [Đã triển khai, prototype — TASK M3]
+## 2n. Lượm nhặt, công cụ, chế tạo, nấu ăn, lửa trại & đuốc [Đã triển khai, prototype — TASK M3]
 
-(Mục này viết bù ở TASK M4 — commit M3 `bbe8f77` để ngỏ tài liệu.)
+Task M3 của chủ dự án (kéo phần "lượm nhặt & chế tạo" của mốc M4 trong [design/game_design.md](design/game_design.md) mục 6 lên trước; không có trồng trọt, quái đêm, NPC, mở khóa công thức, chế tạo có thời gian chờ, xây nhà). Tận dụng hệ inventory / item / equip / deployable (lều) có sẵn — không viết lại.
 
 ```
-features/gathering/  resource_node.gd (ResourceNode: Interactable), resource_node_definition.gd, resource_node_layer.gd
-                     data/ (tree, rock, berry_bush, grass .tres), nodes/ (*_node.tscn)
-features/crafting/   recipe_definition.gd, recipe_book.gd, crafting.gd (Crafting — logic thuần), crafting_station.gd
-                     stations/ workbench.gd/.tscn, campfire.gd/.tscn · data/ (công thức + recipe_book.tres)
-features/items/loot/ loot_entry.gd, loot_table.gd, loot_dropper.gd (LootDropper — enemy rơi đồ khi chết)
-ui/crafting/         crafting_window.gd/.tscn (CraftingWindow, phím C)
+features/gathering/  resource_node_definition.gd (ResourceNodeDefinition), resource_node.gd (ResourceNode),
+                     resource_node_layer.gd (ResourceNodeLayer), data/ (tree, rock, berry_bush, grass .tres),
+                     nodes/ (tree_node, rock_node, berry_bush_node, grass_node .tscn — hình placeholder bằng polygon)
+features/crafting/   recipe_definition.gd (RecipeDefinition), recipe_book.gd (RecipeBook), crafting.gd (Crafting — logic thuần),
+                     crafting_station.gd (CraftingStation), data/ (8 công thức + recipe_book.tres),
+                     stations/ workbench.gd/.tscn (bàn chế tạo), campfire.gd/.tscn (Campfire)
+features/items/      loot/ loot_entry.gd, loot_table.gd (LootTable), loot_dropper.gd (LootDropper)
+                     + item mới: branch, fiber, stone_axe, stone_pickaxe, torch, bandage, campfire, roasted_berry
+features/combat/weapons/data/  stone_axe, stone_pickaxe (weapon type `tool`), combo_stone_tool
+entities/enemies/loot/  simple_enemy_loot, ranged_enemy_loot, stationary_attacker_loot (.tres)
+ui/crafting/         crafting_window.gd/.tscn (CraftingWindow — chế tạo + chế độ Nấu)
 ```
 
-- **Node tài nguyên** — `ResourceNode` (E = một lần khai thác bằng công cụ ở tay chính). `ResourceNodeDefinition`: `toughness`, `required_tool` (&"" tay không / &"axe" / &"pickaxe"), `yield_table` (LootTable), `hand_table` + `hand_uses` (nhặt cành / đá vụn bằng tay khi thiếu công cụ), `depletes`, `regrow_days`. Đồ vào **thẳng túi** (không vừa thì rơi cạnh node) — vòng lặp khai thác lặp nhiều lần, không phải nhặt từng món, không lạc đồ trong bóng tối, không thêm vật phẩm rơi vào save. Thiếu công cụ: "Cần rìu" / "Cần cuốc". `ResourceNodeLayer` (saveable `resource_nodes`): đếm ngày qua `GameClock.day_started`, mọc lại lúc 0:00 của ngày đến hạn (kể cả sau khi tải save).
-- **Công cụ** — rìu / cuốc chim đá là item vũ khí `weapon_type_id = "tool"` mà **mọi class cầm được** (`ClassDefinition.allows_weapon_type`), combo 1 bước 5 dmg. Độ bền trong `ItemStack.data["durability"]` (thiếu = đầy), mỗi lần khai thác −1, về 0 → vỡ (`EquipmentSlots.item_depleted`, "Rìu đá đã vỡ!"). Thanh + số độ bền trên ô đồ / tooltip.
-- **Chế tạo** — `RecipeDefinition` (id, nguyên liệu, kết quả, số lượng, `station` NONE / WORKBENCH / CAMPFIRE), `RecipeBook` (export, không phải Autoload). `Crafting` (logic thuần, test độc lập): thiếu trạm / nguyên liệu → không trừ đồ; **túi đầy → chặn** (kết quả phải vừa túi sau khi trừ nguyên liệu) để không mất đồ mới làm. `CraftingWindow` (C — ô kỹ năng 2 chuyển sang **Z**, đã chốt với chủ dự án): công thức dùng được ở vị trí hiện tại, nguyên liệu thiếu tô đỏ + nút khóa, chế tạo tức thì. Bàn chế tạo trong "nhà tạm" Glade.
-- **Lửa trại** — item `campfire` dựng như lều (`PlacementCheck`) nhưng đặt trước mặt (`deploy_offset`, có thân va chạm), tối đa `max_per_map` mỗi map. Cháy `initial_fuel_minutes` 240 phút game (tối đa 720), thêm gỗ +120 / cành +45; hết → tắt (vẫn đứng đó, nhóm lại bằng củi). Đang cháy: `VisionLight` 300 px (> đèn lồng 256), trạm nấu ăn (E → chế độ Nấu). Lưu trong `world_items.deployed[*].state = {fuel, lit}`.
-- **Đuốc** — ô tay phụ, `light_radius` 64 (< đèn lồng 96), cháy 240 phút game (`ItemDefinition.burn_minutes`, còn lại trong `ItemStack.data["fuel"]`), hết thì mất.
-- **Đói = 0 (công thức):** mất `starving_percent_per_hour` = 6 % HP tối đa mỗi giờ game ⇒ đầy HP → chết sau 100 / 6 = 16.7 giờ game = 1000 phút game; 1 ngày = 1200 s thực = 1440 phút game ⇒ 1000 × 1200 / 1440 = 833 s ≈ **13.9 phút thực**, không phụ thuộc max HP.
-- **Chỉnh sau M2:** chạy 12 stamina/s; ánh trăng 16 % (`DayNightSettings.moonlight`); giường hồi 100 % HP / lều 70 %, mana 100 %; ngất: tỉnh **tại chỗ** lúc 6:00, không hồi, không tự lưu, đói −10 (ngoài phần giảm theo nhịp ngủ trong mấy giờ ngất); túi đồ rỗng tự xóa, tối đa 5 túi (túi thứ 6 → túi cũ nhất biến mất + thông báo).
-- **Save v3** — migration v2 → v3: `maps.<id>.resource_nodes = {version 1, nodes: {}}`, `world_items.deployed[*].state = {}`, `world_items.version = 3`; độ bền / nhiên liệu nằm trong `ItemStack.data` nên túi, trang bị, rương giữ nguyên.
+**Node tài nguyên** — `ResourceNode` (Interactable; con của `ResourceNodeLayer` trong `EntityContainer/Resources`) đọc `ResourceNodeDefinition`. Mỗi lần **E** trừ "sức khai thác" (tay không `HAND_POWER` 1, công cụ `ItemDefinition.harvest_power` 1) vào `toughness`; đủ → tung `yield_table` (LootTable) → **vào thẳng túi**, phần không vừa rơi xuống đất cạnh node. Chọn vào túi (không rơi ra đất) vì vòng lặp khai thác lặp nhiều lần: không phải nhặt từng món, không lạc đồ trong bóng tối, không thêm vật phẩm rơi vào save. Công cụ: `required_tool` (`axe` / `pickaxe`) phải cầm ở **tay chính**; thiếu → lời nhắc "Cần rìu" / "Cần cuốc" và không khai thác. Cây/đá còn cho **nhặt tay** (`hand_table`, `hand_uses` lần mỗi chu kỳ mọc): nhặt cành dưới gốc cây, nhặt đá vụn — để có nguyên liệu làm công cụ đầu tiên. `depletes` = false (bụi mọng): không bị phá, hái xong thì hết quả tới ngày mọc lại. Node bị phá: ẩn hình + tắt thân va chạm, hiện gốc cây / đá vụn. Mọc lại sau `regrow_days` ngày game (lúc 0:00 ngày đó; `ResourceNodeLayer` nghe `GameClock.minute_changed`, kiểm tra cả sau khi tải save).
 
-| Công thức (TASK M3) | Trạm | Nguyên liệu |
+**Công cụ** — rìu đá / cuốc chim đá là `ItemDefinition` có `weapon` (WeaponDefinition `weapon_type_id = tool`), `tool_type`, `harvest_power`, `max_durability` 40. Trang bị ở **ô Vũ khí (tay chính)** — cùng ô với vũ khí, không thêm ô mới: hệ equip M1 đã có đúng một ô tay chính và vũ khí cầm ở đó thì hiện ra trong combat; công cụ cũng đánh được (combo 1 đòn, damage 5 — kiếm thử 12/14/22). Xung đột: cầm rìu thì không cầm kiếm; đổi qua túi đồ (nhấp đúp / chuột phải). Đề xuất về sau: hotbar đổi nhanh (chưa làm — ngoài phạm vi). Mọi class cầm được công cụ (`ClassDefinition`: `TOOL_TYPE` luôn được phép). **Độ bền** lưu ở `ItemStack.data["durability"]` (field `data` đã có từ M1; thiếu = mới, đầy): mỗi lần khai thác `EquipmentSlots.wear()` trừ 1, về 0 → món biến mất khỏi ô + `item_depleted` → "Rìu đá đã vỡ!". Tooltip + vạch độ bền trên ô (`ItemSlotView`), lời nhắc "Chặt (Độ bền 38/40)". Đuốc: `burn_minutes` 240, nhiên liệu ở `data["fuel"]`, `EquipmentSlots.burn()` theo `GameClock.time_passed` (kể cả khi ngủ), hết → mất ("Đuốc đã cháy hết.").
+
+**Chế tạo** — `RecipeDefinition` (.tres: `id`, `ingredients` {item_id: số}, `result_id`, `result_count`, `station` NONE / WORKBENCH / CAMPFIRE), `RecipeBook` (danh sách, kiểm tra hợp lệ với ItemDatabase). `Crafting` (RefCounted, hàm static, **không chạm UI**): `get_missing`, `get_block_reason`, `craft`, `stations_near` (trạm đang hoạt động, cùng tầng, trong `use_radius` đo trên mặt đất). Thiếu trạm / nguyên liệu → không trừ gì. **Túi đầy: CHẶN** — thành phẩm phải vừa túi sau khi trừ nguyên liệu (mô phỏng trên bản sao Inventory; nguyên liệu dùng hết nhường ô được), không vừa thì không trừ gì, báo "Túi đầy — không còn chỗ cho thành phẩm". Chọn chặn thay vì rơi ra đất để không mất đồ vừa làm trong bóng tối / dưới nước. Chế tạo tức thì.
+`CraftingWindow` (phím **C** `craft_toggle`; ô kỹ năng 2 chuyển từ C sang **Z**): liệt kê công thức dùng được ở vị trí hiện tại (tay không + trạm ở gần), nguyên liệu thiếu tô **đỏ**, nút chế tạo khóa kèm lý do; Esc / C đóng; mở thì khóa combat như túi đồ. E ở bàn chế tạo → mở cửa sổ; E ở lửa trại đang cháy → **chế độ Nấu** (chỉ công thức campfire + nút thêm củi); lửa đã tắt → cửa sổ Nấu khóa nấu, còn nút thêm củi để nhóm lại.
+
+**Trạm** — `CraftingStation` (Interactable, group `crafting_stations`, `use_radius`): **Bàn chế tạo** (`workbench.tscn`, 72 px, đặt cạnh giường trong "nhà" tạm ở Glade; có thân va chạm). **Lửa trại** (`Campfire`, 80 px): item `campfire` có `deploy_scene` như lều → `World._deploy_item` dùng chung `PlacementCheck` (đúng tầng, không nước/vách/vực, không chạm vật cản); khác lều: đặt **trước mặt** người chơi 30 px (`ItemDefinition.deploy_offset`, vì có thân va chạm), giới hạn **8 lửa trại/map** (`ItemDefinition.max_per_map`; lều = 1 — thay luật "một lều" cứng của M2 bằng dữ liệu). Cháy 240 phút game lúc dựng, gỗ +120, cành +45, tối đa 720; hết → tắt: ánh sáng tắt, không nấu được, vẫn đứng đó (thân va chạm còn), thêm củi → nhóm lại. Lưu trong `world_items.deployed[*].state = {fuel, lit}`.
+
+**Ánh sáng** — (TASK M4: kỹ thuật vẽ Mix bên dưới đã được thay bằng NightOverlay — 2o; bán kính, màu, logic "điểm nhìn thấy" giữ nguyên.) Lửa trại là `VisionLight` bán kính 300 px mặt đất (đèn lồng: 160 + 96 = 256), màu cam. Đuốc ở **Tay phụ** thay đèn lồng: `light_radius` +64 (→ 224, nhỏ hơn đèn lồng). **Ban đêm không đen hẳn** (`DayNightSettings.moonlight` 0.16 = kênh sáng nhất của SunTint lúc tối hẳn, ánh trăng xanh lạnh `moon_tint`; chỉnh trong `day_night_settings.gd/.tres`): thấy bóng cây, địa hình. **Đổi blend của VisionLight từ Add sang Mix** (lý do sửa cấu trúc M2): với Add, vùng 2–3 nguồn sáng chồng nhau cộng vượt 1.0 → cháy trắng (đo bằng render thật: lõi 1 đèn 0.58, 3 đèn chồng nhau 1.0 bão hòa trên nền xám 0.5); Mix kéo màu vùng sáng về `albedo × màu đích` theo alpha của texture (gradient trắng, alpha 1 → 0), nhiều nguồn chồng nhau không vượt màu đích. Màu đích = `ambient` (SunTint hiện tại, DayNightLighting gán mỗi frame).lerp(`color`, darkness) × `energy` → lúc bình minh/hoàng hôn màu đích ≈ ambient nên bật/tắt không giật. Chi phí vẽ như cũ (đo cùng máy: Add 4.3 FPS vs Mix 4.2 FPS ở llvmpipe). Đá rune `energy` 1.1 → 1.0 (Mix không cần bù).
+
+**Nguồn thịt** — enemy M2 chưa rơi gì. Thêm `LootDropper` (con của enemy, nghe `HealthComponent.died`, thả từng stack xuống đất cạnh xác qua `ItemPickupLayer` cùng tầng; map không có layer — Combat Sandbox — không rơi) + `LootTable` data-driven ở `entities/enemies/loot/`. `LootTable`/`LootEntry` (`item_id`, `min_count`, `max_count`, `chance`) dùng chung cho node tài nguyên.
+
+**Hệ số mặc định**
+
+| Mục | Mặc định | Lý do |
 |---|---|---|
-| Rìu đá | Tay | 2 cành, 2 đá, 3 sợi |
-| Cuốc chim đá | Tay | 2 cành, 3 đá, 3 sợi |
-| Đuốc | Tay | 1 cành, 1 sợi |
-| Băng gạc | Tay | 4 sợi |
-| Lửa trại | Tay | 3 gỗ, 2 cành, 2 đá |
-| Lều | Bàn chế tạo | 4 gỗ, 8 sợi, 4 cành |
-| Thịt nướng | Lửa trại | 1 thịt sống |
-| Quả mọng nướng | Lửa trại | 2 quả mọng |
+| Stamina chạy | 12/s (M2: 20/s) | Theo task; chạy liên tục ~8.3 s |
+| Ánh trăng `moonlight` | 0.16 (≈ 13 % độ sáng cảm nhận) | Trong khoảng 12–18 % của task; thấy bóng cây + địa hình, không rõ chi tiết |
+| Đói = 0 | −6 % HP tối đa / giờ game | Công thức: thời gian chết = 100 / 6 giờ game = 16.7 giờ game = 1000 phút game; 1 ngày (1440 phút game) = 1200 s thực → 1000 × 1200 / 1440 = **833 s ≈ 13.9 phút thực** (trong 12–15 phút), không phụ thuộc max HP |
+| Ngủ | giường 100 % HP + 100 % mana; lều 70 % HP + 100 % mana; hồi sinh 50 % | Theo task |
+| Ngất | tỉnh tại chỗ 6:00, không hồi HP, không tự lưu, đói −10 | Theo task |
+| Túi đồ khi chết | tối đa 5/map; túi rỗng tự xóa | Theo task |
+| Tay không / công cụ | sức khai thác 1; độ bền rìu, cuốc 40 | Một cây (toughness 4) tốn 4 độ bền → 10 cây / công cụ |
+| Công cụ làm vũ khí | 1 đòn, damage 5, tầm 26, knockback 60 | Thấp hơn hẳn kiếm thử (12/14/22) |
+| Đuốc | cháy 240 phút game (4 giờ ≈ 3.3 phút thực), +64 px | Đủ đi một đoạn đêm; nhỏ hơn đèn lồng (+96) |
+| Lửa trại | 240 phút khi dựng, gỗ +120, cành +45, tối đa 720; bán kính 300; dùng trong 80 px; 8 / map | Một bộ củi cháy qua nửa đêm; thêm 4 gỗ là tới sáng |
+| Bàn chế tạo | dùng trong 72 px | Đứng cạnh bàn |
 
-| Node tài nguyên | Công cụ | Độ bền | Thu được | Tay không | Mọc lại |
-|---|---|---|---|---|---|
-| Cây | Rìu | 4 | 3–4 gỗ, 1–2 cành | 1–2 cành, 2 lần / chu kỳ | 3 ngày |
-| Đá | Cuốc | 4 | 3–5 đá | 1 đá vụn, 2 lần / chu kỳ | 4 ngày |
-| Bụi mọng | Tay | 1 | 2–3 quả mọng (không bị phá) | — | 2 ngày |
-| Bụi cỏ | Tay | 1 | 2–3 sợi | — | 1 ngày |
+**Bảng công thức**
 
-Enemy M3 (LootDropper): Simple / Stationary / Ranged rơi thịt sống (bảng trong `entities/enemies/loot/`).
+| Công thức | Nguyên liệu | Kết quả | Trạm |
+|---|---|---|---|
+| Rìu đá | 2 cành, 2 đá, 3 sợi | 1 | tay |
+| Cuốc chim đá | 2 cành, 3 đá, 3 sợi | 1 | tay |
+| Đuốc | 1 cành, 1 sợi | 1 | tay |
+| Băng gạc (+12 HP, dùng được cả khi no) | 4 sợi | 1 | tay |
+| Lửa trại | 3 gỗ, 2 cành, 2 đá | 1 | tay |
+| Lều | 4 gỗ, 8 sợi, 4 cành | 1 | bàn chế tạo |
+| Thịt nướng (+40 đói, +15 HP, buff Ấm bụng) | 1 thịt sống | 1 | lửa trại |
+| Quả mọng nướng (+20 đói, +5 HP) | 2 quả mọng | 1 | lửa trại |
 
-**Kiểm thử:** `tests/crafting/test_crafting.gd` (logic chế tạo), `tests/gathering/test_gathering.gd` (vòng lặp đầy đủ qua input thật, thiếu công cụ, vỡ công cụ, túi đầy, bàn chế tạo, mọc lại sau save/load, lửa trại, đuốc, túi đồ khi chết, save v1/v2).
+**Bảng rơi đồ**
+
+| Nguồn | Cách | Rơi | Độ bền khai thác | Mọc lại |
+|---|---|---|---|---|
+| Cây sồi | rìu | 3–4 gỗ + 1–2 cành | 4 lần | 3 ngày |
+| Cây sồi | tay (nhặt cành, 2 lần/chu kỳ) | 1–2 cành | 1 | cùng chu kỳ |
+| Tảng đá | cuốc chim | 3–5 đá | 4 lần | 4 ngày |
+| Tảng đá | tay (nhặt đá vụn, 2 lần/chu kỳ) | 1 đá | 1 | cùng chu kỳ |
+| Bụi mọng (không bị phá) | tay | 2–3 quả mọng | 1 | 2 ngày |
+| Bụi cỏ | tay | 2–3 sợi | 1 | 1 ngày |
+| Melee Chaser (simple_enemy) | chết | 1–2 thịt sống (100 %) | — | — |
+| Ranged enemy | chết | 1 thịt sống (60 %) | — | — |
+| Stationary Attacker | chết | 2 thịt sống (100 %) | — | — |
+
+**Save v3** — `SCHEMA_VERSION = 3`; migration **v2 → v3** thật (`SaveMigrations.migrate_2_to_3`): thêm `maps.<id>.resource_nodes = {version 1, nodes: {}}` (mọi node đầy), `world_items.version` → 3, `deployed[*].state = {}` (lều không có trạng thái riêng). Độ bền công cụ / nhiên liệu đuốc ở `ItemStack.data` — save v2 chưa có công cụ nên túi/trang bị/rương giữ nguyên (thiếu field = đầy). Chuỗi v1 → v2 → v3 chạy tự động; test tải save v1 (M1) và v2 (M2) đều thành công và lưu lại thành v3.
+
+```json
+"maps": {"glade": {
+  "resource_nodes": {"version": 1, "nodes": {
+    "glade_tree_3": {"depleted": true, "regrow_day": 4, "progress_left": 4, "hand_left": 2}}},
+  "world_items": {"version": 3, "deployed": [
+    {"item_id": "campfire", "id": "campfire_1760900000_0042", "position": [-416.0, 912.0], "tier": 0,
+     "state": {"fuel": 185.5, "lit": true}}]}}},
+"global": {"player": {"equipment": {"version": 1, "slots": {"weapon": {"id": "stone_axe", "count": 1, "data": {"durability": 36}}}}}}
+```
+
+**Trong Glade:** `EntityContainer/Workbench` (cạnh giường nhà tạm), `EntityContainer/Resources` (ResourceNodeLayer: 4 cây, 3 đá, 3 bụi mọng, 5 bụi cỏ quanh khu nhà / bờ suối), `UILayer/CraftingWindow`; World export `recipe_book`, `crafting_window`, `resource_layer`. Script dựng Glade (`tools/glade/build_glade_prototype.gd`) đã thêm các node này và giờ instance scene con bằng `GEN_EDIT_STATE_INSTANCE` (trước đó ghi đè cứng mọi thuộc tính của instance — đó là nguồn gốc độ lệch CombatHUD); chạy trên bản sao → toàn bộ test pass, scene commit vẫn là bản chỉnh tay (khác nhau chỉ ở id/thứ tự).
+
+**Kiểm thử** — `tests/crafting/test_crafting.gd` (40 ca, logic thuần: dữ liệu hợp lệ, trạm, thiếu nguyên liệu không trừ đồ, túi đầy chặn / nguyên liệu nhường ô, độ bền vỡ đúng lần 40, đuốc cháy hết, bảng rơi đồ, migration v2 → v3). `tests/gathering/test_gathering.gd` (92 ca, qua input thật: E, C, Esc, WASD, chuột trên cửa sổ): **vòng lặp đầy đủ** nhổ cỏ → nhặt cành → nhặt đá vụn → chế rìu (UI) → trang bị → chặt cây → chế + dựng lửa trại → giết enemy rơi thịt → nấu → ăn → đói tăng đúng; thiếu công cụ / sai công cụ không khai thác; rìu vỡ đúng lần cuối; thiếu nguyên liệu đỏ + nút khóa + không trừ; túi đầy chặn; bàn chế tạo; node mọc lại đúng ngày kể cả sau save/load; lửa trại hết giờ → ánh sáng tắt, nhóm lại, chặn đường, chỗ dựng sai, giới hạn/map; chồng sáng không cháy trắng (Mix); đuốc; 5 túi đồ + túi rỗng; CombatHUD không có thuộc tính offset/anchor ghi đè trong scene Glade + nằm trong màn hình; lời nhắc [E] không chạm dòng gợi ý phím; tải save v1, v2.
+**Hiệu năng** (đêm + 5 lửa trại + đuốc): máy dev (AMD Radeon tích hợp, vsync tắt, bản Add trước khi sửa) 79 FPS. Môi trường CI không có GPU (Mesa llvmpipe, render bằng CPU, 1152×648) chỉ để so tương đối: ngày 16.7, đêm 9.3, đêm + 5 lửa + đuốc 4.2 FPS; Add và Mix bằng nhau. Cần đo lại trên máy dev sau khi đổi Mix.
+
+**Giới hạn:** hình node tài nguyên, bàn chế tạo, lửa trại là polygon placeholder; chưa có animation khai thác (mỗi lần E là một nhát); chế tạo tức thì; công cụ chỉ có cấp đá, chưa có liềm; đổi vũ khí ↔ công cụ phải qua túi đồ (chưa có hotbar); bàn chế tạo di động **không làm** (theo task); lửa trại không lan cháy, không gây sát thương; vùng sáng vẫn là hình tròn trên mặt đất, không có bóng đổ; đuốc không thả xuống đất / cắm được; enemy rơi thịt theo bảng cố định, chưa có thú săn (M4); node tài nguyên chỉ đặt tay trong Glade (chưa sinh ngẫu nhiên, chưa có map phụ); FPS sau khi đổi Mix chưa đo trên máy có GPU (TASK M4 thay Mix bằng NightOverlay, đo lại: đêm + 5 lửa trại + đuốc 278 FPS — 2o).
 
 ## 2o. Đêm nguy hiểm: quái đêm, spawn, giáp, save v4 [Đã triển khai, prototype — TASK M4]
 

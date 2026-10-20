@@ -66,6 +66,19 @@ func set_lights(ambient: Color, lights: Array[VisionLight]) -> void:
 		queue_redraw()
 
 
+## Cùng công thức với shader (CPU — test / debug): màu nhân lên cảnh tại `point`.
+static func shade_at(ambient: Color, lights: Array, point: Vector2) -> Color:
+	var lit: Color = Color(0, 0, 0)
+	for item: Variant in lights:
+		var light: VisionLight = item as VisionLight
+		if light == null:
+			continue
+		var tint: Color = light.color * light.get_strength()
+		var cover: float = light.cover_at(point)
+		lit = Color(maxf(lit.r, tint.r * cover), maxf(lit.g, tint.g * cover), maxf(lit.b, tint.b * cover))
+	return Color(minf(ambient.r + lit.r, 1.0), minf(ambient.g + lit.g, 1.0), minf(ambient.b + lit.b, 1.0))
+
+
 func _draw() -> void:
 	if _rect.has_area():
 		draw_rect(_rect.grow(8.0), Color.WHITE)

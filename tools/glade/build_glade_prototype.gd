@@ -116,8 +116,10 @@ func save_res(res: Resource, path: String) -> Resource:
 	return load(path)
 
 
+## GEN_EDIT_STATE_INSTANCE: scene lưu ra chỉ ghi thuộc tính khác scene gốc (như Editor); không có thì mọi thuộc tính của
+## instance bị ghi đè cứng (vd. anchor/offset của CombatHUD — test combat_hud_no_offset_override bắt lỗi này, TASK M3).
 func instance(parent: Node, path: String, pos: Vector2, name_: String = "") -> Node:
-	var inst: Node = (load(path) as PackedScene).instantiate()
+	var inst: Node = (load(path) as PackedScene).instantiate(PackedScene.GEN_EDIT_STATE_INSTANCE)
 	if name_ != "":
 		inst.name = name_
 	(inst as Node2D).position = pos
@@ -450,7 +452,6 @@ func _build_world() -> void:
 	cam.set("max_zoom", 3.0)
 	cam.set("default_zoom", 2.0)
 	for pair: Array in [["res://ui/combat/combat_hud.tscn", "CombatHUD"], ["res://ui/skills/skill_bar.tscn", "SkillBar"], ["res://ui/interaction/interaction_prompt.tscn", "InteractionPrompt"], ["res://ui/interaction/interaction_feedback.tscn", "InteractionFeedback"], ["res://ui/progression/progression_panel.tscn", "ProgressionPanel"], ["res://ui/debug/environment_debug_hud.tscn", "EnvironmentDebugHud"], ["res://ui/inventory/pickup_toast.tscn", "PickupToast"], ["res://ui/inventory/inventory_window.tscn", "InventoryWindow"], ["res://ui/crafting/crafting_window.tscn", "CraftingWindow"]]:
-		# GEN_EDIT_STATE_INSTANCE: pack() chỉ ghi thuộc tính khác scene gốc (không ghi anchor của CombatHUD — test M3).
 		var inst: Node = (load(pair[0]) as PackedScene).instantiate(PackedScene.GEN_EDIT_STATE_INSTANCE)
 		inst.name = pair[1]
 		ui.add_child(inst)
@@ -896,7 +897,7 @@ func _props(entities: Node2D) -> void:
 	rune_light.position = Vector2(0, -6)
 	rune_light.set("radius", 140.0)
 	rune_light.set("color", Color(0.45, 0.9, 1))
-	rune_light.set("energy", 1.1)
+	rune_light.set("energy", 1.0)
 	rune_light.set("ground_squash", 0.5)
 	rune_light.set("safe_zone", true)
 	add(rune, rune_light, "VisionLight")
@@ -994,7 +995,10 @@ func _items(entities: Node2D) -> void:
 	var bed: Node = instance(entities, "res://features/survival/rest/bed.tscn", iso(30.4, 36.2), "Bed")
 	bed.set("interaction_name", "Giường (nhà tạm)")
 	bed.set("spot_id", "glade_home_bed")
-	_crafting(entities)
+	# TASK M3: bàn chế tạo trong nhà tạm.
+	var bench: Node = instance(entities, "res://features/crafting/stations/workbench.tscn", iso(32, 36), "Workbench")
+	bench.set("interaction_name", "Bàn chế tạo (nhà tạm)")
+	_resources(entities)
 	var layer: Node2D = Node2D.new()
 	layer.set_script(load("res://features/inventory/pickup/item_pickup_layer.gd"))
 	layer.y_sort_enabled = true
@@ -1007,6 +1011,26 @@ func _items(entities: Node2D) -> void:
 		pickup.set("item_id", p[1])
 		pickup.set("count", p[2])
 		pickup.set("pickup_id", p[3])
+
+## TASK M3: node tài nguyên (node_id ổn định cho save). [tên, scene, i, j]
+const RESOURCE_NODES: Array = [
+	["Tree1", "tree", 33, 30], ["Tree2", "tree", 35, 32], ["Tree3", "tree", 33, 33], ["Tree4", "tree", 34, 37],
+	["Rock1", "rock", 16, 30], ["Rock2", "rock", 14, 34], ["Rock3", "rock", 17, 28],
+	["BerryBush1", "berry_bush", 19, 31], ["BerryBush2", "berry_bush", 16, 36], ["BerryBush3", "berry_bush", 30, 30],
+	["Grass1", "grass", 28, 29], ["Grass2", "grass", 27, 28], ["Grass3", "grass", 25, 29], ["Grass4", "grass", 24, 28], ["Grass5", "grass", 29, 31],
+]
+
+
+func _resources(entities: Node2D) -> void:
+	var layer: Node2D = Node2D.new()
+	layer.set_script(load("res://features/gathering/resource_node_layer.gd"))
+	layer.y_sort_enabled = true
+	add(entities, layer, "Resources")
+	layer.add_to_group(&"saveable", true)
+	for r: Array in RESOURCE_NODES:
+		var node: Node = instance(layer, "res://features/gathering/nodes/%s_node.tscn" % r[1], iso(r[2], r[3]), r[0])
+		node.set("node_id", "glade_%s_%s" % [r[1], String(r[0]).right(1)])
+
 
 func _agent(body: Node) -> void:
 	var agent: Node = Node.new()
@@ -1096,6 +1120,7 @@ func _survival(world: Node, ui: CanvasLayer, player: Node, entities: Node2D) -> 
 	var clock: Node = _logic_node("res://features/time/game_clock.gd", "GameClock")
 	clock.set("settings", load("res://features/time/time_settings.tres"))
 	clock.add_to_group(&"saveable", true)
+	entities.get_node("Resources").set("clock", clock)
 	var lighting: Node = _logic_node(ENV + "time/day_night_lighting.gd", "DayNightLighting")
 	lighting.set("clock", clock)
 	lighting.set("settings", load(ENV + "time/day_night_settings.tres"))
@@ -1119,7 +1144,6 @@ func _survival(world: Node, ui: CanvasLayer, player: Node, entities: Node2D) -> 
 	world.set("sleep_controller", sleep)
 	world.set("death_controller", death)
 	world.set("death_marker", marker)
-	entities.get_node("Resources").set("clock", clock)
 	# TASK M4: quái đêm theo bảng spawn của Glade.
 	var spawner: Node = _logic_node("res://features/spawning/enemy_spawner.gd", "EnemySpawner")
 	spawner.set("table", load("res://features/spawning/data/glade_spawn_table.tres"))
@@ -1131,32 +1155,3 @@ func _survival(world: Node, ui: CanvasLayer, player: Node, entities: Node2D) -> 
 	world.set("night_banner", banner)
 	world.set("hit_vignette", vignette)
 	world.set("threat_indicator", threat)
-
-
-# ---------------------------------------------------------------- khai thác & chế tạo (TASK M3)
-
-## Node tài nguyên đặt sẵn: [tên, scene, node_id, i, j].
-const RESOURCE_NODES: Array = [
-	["Tree1", "tree_node", "glade_tree_1", 33.0, 30.0], ["Tree2", "tree_node", "glade_tree_2", 35.0, 32.0],
-	["Tree3", "tree_node", "glade_tree_3", 33.0, 33.0], ["Tree4", "tree_node", "glade_tree_4", 34.0, 37.0],
-	["Rock1", "rock_node", "glade_rock_1", 16.0, 30.0], ["Rock2", "rock_node", "glade_rock_2", 14.0, 34.0],
-	["Rock3", "rock_node", "glade_rock_3", 17.0, 28.0],
-	["BerryBush1", "berry_bush_node", "glade_berry_bush_1", 19.0, 31.0], ["BerryBush2", "berry_bush_node", "glade_berry_bush_2", 16.0, 36.0],
-	["BerryBush3", "berry_bush_node", "glade_berry_bush_3", 30.0, 30.0],
-	["Grass1", "grass_node", "glade_grass_1", 28.0, 29.0], ["Grass2", "grass_node", "glade_grass_2", 27.0, 28.0],
-	["Grass3", "grass_node", "glade_grass_3", 25.0, 29.0], ["Grass4", "grass_node", "glade_grass_4", 24.0, 28.0],
-	["Grass5", "grass_node", "glade_grass_5", 29.0, 31.0],
-]
-
-
-func _crafting(entities: Node2D) -> void:
-	var bench: Node = instance(entities, "res://features/crafting/stations/workbench.tscn", iso(32.0, 36.0), "Workbench")
-	bench.set("interaction_name", "Bàn chế tạo (nhà tạm)")
-	var layer: Node2D = Node2D.new()
-	layer.set_script(load("res://features/gathering/resource_node_layer.gd"))
-	layer.y_sort_enabled = true
-	add(entities, layer, "Resources")
-	layer.add_to_group(&"saveable", true)
-	for r: Array in RESOURCE_NODES:
-		var node: Node = instance(layer, "res://features/gathering/nodes/%s.tscn" % r[1], iso(r[3], r[4]), r[0])
-		node.set("node_id", r[2])

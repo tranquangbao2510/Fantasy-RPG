@@ -527,6 +527,17 @@ func _test_campfire() -> void:
 	check("campfire_lights_area", lighting.is_point_visible(near_fire) and fire.get_light().is_lit()
 		and fire.get_light().safe_zone and _player.global_position.distance_to(near_fire) > 300.0,
 		"%.2f %s %s %.0f" % [lighting.get_visibility(near_fire), fire.get_light().is_lit(), fire.get_light().safe_zone, _player.global_position.distance_to(near_fire)])
+	# Chồng sáng không cháy trắng (TASK M3, kỹ thuật NightOverlay của M4): nguồn sáng mạnh nhất thắng, không cộng dồn —
+	# hai lửa trại chồng lên nhau sáng bằng một lửa, không vượt 1.0.
+	var twin: Campfire = _layer.spawn_deployed(_bag().database.get_item(&"campfire"), fire.global_position + Vector2(6, 0), 0) as Campfire
+	await frames(2)
+	var ambient: Color = lighting.get_ambient_color()
+	var one: Color = NightOverlay.shade_at(ambient, [fire.get_light()], near_fire)
+	var two: Color = NightOverlay.shade_at(ambient, [fire.get_light(), twin.get_light()], near_fire)
+	check("lights_no_overexposure", two.is_equal_approx(NightOverlay.shade_at(ambient, [twin.get_light(), fire.get_light()], near_fire))
+		and absf(two.r - one.r) < 0.05 and maxf(two.r, maxf(two.g, two.b)) <= 1.0 and one.r > ambient.r + 0.3, "%s %s %s" % [ambient, one, two])
+	twin.queue_free()
+	await frames(1)
 	# Hết giờ → tắt: ánh sáng tắt, còn lại ánh trăng; không nấu được; vẫn đứng đó.
 	var burned: Array[bool] = []
 	fire.lit_changed.connect(func(lit: bool) -> void: burned.append(lit))

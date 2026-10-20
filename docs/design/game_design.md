@@ -1,7 +1,7 @@
 # Game Design — Fantasy RPG
 
 > Tài liệu định hướng thiết kế. **Mọi task mới phải đọc file này trước** để biết hệ thống đang làm phục vụ mục tiêu gì.
-> Trạng thái: **v0.2 (2026-10-20)**, cập nhật theo ý tưởng chi tiết của chủ dự án; đánh dấu trạng thái sau M2. Mục **[Chưa quyết định]** chưa được chốt, không tự chọn thay chủ dự án.
+> Trạng thái: **v0.2 (2026-10-20)**, cập nhật theo ý tưởng chi tiết của chủ dự án; đánh dấu trạng thái sau M2 và task M3 (lượm nhặt, chế tạo, nấu ăn — kéo một phần mốc M4 lên trước). Mục **[Chưa quyết định]** chưa được chốt, không tự chọn thay chủ dự án.
 
 ---
 
@@ -67,7 +67,7 @@ Uy tín phe phái → mở/khóa vùng, cửa hàng, nhiệm vụ; thay đổi t
 ### 3.4 Chết
 
 - Hết HP: **túi đồ rơi thành một túi tại chỗ chết**, người chơi **hồi sinh ở nhà**. **Không mất tiền.** ✅ (M2: túi `DeathBag` chứa toàn bộ túi đồ, hồi sinh ở giường "nhà" hoặc lều đã ngủ với 50% HP, mũi tên chỉ túi trên HUD)
-- Quay lại chỗ chết nhặt lại túi. Đã chốt (M2.1): trang bị đang mặc **không rơi**; chết lần nữa trước khi nhặt → **túi mới, túi cũ vẫn giữ**. **[Chưa quyết định]** Túi đồ có biến mất sau N ngày không (M2: không biến mất).
+- Quay lại chỗ chết nhặt lại túi. Đã chốt (M2.1): trang bị đang mặc **không rơi**; chết lần nữa trước khi nhặt → **túi mới, túi cũ vẫn giữ**. **[Chưa quyết định]** Túi đồ có biến mất sau N ngày không (M2: không biến mất; task M3: tối đa 5 túi/map — túi thứ 6 làm túi cũ nhất biến mất, túi rỗng tự xóa).
 
 ## 4. Hệ thống
 
@@ -106,13 +106,13 @@ Ký hiệu: ✅ đã có (prototype) · 🟡 có một phần · ⬜ chưa có.
 - **Quái ban đêm mạnh hơn và đông hơn.** 🟡 (TASK M4: quái đêm sinh từ hoàng hôn theo bảng spawn, tan biến lúc bình minh; cầm đèn bị phát hiện xa hơn; không ngủ được khi quái gần. Chưa: sprite, tìm đường, quái ngày)
 
 ### 4.6 Ngủ ✅
-- M2: giường (nhà tạm trong Glade) + lều (dựng/ngủ/thu); ngủ 18:00–trước 6:00, thức tới 2:00 thì ngất.
+- M2: giường (nhà tạm trong Glade) + lều (dựng/ngủ/thu); ngủ 18:00–trước 6:00, thức tới 2:00 thì ngất. Task M3: giường hồi 100 % HP, lều 70 % HP (mana 100 % cả hai); ngất tỉnh tại chỗ lúc 6:00, đói −10.
 - Ngủ ở **giường trong nhà**, hoặc **dựng lều** ở ngoài (lều là item, dựng/thu được).
 - Ngủ → sang sáng hôm sau, hồi HP/mana, **tự lưu game**.
 - **[Chưa quyết định]** Ngủ lều ngoài trời có rủi ro không (bị quái tấn công, hồi ít hơn).
 
 ### 4.7 Lượm nhặt & săn bắt 🟡
-- TASK M3: cây / đá / bụi mọng / bụi cỏ, rìu + cuốc chim đá (có độ bền), mọc lại theo ngày. TASK M4: quái đêm rơi da, xương, tinh chất bóng. Chưa: công cụ có cấp, liềm, thú hiền.
+- Task M3: cây, tảng đá, bụi mọng, bụi cỏ trong Glade; rìu đá + cuốc chim đá có độ bền; mọc lại theo ngày ✅. Chưa có: liềm, cấp công cụ, thú săn. TASK M4: quái đêm rơi da, xương, tinh chất bóng.
 - Node tài nguyên: cây (gỗ), đá/quặng, bụi (quả, thảo dược)... **mọc lại** sau N ngày.
 - Cần công cụ (rìu, cuốc chim, liềm), công cụ có cấp.
 - **Săn thú** trong rừng (thú hiền bỏ chạy, thú dữ tấn công) rơi thịt, da, xương.
@@ -123,7 +123,7 @@ Ký hiệu: ✅ đã có (prototype) · 🟡 có một phần · ⬜ chưa có.
 - NPC thân thiết có thể **thu hoạch hộ**.
 
 ### 4.9 Chế tạo 🟡
-- TASK M3: công thức `.tres`, chế tạo tức thì (tay / bàn chế tạo / lửa trại), lều, đuốc, lửa trại, nấu ăn. TASK M4: giáo xương, áo da (trang phục có chỉ số giáp), đuốc tinh chất. Chưa: mở khóa công thức, thời gian chờ, trạm trong nhà.
+- Task M3: công thức `.tres` (RecipeDefinition), chế tạo tức thì, phím C; trạm bàn chế tạo (Glade) + lửa trại (nấu ăn) ✅. Chưa có: mở khóa công thức, chế tạo có thời gian chờ, trạm trong nhà theo nâng cấp. TASK M4: giáo xương, áo da (trang phục có chỉ số giáp), đuốc tinh chất.
 - Trạm trong nhà (mở dần qua nâng cấp): bàn chế tạo, bếp, bàn thuốc...
 - Công thức dạng dữ liệu `.tres`, mở khóa qua sách, NPC, mastery.
 - Chế được: công cụ, vũ khí, **trang phục**, đồ ăn, thuốc, lều, đèn.

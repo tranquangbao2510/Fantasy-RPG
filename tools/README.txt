@@ -12,7 +12,7 @@ Chạy từ thư mục gốc project (Godot 4.7.2 console):
      Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tools/glade/build_glade_prototype.gd
    CẢNH BÁO: ghi đè world/environment_prototype/environment_prototype.tscn, các scene prop trong
    world/environment/props/, tileset logic và material .tres. Chỉnh sửa tay trên các file đó sẽ mất — commit trước.
-   Bố cục (toạ độ lưới i, j) nằm ở đầu script. Cần chạy bước 1 + import trước nếu art chưa có.
+   Bố cục (toạ độ lưới i, j) nằm ở đầu script (node tài nguyên M3: RESOURCE_NODES). Cần chạy bước 1 + import trước nếu art chưa có.
 
 3. Kiểm tra sau khi dựng lại:
      Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/environment/test_environment_prototype.gd

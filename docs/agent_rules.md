@@ -31,6 +31,7 @@
 
 ## Git và file
 
+- **Trước khi bắt đầu mọi task: `git fetch` + `git pull`** (merge, không rebase lịch sử đã push) và kiểm tra `git status` không bị diverged với `origin`. Nếu origin có commit lạ (không do mình biết trước) thì báo người dùng trước khi làm.
 - Không xóa file của người dùng; bảo toàn thay đổi chưa commit.
 - Không thực hiện thao tác Git phá hủy (reset --hard, force push, ...).
 - Không commit, tạo remote hoặc push khi chưa được yêu cầu.

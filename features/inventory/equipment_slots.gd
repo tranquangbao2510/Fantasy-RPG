@@ -6,10 +6,14 @@ extends Node
 ##   vũ khí đổi từ nơi khác (phím debug 1/2/3) → ô weapon nhận item tương ứng trong database (item cũ bị bỏ — debug);
 ##   vũ khí bị gỡ (đổi class không dùng được) → item về túi (túi đầy: gọi `overflow_handler`, không có thì giữ trong ô).
 ## - Ô `head`: chỉ lưu và hiển thị (M1 chưa có chỉ số/ngoại hình).
+## - Hao mòn (TASK M3): `wear(slot, n)` trừ độ bền công cụ (ItemStack.data["durability"]); `burn(phút)` đốt món cháy được
+##   đang mặc (đuốc, data["fuel"]). Về 0 → món biến mất khỏi ô (ô weapon: gỡ vũ khí) và phát `item_depleted`.
 
 signal changed
 ## Trang bị bị từ chối (item không hợp lệ, sai ô, hệ thống vũ khí từ chối...).
 signal equip_rejected(item_id: StringName, reason: String)
+## Món đang mặc hỏng / cháy hết và biến mất khỏi ô (TASK M3).
+signal item_depleted(item_id: StringName, slot_name: StringName)
 
 const SLOTS: Array[StringName] = ItemDefinition.EQUIP_SLOTS
 const STATE_VERSION: int = 1
@@ -59,6 +63,46 @@ func get_light_color(fallback: Color) -> Color:
 		if item != null and item.is_light_source():
 			return item.light_color
 	return fallback
+
+
+## Công cụ khai thác đang cầm ở tay chính (null nếu tay không hoặc cầm vũ khí thường).
+func get_tool() -> ItemDefinition:
+	var item: ItemDefinition = get_item(&"weapon")
+	return item if item != null and item.is_tool() else null
+
+
+## Trừ `amount` độ bền của món ở ô. Về 0 → món vỡ (gỡ khỏi ô, `item_depleted`). Trả về true nếu món vừa vỡ.
+func wear(slot_name: StringName, amount: int = 1) -> bool:
+	var stack: ItemStack = _slots.get(slot_name)
+	var item: ItemDefinition = get_item(slot_name)
+	if stack == null or item == null or item.max_durability <= 0 or amount <= 0:
+		return false
+	var left: int = item.durability_of(stack) - amount
+	if left > 0:
+		stack.data["durability"] = left
+		changed.emit()
+		return false
+	_set_slot(slot_name, null)
+	item_depleted.emit(item.id, slot_name)
+	return true
+
+
+## Thời gian game trôi `minutes` phút: món cháy được đang mặc (đuốc) hao nhiên liệu; hết → biến mất (`item_depleted`).
+func burn(minutes: float) -> void:
+	if minutes <= 0.0:
+		return
+	for slot_name: StringName in _slots.keys():
+		var stack: ItemStack = _slots[slot_name]
+		var item: ItemDefinition = get_item(slot_name)
+		if item == null or item.burn_minutes <= 0.0:
+			continue
+		var left: float = item.fuel_of(stack) - minutes
+		if left > 0.0:
+			stack.data["fuel"] = snappedf(left, 0.01)
+			changed.emit()
+		else:
+			_set_slot(slot_name, null)
+			item_depleted.emit(item.id, slot_name)
 
 
 ## Lý do không thể trang bị stack vào ô ("" nếu được).

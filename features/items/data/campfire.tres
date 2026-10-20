@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://features/items/item_definition.gd" id="1_item"]
+[ext_resource type="Texture2D" path="res://features/items/icons/campfire.png" id="9_icon"]
+[ext_resource type="PackedScene" path="res://features/crafting/stations/campfire.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_item")
+id = &"campfire"
+display_name = "Lửa trại"
+description = "Bộ củi + đá xếp vòng. Dựng trước mặt (đất trống): soi sáng rộng, nấu ăn; thêm gỗ / cành để cháy lâu hơn."
+icon = ExtResource("9_icon")
+category = 7
+max_stack = 5
+sell_price = 6
+tags = Array[StringName]([&"camp"])
+deploy_scene = ExtResource("2_scene")
+max_per_map = 8
+deploy_offset = 30.0

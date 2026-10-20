@@ -7,7 +7,8 @@ extends Node2D
 ## - Vứt: spawn_drop() tạo pickup tại chỗ (chưa "armed" tới khi người nhặt ra khỏi vùng hút).
 ## - Save (group `saveable`, theo map): `collected` = pickup_id của pickup đặt sẵn đã nhặt; `dropped` = pickup vứt ra
 ##   còn trên đất (item, số lượng, vị trí, tầng); `death_bags` = túi đồ rơi khi chết (TASK M2: id, vị trí, tầng, nội dung);
-##   `deployed` = vật người chơi dựng (lều: item_id, id, vị trí, tầng).
+##   `deployed` = vật người chơi dựng (lều, lửa trại: item_id, id, vị trí, tầng, state — TASK M3: trạng thái riêng của
+##   vật, vd. nhiên liệu lửa trại; node cung cấp save_deploy_state() / load_deploy_state(state)).
 ## collector: node có get_inventory() -> Inventory (Player); tùy chọn is_dead().
 
 signal item_picked(item_id: StringName, amount: int)
@@ -17,7 +18,8 @@ signal deployed_added(node: Node2D)
 
 const PICKUP_SCENE: PackedScene = preload("res://features/inventory/pickup/item_pickup.tscn")
 const DEATH_BAG_SCENE: PackedScene = preload("res://features/survival/death/death_bag.tscn")
-const STATE_VERSION: int = 2
+const STATE_VERSION: int = 3
+const GROUP: StringName = &"item_pickup_layers"
 
 @export var database: ItemDatabase
 @export var collector: Node2D
@@ -35,6 +37,7 @@ var _blocked_at: Dictionary[ItemPickup, float] = {}
 
 func _ready() -> void:
 	y_sort_enabled = true
+	add_to_group(GROUP)
 	var ids: Array[String] = []
 	for pickup: ItemPickup in get_pickups():
 		if not pickup.is_placed():
@@ -143,8 +146,9 @@ func save_state() -> Dictionary:
 	for node: Node in get_deployed():
 		var body: Node2D = node as Node2D
 		var agent: ElevationAgent = ElevationAgent.find_for(body)
+		var state: Dictionary = body.call(&"save_deploy_state") if body.has_method(&"save_deploy_state") else {}
 		deployed.append({"item_id": String(body.get(&"item_id")), "id": str(body.call(&"get_deploy_id")),
-			"position": _vec_to_array(body.global_position), "tier": agent.get_tier() if agent != null else -1})
+			"position": _vec_to_array(body.global_position), "tier": agent.get_tier() if agent != null else -1, "state": state})
 	return {"version": STATE_VERSION, "collected": _collected.duplicate(), "dropped": dropped, "death_bags": bags, "deployed": deployed}
 
 
@@ -192,7 +196,8 @@ func load_state(state: Dictionary) -> void:
 		if item == null or item.deploy_scene == null or at == null:
 			push_warning("[ItemPickupLayer] Bỏ qua vật đã dựng lỗi trong save: %s" % [entry])
 			continue
-		spawn_deployed(item, at, _int_or(data.get("tier"), -1), str(data.get("id", "")))
+		var node_state: Variant = data.get("state", {})
+		spawn_deployed(item, at, _int_or(data.get("tier"), -1), str(data.get("id", "")), node_state if node_state is Dictionary else {})
 
 
 func _get_inventory() -> Inventory:
@@ -220,6 +225,22 @@ func get_death_bags() -> Array[DeathBag]:
 	return result
 
 
+## Số vật dựng loại `item_id` đang có trên map (giới hạn ItemDefinition.max_per_map).
+func count_deployed(item_id: StringName) -> int:
+	var total: int = 0
+	for node: Node in get_deployed():
+		if node.get(&"item_id") == item_id:
+			total += 1
+	return total
+
+
+## Bỏ túi đồ khỏi map ngay (cùng đồ bên trong) — vd. vượt giới hạn số túi.
+func remove_death_bag(bag: DeathBag) -> void:
+	if bag != null and bag.get_parent() == self:
+		remove_child(bag)
+		bag.queue_free()
+
+
 ## Vật người chơi dựng (node có get_deploy_id(), vd. Tent).
 func get_deployed() -> Array[Node]:
 	var result: Array[Node] = []
@@ -243,8 +264,9 @@ func spawn_death_bag(stacks: Array[ItemStack], at: Vector2, tier: int = -1, bag_
 	return bag
 
 
-## Đặt vật dựng từ item (deploy_scene) tại vị trí world trên tầng. deploy_id rỗng → node tự sinh.
-func spawn_deployed(item: ItemDefinition, at: Vector2, tier: int = -1, deploy_id: String = "") -> Node2D:
+## Đặt vật dựng từ item (deploy_scene) tại vị trí world trên tầng. deploy_id rỗng → node tự sinh. `state`: trạng thái riêng
+## đã lưu (TASK M3, vd. lửa trại còn cháy bao lâu) → load_deploy_state() của node sau khi vào cây.
+func spawn_deployed(item: ItemDefinition, at: Vector2, tier: int = -1, deploy_id: String = "", state: Dictionary = {}) -> Node2D:
 	var node: Node2D = item.deploy_scene.instantiate() as Node2D
 	if not deploy_id.is_empty():
 		node.set(&"spot_id", deploy_id)
@@ -255,6 +277,10 @@ func spawn_deployed(item: ItemDefinition, at: Vector2, tier: int = -1, deploy_id
 		agent.initial_tier = tier
 	node.position = to_local(at)
 	add_child(node)
+	if node.has_method(&"set_ground_squash"):
+		node.call(&"set_ground_squash", ground_squash)
+	if not state.is_empty() and node.has_method(&"load_deploy_state"):
+		node.call(&"load_deploy_state", state)
 	deployed_added.emit(node)
 	return node
 

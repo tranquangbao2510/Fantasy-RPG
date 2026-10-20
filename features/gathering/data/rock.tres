@@ -1,0 +1,43 @@
+[gd_resource type="Resource" script_class="ResourceNodeDefinition" format=3]
+
+[ext_resource type="Script" path="res://features/gathering/resource_node_definition.gd" id="1_def"]
+[ext_resource type="Script" path="res://features/items/loot/loot_entry.gd" id="2_entry"]
+[ext_resource type="Script" path="res://features/items/loot/loot_table.gd" id="3_table"]
+
+[sub_resource type="Resource" id="Entry_1"]
+script = ExtResource("2_entry")
+item_id = &"stone"
+min_count = 3
+max_count = 5
+chance = 1.0
+
+[sub_resource type="Resource" id="Entry_2"]
+script = ExtResource("2_entry")
+item_id = &"stone"
+min_count = 1
+max_count = 1
+chance = 1.0
+
+[sub_resource type="Resource" id="Table_hand"]
+script = ExtResource("3_table")
+entries = Array[ExtResource("2_entry")]([SubResource("Entry_2")])
+
+[sub_resource type="Resource" id="Table_yield"]
+script = ExtResource("3_table")
+entries = Array[ExtResource("2_entry")]([SubResource("Entry_1")])
+
+[resource]
+script = ExtResource("1_def")
+id = &"rock"
+display_name = "Tảng đá"
+required_tool = &"pickaxe"
+harvest_verb = "Đập"
+missing_tool_text = "Cần cuốc"
+toughness = 4
+yield_table = SubResource("Table_yield")
+depletes = true
+regrow_days = 4
+hand_verb = "Nhặt đá vụn"
+hand_table = SubResource("Table_hand")
+hand_uses = 2
+

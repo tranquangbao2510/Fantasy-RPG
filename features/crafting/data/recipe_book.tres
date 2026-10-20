@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="RecipeBook" format=3]
+
+[ext_resource type="Script" path="res://features/crafting/recipe_book.gd" id="1_book"]
+[ext_resource type="Script" path="res://features/crafting/recipe_definition.gd" id="1_recipe"]
+[ext_resource type="Resource" path="res://features/crafting/data/stone_axe.tres" id="2_stone_axe"]
+[ext_resource type="Resource" path="res://features/crafting/data/stone_pickaxe.tres" id="3_stone_pickaxe"]
+[ext_resource type="Resource" path="res://features/crafting/data/torch.tres" id="4_torch"]
+[ext_resource type="Resource" path="res://features/crafting/data/bandage.tres" id="5_bandage"]
+[ext_resource type="Resource" path="res://features/crafting/data/campfire.tres" id="6_campfire"]
+[ext_resource type="Resource" path="res://features/crafting/data/tent.tres" id="7_tent"]
+[ext_resource type="Resource" path="res://features/crafting/data/grilled_meat.tres" id="8_grilled_meat"]
+[ext_resource type="Resource" path="res://features/crafting/data/roasted_berry.tres" id="9_roasted_berry"]
+
+[resource]
+script = ExtResource("1_book")
+recipes = Array[ExtResource("1_recipe")]([ExtResource("2_stone_axe"), ExtResource("3_stone_pickaxe"), ExtResource("4_torch"), ExtResource("5_bandage"), ExtResource("6_campfire"), ExtResource("7_tent"), ExtResource("8_grilled_meat"), ExtResource("9_roasted_berry")])

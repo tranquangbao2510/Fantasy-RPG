@@ -5,14 +5,20 @@ extends Node
 ## Khi HP về 0: khóa điều khiển → màn hình mờ → TOÀN BỘ túi đồ (không gồm đồ đang mặc) rơi thành một DeathBag tại
 ## chỗ chết, cùng tầng → hồi sinh ở chỗ tỉnh dậy (SleepController: lều đã ngủ hoặc giường "nhà") với
 ## `respawn_health_ratio` HP → sáng lại. Chết tiếp khi chưa nhặt túi cũ: túi mới, túi cũ vẫn còn. Không mất tiền.
+## Tối đa `max_death_bags` túi trên map (TASK M3): túi mới vượt giới hạn thì túi CŨ NHẤT (đặt sớm nhất) biến mất cùng đồ
+## bên trong, phát `bag_discarded` (World báo cho người chơi).
 
 signal player_respawned(bag: DeathBag)
+## Túi cũ nhất bị bỏ vì vượt giới hạn.
+signal bag_discarded(bag_id: String)
 
 @export var player: Player
 @export var sleep: SleepController
 @export var pickup_layer: ItemPickupLayer
 @export var settings: SleepSettings
 @export var overlay: SleepOverlay
+## Số túi đồ tối đa cùng lúc trên một map.
+@export_range(1, 50) var max_death_bags: int = 5
 
 var _busy: bool = false
 
@@ -61,4 +67,9 @@ func _drop_bag(at: Vector2, tier: int) -> DeathBag:
 	if stacks.is_empty() or pickup_layer == null:
 		return null
 	inventory.clear()
+	var bags: Array[DeathBag] = pickup_layer.get_death_bags()
+	while bags.size() >= max_death_bags:
+		var oldest: DeathBag = bags.pop_front()
+		pickup_layer.remove_death_bag(oldest)
+		bag_discarded.emit(oldest.bag_id)
 	return pickup_layer.spawn_death_bag(stacks, at, tier)

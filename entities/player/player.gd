@@ -118,6 +118,11 @@ func is_dead() -> bool:
 	return _health.is_dead()
 
 
+## Hướng nhìn hiện tại (màn hình, đã chuẩn hóa).
+func get_facing() -> Vector2:
+	return _facing
+
+
 func is_sprinting() -> bool:
 	return _sprinting
 
@@ -229,9 +234,10 @@ func get_item_user() -> ItemUser:
 	return _item_user
 
 
-## Thời gian game trôi (World nối từ GameClock.time_passed).
+## Thời gian game trôi (World nối từ GameClock.time_passed): đói; đuốc đang cầm cháy dần (TASK M3).
 func pass_game_time(minutes: float, sleeping: bool) -> void:
 	_hunger.pass_time(minutes, sleeping)
+	_equipment.burn(minutes)
 
 
 ## Đặt điểm spawn mới (vd. tình huống sandbox) rồi reset_state() để đưa Player về đó an toàn.

@@ -20,8 +20,9 @@ extends Resource
 @export var additional_passives: Array[PassiveDefinition] = []
 
 
+## Công cụ (WeaponDefinition.TOOL_TYPE — rìu, cuốc) là luật chung của sinh tồn: class nào cũng cầm được (TASK M3).
 func allows_weapon_type(weapon_type_id: StringName) -> bool:
-	return allowed_weapon_type_ids.has(weapon_type_id)
+	return weapon_type_id == WeaponDefinition.TOOL_TYPE or allowed_weapon_type_ids.has(weapon_type_id)
 
 
 func get_skill(skill_id: StringName) -> SkillDefinition:

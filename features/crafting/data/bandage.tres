@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RecipeDefinition" format=3]
+
+[ext_resource type="Script" path="res://features/crafting/recipe_definition.gd" id="1_recipe"]
+
+[resource]
+script = ExtResource("1_recipe")
+id = &"bandage"
+ingredients = Dictionary[StringName, int]({
+&"fiber": 4
+})
+result_id = &"bandage"
+result_count = 1
+station = 0

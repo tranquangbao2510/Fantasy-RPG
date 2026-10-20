@@ -193,10 +193,12 @@ func _test_stamina_and_dodge() -> void:
 	await frames(6)
 	var walk_speed: float = _player.velocity.length()
 	Input.action_press(&"sprint")
-	await frames(20)
+	await frames(40)
 	check("sprint_faster", _player.velocity.length() > walk_speed * 1.4 and sprite.animation == &"run_E",
 		"%.0f → %.0f %s" % [walk_speed, _player.velocity.length(), sprite.animation])
-	check("sprint_drains_stamina", stamina.current < stamina.get_max() - 4.0, "%.1f" % stamina.current)
+	# TASK M3: chạy tiêu 12/s (M2: 20/s) — 40 frame ≈ 0.67 s → ≈ 8.
+	check("sprint_drains_stamina", stamina.settings.sprint_cost_per_second == 12.0 and stamina.current < stamina.get_max() - 6.0
+		and stamina.current > stamina.get_max() - 10.0, "%.1f" % stamina.current)
 	_release_moves()
 	await frames(2)
 	var after_sprint: float = stamina.current
@@ -284,11 +286,31 @@ func _test_hunger() -> void:
 	stamina.load_value(40.0)
 	await seconds(1.0)
 	check("low_hunger_blocks_stamina_regen", is_equal_approx(stamina.current, 40.0) and _world.combat_hud.is_hunger_warning())
-	# = 0: mất HP chậm theo thời gian game.
+	# = 0: mất HP chậm theo thời gian game (TASK M3: 6 % max HP mỗi giờ game).
 	health.reset()
 	hunger.load_value(0.0)
-	_clock.advance(30.0)
-	check("starving_loses_hp", health.current_health == health.max_health - 10, "%d" % health.current_health)
+	_clock.advance(60.0)
+	check("starving_loses_hp", health.current_health == health.max_health - floori(health.max_health * 0.06), "%d" % health.current_health)
+	# Đầy HP → chết trong 12–15 phút thực, với max HP của Player (130) lẫn HP gốc (100) — component riêng để Player
+	# không chết thật (DeathController sẽ chạy).
+	for max_hp: int in [health.max_health, 100]:
+		var probe_health: HealthComponent = HealthComponent.new()
+		probe_health.max_health = max_hp
+		root.add_child(probe_health)
+		var probe: HungerComponent = HungerComponent.new()
+		probe.settings = hunger.settings
+		probe.health = probe_health
+		root.add_child(probe)
+		probe.load_value(0.0)
+		var starving_minutes: float = 0.0
+		while not probe_health.is_dead() and starving_minutes < 3000.0:
+			probe.pass_time(10.0)
+			starving_minutes += 10.0
+		var real_minutes: float = starving_minutes / _clock.settings.get_minutes_per_second() / 60.0
+		check("starving_full_to_dead_12_15_min_hp%d" % max_hp, probe_health.is_dead() and real_minutes >= 12.0 and real_minutes <= 15.0,
+			"%.0f phút game = %.1f phút thực" % [starving_minutes, real_minutes])
+		probe.free()
+		probe_health.free()
 	health.reset()
 	hunger.load_value(100.0)
 	stamina.refill()
@@ -374,7 +396,10 @@ func _test_night_vision() -> void:
 	_clock.set_time(1, 23 * 60)
 	await frames(2)
 	var radius: float = lighting.get_vision_radius()
-	check("night_darkness", lighting.darkness == 1.0 and sun.color.v < 0.1 and light.get_light().enabled, "%s" % sun.color)
+	# TASK M3: không đen hẳn — còn ánh trăng 12–18 % (kênh sáng nhất của SunTint).
+	check("night_darkness_moonlight", lighting.darkness == 1.0 and sun.color.v >= 0.12 and sun.color.v <= 0.18
+		and is_equal_approx(sun.color.v, lighting.settings.moonlight) and light.get_light().enabled, "%s" % sun.color)
+	check("night_far_is_moonlit", is_equal_approx(lighting.get_visibility(_player.global_position + Vector2(900, 0)), lighting.settings.moonlight))
 	check("night_near_visible", lighting.is_point_visible(_player.global_position + Vector2(radius * 0.5, 0)))
 	check("night_far_hidden", not lighting.is_point_visible(_player.global_position + Vector2(radius * 1.3, 0)))
 	# Bán kính đo trên mặt đất: theo chiều dọc màn hình chỉ bằng một nửa.
@@ -438,15 +463,19 @@ func _test_sleep() -> void:
 		await process_frame
 	check("sleep_to_6am_next_day", slept == [2] and _clock.get_day() == 2 and _clock.format_time() == "06:00",
 		"%d %s" % [_clock.get_day(), _clock.format_time()])
-	check("sleep_heals", health.current_health == mini(health.max_health, health.max_health - 60 + roundi(health.max_health * 0.5)),
-		"%d" % health.current_health)
+	# TASK M3: giường nhà hồi 100 % HP.
+	check("sleep_heals_bed_full", is_equal_approx(_world.sleep_controller.settings.heal_ratio_for("bed"), 1.0)
+		and health.current_health == health.max_health, "%d" % health.current_health)
 	check("sleep_hunger_by_sleep_rate", absf(hunger.value - (80.0 - 8.0 * hunger.settings.decay_per_hour_sleeping)) < 0.05, "%.2f" % hunger.value)
 	check("sleep_autosaves", FileAccess.file_exists(_saves.get_slot_path(1)))
 	check("sleep_sets_respawn_to_bed", _player.respawn_point.get("id") == bed.spot_id and _player.respawn_point.get("kind") == "bed")
 	check("sleep_day_title", (_world.get_node("UILayer/SleepOverlay") as SleepOverlay).last_title == "Ngày 2"
 		and not _player.is_control_locked())
-	# Ngất lúc 2:00: tỉnh ở giường lúc 6:00 cùng ngày, không hồi HP.
+	# Ngất lúc 2:00 (TASK M3): tỉnh TẠI CHỖ lúc 6:00 cùng ngày, không hồi HP, không tự lưu, đói −10 (+ giảm theo nhịp ngủ).
 	_place(ARENA)
+	var faint_at: Vector2 = _player.global_position
+	hunger.load_value(80.0)
+	DirAccess.remove_absolute(_saves.get_slot_path(1))
 	_clock.set_time(3, 1 * 60 + 59)
 	health.reset()
 	health.apply_damage(30)
@@ -458,7 +487,10 @@ func _test_sleep() -> void:
 			break
 		await process_frame
 	check("faint_at_2am", fainted == [3] and _clock.format_time() == "06:00" and _clock.get_day() == 3, _clock.format_time())
-	check("faint_wakes_at_bed", _player.global_position.distance_to(bed.get_wake_position()) < 1.0)
+	check("faint_wakes_in_place", _player.global_position.distance_to(faint_at) < 1.0)
+	var expected_hunger: float = 80.0 - 2.0 / 60.0 * hunger.settings.decay_per_hour_awake - 4.0 * hunger.settings.decay_per_hour_sleeping - 10.0
+	check("faint_hunger_penalty", absf(hunger.value - expected_hunger) < 0.05, "%.2f (mong đợi %.2f)" % [hunger.value, expected_hunger])
+	check("faint_no_autosave", not FileAccess.file_exists(_saves.get_slot_path(1)))
 	check("faint_no_heal", health.current_health == health.max_health - 30)
 	health.reset()
 
@@ -501,6 +533,10 @@ func _test_tent() -> void:
 	var menu: PopupMenu = _world.open_tent_menu(tent)
 	check("tent_menu", menu.get_item_text(0) == "Ngủ" and menu.get_item_text(1) == "Thu lều")
 	menu.hide()
+	var tent_health: HealthComponent = _player.get_health()
+	tent_health.reset()
+	tent_health.apply_damage(100)
+	var before_tent: int = tent_health.current_health
 	var slept: Array[int] = []
 	_world.sleep_controller.slept.connect(func(day: int) -> void: slept.append(day), CONNECT_ONE_SHOT)
 	_world.choose_tent_action(tent, 0)
@@ -510,6 +546,10 @@ func _test_tent() -> void:
 		await process_frame
 	check("sleep_in_tent", slept == [4] and _player.respawn_point.get("kind") == "tent" and _player.respawn_point.get("id") == tent.spot_id)
 	check("wake_spot_is_tent", _world.sleep_controller.get_wake_spot() == tent)
+	# TASK M3: lều hồi 70 % HP (giường 100 %).
+	check("sleep_in_tent_heals_70", tent_health.current_health == mini(tent_health.max_health, before_tent + roundi(tent_health.max_health * 0.7)),
+		"%d → %d" % [before_tent, tent_health.current_health])
+	tent_health.reset()
 	# Lưu/tải lều (vòng save → đổi scene → load).
 	var tent_position: Vector2 = tent.global_position
 	check("tent_saved", _saves.save_game(2))
@@ -626,7 +666,7 @@ func _test_save_v2() -> void:
 	check("save_v2", _saves.save_game(4))
 	var data: Dictionary = _saves.read_save(4)
 	var survival: Dictionary = data["global"]["player"]["survival"]
-	check("save_v2_structure", int(data["schema_version"]) == 2 and data["global"]["clock"]["day"] == 5.0
+	check("save_v2_structure", int(data["schema_version"]) == 3 and data["global"]["clock"]["day"] == 5.0
 		and is_equal_approx(survival["hunger"], 37.25) and survival["respawn"]["kind"] == "bed", JSON.stringify(survival))
 	mana.refill()
 	hunger.load_value(100.0)
@@ -649,7 +689,9 @@ func _test_migration_v1() -> void:
 	file.store_string(JSON.stringify(v1))
 	file.close()
 	var migrated: Dictionary = _saves.read_save(5)
-	check("migration_v1_v2_structure", int(migrated["schema_version"]) == 2 and migrated["global"]["clock"]["minute"] == 360
+	# v1 → v2 → v3 (TASK M3): thêm cả resource_nodes.
+	check("migration_v1_v2_structure", int(migrated["schema_version"]) == 3 and migrated["global"]["clock"]["minute"] == 360
+		and migrated["maps"]["glade"]["resource_nodes"] == {"version": 1, "nodes": {}}
 		and migrated["global"]["player"]["survival"] == {} and migrated["maps"]["glade"]["world_items"]["death_bags"] == [],
 		JSON.stringify(migrated["global"]))
 	await _reload(5)

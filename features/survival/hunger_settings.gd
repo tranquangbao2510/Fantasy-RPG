@@ -10,9 +10,10 @@ extends Resource
 @export var low_threshold: float = 25.0
 ## Từ ngưỡng này trở lên: "no" — không ăn thêm món có hồi đói.
 @export var full_threshold: float = 95.0
-## Khi đói = 0: mất `starving_damage` HP mỗi `starving_interval_minutes` phút game.
-@export var starving_damage: int = 1
-@export var starving_interval_minutes: float = 3.0
+## Khi đói = 0: mất `starving_percent_per_hour` % HP TỐI ĐA mỗi giờ game (TASK M3). Đầy HP → chết sau
+## 100 / % giờ game = 100 / % × 60 / (phút game mỗi giây thực) giây thực; mặc định 6 %/giờ, 1 ngày = 1200 s:
+## 16.7 giờ game = 1000 phút game = 833 s ≈ 13.9 phút thực, không phụ thuộc max HP (passive +HP vẫn chết cùng lúc).
+@export var starving_percent_per_hour: float = 6.0
 
 @export_group("Hoạt động")
 @export var sprint_cost_per_second: float = 0.08

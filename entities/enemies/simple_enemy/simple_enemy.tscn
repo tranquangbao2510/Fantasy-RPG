@@ -1,6 +1,8 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="PackedScene" path="res://entities/enemies/enemy_base.tscn" id="1_base"]
+[ext_resource type="Script" path="res://features/items/loot/loot_dropper.gd" id="m3_dropper"]
+[ext_resource type="Resource" path="res://entities/enemies/loot/simple_enemy_loot.tres" id="m3_loot"]
 [ext_resource type="PackedScene" path="res://features/combat/melee_attack.tscn" id="2_melee"]
 
 [node name="SimpleEnemy" node_paths=PackedStringArray("attack") instance=ExtResource("1_base")]
@@ -15,4 +17,9 @@ windup = 0.35
 duration = 0.15
 cooldown = 1.0
 target_layers = 16
+health = NodePath("../HealthComponent")
+
+[node name="LootDropper" type="Node" parent="." node_paths=PackedStringArray("health")]
+script = ExtResource("m3_dropper")
+table = ExtResource("m3_loot")
 health = NodePath("../HealthComponent")

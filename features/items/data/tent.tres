@@ -15,3 +15,4 @@ max_stack = 1
 sell_price = 30
 tags = Array[StringName]([&"camp"])
 deploy_scene = ExtResource("4_tent")
+max_per_map = 1

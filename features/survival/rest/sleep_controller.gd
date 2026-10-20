@@ -2,9 +2,10 @@ class_name SleepController
 extends Node
 ## Ngủ, ngất, điểm tỉnh dậy (TASK M2). Một node trong World (map có GameClock).
 ## - try_sleep(chỗ ngủ): chỉ từ `sleep_from_minute` tới trước `wake_minute`. Màn hình mờ → thời gian nhảy tới
-##   wake_minute (time_passed sleeping=true: đói giảm theo nhịp ngủ) → hồi HP/mana theo SleepSettings → chỗ ngủ thành
-##   điểm tỉnh dậy / hồi sinh của Player → tự lưu game (SaveService) → "Ngày N" → sáng lại.
-## - Còn thức lúc `faint_hour` (2:00) → ngất: tỉnh lại ở điểm tỉnh dậy lúc wake_minute, không hồi HP/mana, không tự lưu.
+##   wake_minute (time_passed sleeping=true: đói giảm theo nhịp ngủ) → hồi HP (giường 100 %, lều 70 % — TASK M3) + mana
+##   theo SleepSettings → chỗ ngủ thành điểm tỉnh dậy / hồi sinh của Player → tự lưu game (SaveService) → "Ngày N" → sáng lại.
+## - Còn thức lúc `faint_hour` (2:00) → ngất (TASK M3): tỉnh lại TẠI CHỖ lúc wake_minute, không hồi HP/mana, không tự lưu,
+##   đói − `faint_hunger_penalty` (ngoài phần giảm theo nhịp ngủ). (M2: tỉnh ở điểm tỉnh dậy.)
 ## - Điểm tỉnh dậy: Player.respawn_point {map_id, kind, id} → chỗ ngủ đó nếu còn trong map; không thì giường "nhà"
 ##   (Bed.home) gần nhất; không có giường nào → tại chỗ. Lều bị thu → điểm tỉnh dậy về nhà.
 ## Không biết UI cụ thể: dùng `overlay` (SleepOverlay: fade_out / fade_in / show_title) nếu có.
@@ -111,11 +112,12 @@ func _sleep(spot: RestSpot, fainted_now: bool) -> void:
 	if clock != null:
 		clock.advance(clock.minutes_until(settings.wake_minute), true)
 	if fainted_now:
-		move_player_to_wake_spot(float(player.get_health().current_health) / player.get_health().max_health)
+		player.get_hunger().restore(-settings.faint_hunger_penalty)
 	else:
 		set_wake_spot(spot)
 		var health: HealthComponent = player.get_health()
-		health.heal(roundi(health.max_health * settings.sleep_heal_ratio))
+		var ratio: float = settings.heal_ratio_for(spot.get_kind() if spot != null else "bed")
+		health.heal(roundi(health.max_health * ratio))
 		player.get_mana().restore(player.get_mana().get_max() * settings.sleep_mana_ratio)
 		if spot != null:
 			player.respawn_at(spot.get_wake_position(), spot.get_tier(), float(health.current_health) / health.max_health)

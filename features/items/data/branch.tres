@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://features/items/item_definition.gd" id="1_item"]
+[ext_resource type="Texture2D" path="res://features/items/icons/branch.png" id="9_icon"]
+
+[resource]
+script = ExtResource("1_item")
+id = &"branch"
+display_name = "Cành cây"
+description = "Cành khô nhặt dưới gốc cây. Làm cán công cụ, đuốc, hoặc thêm vào lửa trại."
+icon = ExtResource("9_icon")
+category = 0
+max_stack = 99
+sell_price = 1
+tags = Array[StringName]([&"wood", &"fuel"])

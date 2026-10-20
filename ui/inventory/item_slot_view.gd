@@ -16,6 +16,9 @@ var _icon: TextureRect
 var _count: Label
 var _placeholder: Label
 var _style: StyleBoxFlat
+## Thanh độ bền / thời gian cháy (TASK M3) ở đáy ô.
+var _wear_back: ColorRect
+var _wear_bar: ColorRect
 
 
 func _init() -> void:
@@ -40,6 +43,16 @@ func _init() -> void:
 	_count = _add_label(HORIZONTAL_ALIGNMENT_RIGHT, VERTICAL_ALIGNMENT_BOTTOM, 13, Color.WHITE)
 	_count.add_theme_constant_override(&"outline_size", 4)
 	_count.add_theme_color_override(&"font_outline_color", Color.BLACK)
+	_wear_back = ColorRect.new()
+	_wear_back.color = Color(0, 0, 0, 0.7)
+	_wear_back.position = Vector2(5, SIZE.y - 7)
+	_wear_back.size = Vector2(SIZE.x - 10, 3)
+	_wear_back.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_wear_back)
+	_wear_bar = ColorRect.new()
+	_wear_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_wear_back.add_child(_wear_bar)
+	_wear_back.hide()
 
 
 func setup_inventory(owner_window: InventoryWindow, source: Inventory, slot: int) -> void:
@@ -72,6 +85,12 @@ func refresh(database: ItemDatabase) -> void:
 	_count.text = str(stack.count) if stack != null and stack.count > 1 else ""
 	_placeholder.visible = stack == null
 	tooltip_text = "%s\n[%s]\n%s" % [item.display_name, item.get_category_name(), item.description] if item != null else ""
+	_wear_back.visible = item != null and item.has_wear()
+	if _wear_back.visible:
+		tooltip_text += "\n" + item.describe_wear(stack)
+		var ratio: float = item.wear_ratio(stack)
+		_wear_bar.size = Vector2(_wear_back.size.x * ratio, _wear_back.size.y)
+		_wear_bar.color = Color(0.4, 0.9, 0.4).lerp(Color(0.95, 0.3, 0.25), 1.0 - ratio)
 
 
 func set_highlight(enabled: bool) -> void:

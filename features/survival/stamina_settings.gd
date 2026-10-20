@@ -8,7 +8,7 @@ extends Resource
 ## Thời gian chờ (giây) sau lần dùng trước khi hồi.
 @export var regen_delay: float = 0.6
 ## Tiêu mỗi giây khi chạy (giữ Shift).
-@export var sprint_cost_per_second: float = 20.0
+@export var sprint_cost_per_second: float = 12.0
 ## Tiêu mỗi lần né; phải còn đủ mới né được.
 @export var dodge_cost: float = 25.0
 ## Cạn về 0 thì "kiệt sức": không chạy/né được tới khi hồi lại tới ngưỡng này.

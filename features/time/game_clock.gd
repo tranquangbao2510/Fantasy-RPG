@@ -20,6 +20,8 @@ enum Phase { DAWN, DAY, DUSK, NIGHT }
 const PHASE_NAMES: Array[String] = ["Bình minh", "Ban ngày", "Hoàng hôn", "Ban đêm"]
 const MINUTES_PER_DAY: int = 1440
 const STATE_VERSION: int = 1
+## Group để node cần đọc giờ (lửa trại, TASK M3) tìm đồng hồ của map mà không cần đường dẫn.
+const GROUP: StringName = &"game_clock"
 
 @export var settings: TimeSettings
 ## false = đứng yên (vd. đang ngủ — màn hình mờ).
@@ -32,6 +34,7 @@ var _phase: Phase = Phase.DAY
 
 
 func _ready() -> void:
+	add_to_group(GROUP)
 	if settings == null or not settings.is_valid():
 		push_warning("[GameClock] TimeSettings thiếu/không hợp lệ — dùng mặc định.")
 		settings = TimeSettings.new()

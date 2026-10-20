@@ -36,9 +36,10 @@ var _blink_time: float = 0.0
 
 func _ready() -> void:
 	_death_panel.hide()
-	_hint_label.text = "%s: tấn công · %s/%s/%s: đổi vũ khí (debug) · %s: tương tác · %s: reset thử nghiệm" % [
+	_hint_label.text = "%s: tấn công · %s/%s/%s: đổi vũ khí (debug) · %s: tương tác / khai thác · %s: chế tạo · %s: reset thử nghiệm" % [
 		InputHint.action_text(&"basic_attack"), InputHint.action_text(&"debug_weapon_1"), InputHint.action_text(&"debug_weapon_2"),
-		InputHint.action_text(&"debug_weapon_3"), InputHint.action_text(&"interact"), InputHint.action_text(&"debug_reset")]
+		InputHint.action_text(&"debug_weapon_3"), InputHint.action_text(&"interact"), InputHint.action_text(&"craft_toggle"),
+		InputHint.action_text(&"debug_reset")]
 	_hint_label.text += "\n%s/%s/%s/%s: kỹ năng · %s: hủy ngắm/vận sức · %s: bảng class (debug)" % [
 		InputHint.action_text(&"skill_slot_1"), InputHint.action_text(&"skill_slot_2"), InputHint.action_text(&"skill_slot_3"),
 		InputHint.action_text(&"skill_slot_4"), InputHint.action_text(&"skill_cancel"), InputHint.action_text(&"debug_progression")]

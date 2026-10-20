@@ -27,6 +27,21 @@ const EQUIP_SLOTS: Array[StringName] = [&"weapon", &"head", &"offhand"]
 ## Item đặt xuống thế giới khi dùng (vd. lều). Scene gốc phải có hàm setup_from_item(item_id) — xem Tent.
 @export var deploy_scene: PackedScene
 
+@export_group("Công cụ, độ bền, vật dựng (TASK M3)")
+## Loại công cụ khi cầm ở tay chính: &"axe" (rìu), &"pickaxe" (cuốc chim); &"" = không phải công cụ khai thác.
+@export var tool_type: StringName = &""
+## Sức khai thác mỗi lần (trừ vào độ bền khai thác của node tài nguyên). Tay không = ResourceNode.HAND_POWER.
+@export_range(1, 10) var harvest_power: int = 1
+## Độ bền tối đa (số lần khai thác); 0 = không hao mòn. Giá trị hiện tại: ItemStack.data["durability"] (thiếu = đầy).
+@export var max_durability: int = 0
+## Cháy được bao lâu khi trang bị (phút game, vd. đuốc); 0 = không cháy hết. Còn lại: ItemStack.data["fuel"] (thiếu = đầy).
+@export var burn_minutes: float = 0.0
+## Vật dựng (deploy_scene): số tối đa cùng lúc trên một map (lều 1); 0 = không giới hạn.
+@export var max_per_map: int = 0
+## Vật dựng: đặt cách chân người chơi bao nhiêu px mặt đất theo hướng nhìn (vật có thân va chạm như lửa trại đặt trước
+## mặt để không kẹt người chơi); 0 = ngay chỗ đứng (lều).
+@export var deploy_offset: float = 0.0
+
 @export_group("Nguồn sáng khi trang bị")
 ## Bán kính nhìn đêm cộng thêm (px) khi đang trang bị (vd. đèn lồng ở ô offhand). 0 = không phát sáng.
 @export var light_radius: float = 0.0
@@ -51,6 +66,46 @@ func is_usable() -> bool:
 
 func is_light_source() -> bool:
 	return light_radius > 0.0
+
+
+func is_tool() -> bool:
+	return tool_type != &""
+
+
+## Có hao mòn (độ bền) hoặc cháy hết (đuốc) — hiện thanh + số trên ô đồ / tooltip.
+func has_wear() -> bool:
+	return max_durability > 0 or burn_minutes > 0.0
+
+
+## Độ bền hiện tại của stack (thiếu field = mới, đầy).
+func durability_of(stack: ItemStack) -> int:
+	var value: Variant = stack.data.get("durability") if stack != null else null
+	return clampi(int(value), 0, max_durability) if (value is int or value is float) else max_durability
+
+
+## Thời gian cháy còn lại (phút game) của stack.
+func fuel_of(stack: ItemStack) -> float:
+	var value: Variant = stack.data.get("fuel") if stack != null else null
+	return clampf(float(value), 0.0, burn_minutes) if (value is int or value is float) else burn_minutes
+
+
+## Tỉ lệ còn lại 0..1 (1 nếu không hao mòn).
+func wear_ratio(stack: ItemStack) -> float:
+	if max_durability > 0:
+		return float(durability_of(stack)) / max_durability
+	if burn_minutes > 0.0:
+		return fuel_of(stack) / burn_minutes
+	return 1.0
+
+
+## "Độ bền 37/40" / "Còn cháy 3 giờ 20 phút" ("" nếu không hao mòn).
+func describe_wear(stack: ItemStack) -> String:
+	if max_durability > 0:
+		return "Độ bền %d/%d" % [durability_of(stack), max_durability]
+	if burn_minutes > 0.0:
+		var minutes: int = ceili(fuel_of(stack))
+		return "Còn cháy %d giờ %02d phút" % [minutes / 60, minutes % 60]
+	return ""
 
 
 ## Danh sách lỗi dữ liệu (rỗng = hợp lệ).
@@ -80,6 +135,12 @@ func get_validation_errors() -> Array[String]:
 		errors.append("item vừa ăn được vừa dựng được")
 	if light_radius < 0.0:
 		errors.append("light_radius < 0")
+	if has_wear() and max_stack != 1:
+		errors.append("item có độ bền / thời gian cháy phải có max_stack = 1")
+	if tool_type != &"" and equip_slot != &"weapon":
+		errors.append("công cụ phải trang bị ở ô weapon (tay chính)")
+	if max_durability < 0 or burn_minutes < 0.0 or max_per_map < 0:
+		errors.append("max_durability / burn_minutes / max_per_map < 0")
 	return errors
 
 

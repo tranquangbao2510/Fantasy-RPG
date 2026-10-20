@@ -1,7 +1,7 @@
 class_name HungerComponent
 extends Node
 ## Đói (TASK M2), thang 0–100 (100 = no). Giảm theo thời gian trong game (pass_time — World nối từ GameClock),
-## giảm thêm theo hoạt động (exert). Dưới `low_threshold`: chặn hồi stamina. Bằng 0: mất HP chậm.
+## giảm thêm theo hoạt động (exert). Dưới `low_threshold`: chặn hồi stamina. Bằng 0: mất HP chậm (% max HP mỗi giờ game).
 ## Không tự đọc đồng hồ: map không có GameClock thì đói chỉ giảm theo hoạt động.
 
 signal hunger_changed(value: float, maximum: float)
@@ -11,7 +11,8 @@ signal hunger_changed(value: float, maximum: float)
 @export var health: HealthComponent
 
 var value: float = 0.0
-var _starving_minutes: float = 0.0
+## HP đói lả chưa trừ (phần lẻ cộng dồn giữa các lần thời gian trôi).
+var _starving_damage: float = 0.0
 
 
 func _ready() -> void:
@@ -51,7 +52,7 @@ func pass_time(minutes: float, sleeping: bool = false) -> void:
 	if is_starving():
 		_starve(clampf(starving_before, 0.0, minutes))
 	else:
-		_starving_minutes = 0.0
+		_starving_damage = 0.0
 
 
 ## Hoạt động tốn sức (SPRINT tính theo giây: amount = số giây).
@@ -65,19 +66,19 @@ func restore(amount: float) -> void:
 
 
 func load_value(saved: Variant) -> void:
-	_starving_minutes = 0.0
+	_starving_damage = 0.0
 	_set_value(float(saved) if (saved is int or saved is float) else settings.max_hunger)
 
 
 func _starve(minutes: float) -> void:
 	if health == null or health.is_dead():
 		return
-	_starving_minutes += minutes
-	var ticks: int = floori(_starving_minutes / settings.starving_interval_minutes)
-	if ticks <= 0:
+	_starving_damage += health.max_health * settings.starving_percent_per_hour / 100.0 * minutes / 60.0
+	var damage: int = floori(_starving_damage)
+	if damage <= 0:
 		return
-	_starving_minutes -= ticks * settings.starving_interval_minutes
-	health.apply_damage(ticks * settings.starving_damage)
+	_starving_damage -= damage
+	health.apply_damage(damage)
 
 
 func _set_value(new_value: float) -> void:

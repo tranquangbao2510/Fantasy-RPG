@@ -89,6 +89,14 @@
 [ext_resource type="Script" path="res://world/environment/time/vision_light.gd" id="m2_vision"]
 [ext_resource type="Script" path="res://ui/survival/sleep_overlay.gd" id="m2_overlay"]
 [ext_resource type="Script" path="res://ui/survival/death_bag_marker.gd" id="m2_marker"]
+[ext_resource type="Script" path="res://features/gathering/resource_node_layer.gd" id="m3_resource_layer"]
+[ext_resource type="PackedScene" path="res://features/gathering/nodes/tree_node.tscn" id="m3_tree"]
+[ext_resource type="PackedScene" path="res://features/gathering/nodes/rock_node.tscn" id="m3_rock"]
+[ext_resource type="PackedScene" path="res://features/gathering/nodes/berry_bush_node.tscn" id="m3_berry_bush"]
+[ext_resource type="PackedScene" path="res://features/gathering/nodes/grass_node.tscn" id="m3_grass"]
+[ext_resource type="PackedScene" path="res://features/crafting/stations/workbench.tscn" id="m3_workbench"]
+[ext_resource type="PackedScene" path="res://ui/crafting/crafting_window.tscn" id="m3_crafting"]
+[ext_resource type="Resource" path="res://features/crafting/data/recipe_book.tres" id="m3_recipes"]
 
 [sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_0h8ps"]
 blend_mode = 1
@@ -134,7 +142,7 @@ border_width_right = 1
 border_width_bottom = 1
 border_color = Color(0.45, 0.45, 0.6, 1)
 
-[node name="EnvironmentPrototype" type="Node2D" unique_id=1465201579 node_paths=PackedStringArray("camera", "camera_target", "map_bounds", "interaction_detector", "interaction_prompt", "interaction_feedback", "player_health", "combat_hud", "player_weapon", "player_attack", "player_skills", "player_caster", "skill_bar", "player", "player_classes", "player_level", "progression_panel", "inventory_window", "pickup_layer", "pickup_toast", "clock", "day_night", "sleep_controller", "death_controller", "death_marker")]
+[node name="EnvironmentPrototype" type="Node2D" unique_id=1465201579 node_paths=PackedStringArray("camera", "camera_target", "map_bounds", "interaction_detector", "interaction_prompt", "interaction_feedback", "player_health", "combat_hud", "player_weapon", "player_attack", "player_skills", "player_caster", "skill_bar", "player", "player_classes", "player_level", "progression_panel", "inventory_window", "pickup_layer", "pickup_toast", "clock", "day_night", "sleep_controller", "death_controller", "death_marker", "crafting_window", "resource_layer")]
 texture_filter = 4
 script = ExtResource("1_y3y0j")
 camera = NodePath("CameraContainer/GameCamera")
@@ -163,6 +171,9 @@ day_night = NodePath("DayNightLighting")
 sleep_controller = NodePath("SleepController")
 death_controller = NodePath("DeathController")
 death_marker = NodePath("UILayer/DeathBagMarker")
+recipe_book = ExtResource("m3_recipes")
+crafting_window = NodePath("UILayer/CraftingWindow")
+resource_layer = NodePath("EntityContainer/Resources")
 
 [node name="Environment" type="Node2D" parent="." unique_id=978478]
 
@@ -1295,6 +1306,75 @@ position = Vector2(-185.6, 1065.6)
 interaction_name = "Giường (nhà tạm)"
 spot_id = "glade_home_bed"
 
+[node name="Workbench" parent="EntityContainer" instance=ExtResource("m3_workbench")]
+position = Vector2(-128, 1088)
+interaction_name = "Bàn chế tạo (nhà tạm)"
+
+[node name="Resources" type="Node2D" parent="EntityContainer" node_paths=PackedStringArray("clock") groups=["saveable"]]
+y_sort_enabled = true
+script = ExtResource("m3_resource_layer")
+clock = NodePath("../../GameClock")
+
+[node name="Tree1" parent="EntityContainer/Resources" instance=ExtResource("m3_tree")]
+position = Vector2(96, 1008)
+node_id = "glade_tree_1"
+
+[node name="Tree2" parent="EntityContainer/Resources" instance=ExtResource("m3_tree")]
+position = Vector2(96, 1072)
+node_id = "glade_tree_2"
+
+[node name="Tree3" parent="EntityContainer/Resources" instance=ExtResource("m3_tree")]
+position = Vector2(0, 1056)
+node_id = "glade_tree_3"
+
+[node name="Tree4" parent="EntityContainer/Resources" instance=ExtResource("m3_tree")]
+position = Vector2(-96, 1136)
+node_id = "glade_tree_4"
+
+[node name="Rock1" parent="EntityContainer/Resources" instance=ExtResource("m3_rock")]
+position = Vector2(-448, 736)
+node_id = "glade_rock_1"
+
+[node name="Rock2" parent="EntityContainer/Resources" instance=ExtResource("m3_rock")]
+position = Vector2(-640, 768)
+node_id = "glade_rock_2"
+
+[node name="Rock3" parent="EntityContainer/Resources" instance=ExtResource("m3_rock")]
+position = Vector2(-352, 720)
+node_id = "glade_rock_3"
+
+[node name="BerryBush1" parent="EntityContainer/Resources" instance=ExtResource("m3_berry_bush")]
+position = Vector2(-384, 800)
+node_id = "glade_berry_bush_1"
+
+[node name="BerryBush2" parent="EntityContainer/Resources" instance=ExtResource("m3_berry_bush")]
+position = Vector2(-640, 832)
+node_id = "glade_berry_bush_2"
+
+[node name="BerryBush3" parent="EntityContainer/Resources" instance=ExtResource("m3_berry_bush")]
+position = Vector2(0, 960)
+node_id = "glade_berry_bush_3"
+
+[node name="Grass1" parent="EntityContainer/Resources" instance=ExtResource("m3_grass")]
+position = Vector2(-32, 912)
+node_id = "glade_grass_1"
+
+[node name="Grass2" parent="EntityContainer/Resources" instance=ExtResource("m3_grass")]
+position = Vector2(-32, 880)
+node_id = "glade_grass_2"
+
+[node name="Grass3" parent="EntityContainer/Resources" instance=ExtResource("m3_grass")]
+position = Vector2(-128, 864)
+node_id = "glade_grass_3"
+
+[node name="Grass4" parent="EntityContainer/Resources" instance=ExtResource("m3_grass")]
+position = Vector2(-128, 832)
+node_id = "glade_grass_4"
+
+[node name="Grass5" parent="EntityContainer/Resources" instance=ExtResource("m3_grass")]
+position = Vector2(-64, 960)
+node_id = "glade_grass_5"
+
 [node name="BerryPickup2" parent="EntityContainer/Items" instance=ExtResource("m1_pickup")]
 position = Vector2(-249.6, 880)
 item_id = &"berry"
@@ -1363,6 +1443,8 @@ tracked_body = NodePath("../../EntityContainer/Player")
 [node name="PickupToast" parent="UILayer" instance=ExtResource("m1_toast")]
 
 [node name="InventoryWindow" parent="UILayer" instance=ExtResource("m1_window")]
+
+[node name="CraftingWindow" parent="UILayer" instance=ExtResource("m3_crafting")]
 
 [node name="DeathBagMarker" type="Control" parent="UILayer"]
 layout_mode = 3

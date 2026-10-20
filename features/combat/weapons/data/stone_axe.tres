@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="WeaponDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://features/combat/weapons/weapon_definition.gd" id="1_weapon"]
+[ext_resource type="Resource" path="res://features/combat/weapons/data/combo_stone_tool.tres" id="2_combo"]
+
+[resource]
+script = ExtResource("1_weapon")
+weapon_id = &"stone_axe"
+display_name = "Rìu đá"
+weapon_type_id = &"tool"
+combo = ExtResource("2_combo")
+visual_color = Color(0.72, 0.62, 0.48, 1)
+visual_length = 16.0
+visual_width = 4.0

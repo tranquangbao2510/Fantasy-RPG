@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ItemDatabase" load_steps=17 format=3]
+[gd_resource type="Resource" script_class="ItemDatabase" load_steps=25 format=3]
 
 [ext_resource type="Script" path="res://features/items/item_database.gd" id="1_db"]
 [ext_resource type="Script" path="res://features/items/item_definition.gd" id="1_item"]
@@ -16,7 +16,15 @@
 [ext_resource type="Resource" path="res://features/items/data/grilled_meat.tres" id="13_grilled_meat"]
 [ext_resource type="Resource" path="res://features/items/data/lantern.tres" id="14_lantern"]
 [ext_resource type="Resource" path="res://features/items/data/tent.tres" id="15_tent"]
+[ext_resource type="Resource" path="res://features/items/data/branch.tres" id="16_branch"]
+[ext_resource type="Resource" path="res://features/items/data/fiber.tres" id="17_fiber"]
+[ext_resource type="Resource" path="res://features/items/data/stone_axe.tres" id="18_stone_axe"]
+[ext_resource type="Resource" path="res://features/items/data/stone_pickaxe.tres" id="19_stone_pickaxe"]
+[ext_resource type="Resource" path="res://features/items/data/torch.tres" id="20_torch"]
+[ext_resource type="Resource" path="res://features/items/data/bandage.tres" id="21_bandage"]
+[ext_resource type="Resource" path="res://features/items/data/campfire.tres" id="22_campfire"]
+[ext_resource type="Resource" path="res://features/items/data/roasted_berry.tres" id="23_roasted_berry"]
 
 [resource]
 script = ExtResource("1_db")
-items = Array[ExtResource("1_item")]([ExtResource("2_wood"), ExtResource("3_stone"), ExtResource("4_herb"), ExtResource("5_berry"), ExtResource("6_raw_meat"), ExtResource("7_test_sword"), ExtResource("8_test_dagger"), ExtResource("9_test_heavy"), ExtResource("10_test_helmet"), ExtResource("11_ancient_relic"), ExtResource("12_bread"), ExtResource("13_grilled_meat"), ExtResource("14_lantern"), ExtResource("15_tent")])
+items = Array[ExtResource("1_item")]([ExtResource("2_wood"), ExtResource("3_stone"), ExtResource("4_herb"), ExtResource("5_berry"), ExtResource("6_raw_meat"), ExtResource("7_test_sword"), ExtResource("8_test_dagger"), ExtResource("9_test_heavy"), ExtResource("10_test_helmet"), ExtResource("11_ancient_relic"), ExtResource("12_bread"), ExtResource("13_grilled_meat"), ExtResource("14_lantern"), ExtResource("15_tent"), ExtResource("16_branch"), ExtResource("17_fiber"), ExtResource("18_stone_axe"), ExtResource("19_stone_pickaxe"), ExtResource("20_torch"), ExtResource("21_bandage"), ExtResource("22_campfire"), ExtResource("23_roasted_berry")])

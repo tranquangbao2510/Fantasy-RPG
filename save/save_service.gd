@@ -6,14 +6,14 @@ extends Node
 ##   người chơi qua mọi map, vd. Player; mặc định thuộc map hiện tại, vd. rương, vật phẩm trên đất).
 ## - Map lưu được: scene hiện tại có `map_id` khác rỗng và có trong MapCatalog.
 ##
-## Cấu trúc file (schema_version 2):
+## Cấu trúc file (schema_version 3):
 ##   { schema_version, saved_at ("YYYY-MM-DD HH:MM:SS", giờ máy), playtime (giây), map_id,
 ##     global: { save_id: state }, maps: { map_id: { save_id: state } } }
 ## Trạng thái của các map khác (đã ghé trong phiên) được giữ nguyên khi lưu ở map hiện tại.
 ##
 ## Ghi an toàn: ghi `.tmp` → đổi file cũ thành `.bak` → đổi `.tmp` thành file chính. Đọc: file chính hỏng/thiếu
 ## thì thử `.bak`; cả hai hỏng thì báo lỗi, không crash. Field thiếu/sai kiểu → giá trị mặc định (+ cảnh báo).
-## Bản cũ hơn → chạy migration theo từng version (SaveMigrations: v1 → v2 ở TASK M2); bản mới hơn → từ chối.
+## Bản cũ hơn → chạy migration theo từng version (SaveMigrations: v1 → v2 ở TASK M2, v2 → v3 ở TASK M3); bản mới hơn → từ chối.
 
 signal saved(slot: int)
 ## Đã tải xong và áp trạng thái lên scene mới.
@@ -21,7 +21,7 @@ signal loaded(slot: int)
 ## Lưu/tải thất bại (thông báo cho người chơi).
 signal failed(message: String)
 
-const SCHEMA_VERSION: int = 2
+const SCHEMA_VERSION: int = 3
 const GROUP: StringName = &"saveable"
 const DEFAULT_SLOT: int = 1
 const MAP_CATALOG: MapCatalog = preload("res://world/maps/map_catalog.tres")

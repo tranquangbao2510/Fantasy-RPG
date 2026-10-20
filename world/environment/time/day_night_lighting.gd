@@ -2,8 +2,8 @@ class_name DayNightLighting
 extends Node
 ## Ánh sáng ngày/đêm + tầm nhìn đêm của một map (TASK M2). Đọc GameClock, mỗi frame:
 ## - `darkness` (0 ngày → 1 đêm, chuyển mượt trong bình minh/hoàng hôn theo TimeSettings);
-## - SunTint (CanvasModulate) = DayNightSettings.sun_color(darkness): ban đêm gần đen = bóng tối thật cho mọi thứ vẽ
-##   trên canvas của map (địa hình, quái, item); UI ở CanvasLayer riêng không bị ảnh hưởng;
+## - SunTint (CanvasModulate) = DayNightSettings.sun_color(darkness): ban đêm chỉ còn ánh trăng (`moonlight`, TASK M3) cho
+##   mọi thứ vẽ trên canvas của map (địa hình, quái, item); UI ở CanvasLayer riêng không bị ảnh hưởng;
 ## - mọi VisionLight (group `vision_light`) sáng theo darkness (PointLight2D cộng sáng lên vùng tối);
 ##   VisionLight của Player: bán kính = base_vision_radius + bán kính sáng của đồ đang mặc (đèn lồng), màu theo đèn;
 ## - node trong group `daylight_fx` (tia nắng, đốm nắng) mờ dần theo darkness.
@@ -56,11 +56,11 @@ func get_vision_radius() -> float:
 	return settings.base_vision_radius + _equipment_light_radius()
 
 
-## Độ nhìn thấy tại điểm world (0..1): 1 ban ngày; ban đêm = mức che phủ lớn nhất của các VisionLight.
+## Độ nhìn thấy tại điểm world (0..1): 1 ban ngày; ban đêm = max(ánh trăng, mức che phủ lớn nhất của các VisionLight).
 func get_visibility(point: Vector2) -> float:
 	if darkness <= 0.0:
 		return 1.0
-	var cover: float = 0.0
+	var cover: float = settings.moonlight
 	for node: Node in get_tree().get_nodes_in_group(VisionLight.GROUP):
 		var light: VisionLight = node as VisionLight
 		if light != null and is_ancestor_of_scene(light):

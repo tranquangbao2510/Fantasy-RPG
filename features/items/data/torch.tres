@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://features/items/item_definition.gd" id="1_item"]
+[ext_resource type="Texture2D" path="res://features/items/icons/torch.png" id="9_icon"]
+
+[resource]
+script = ExtResource("1_item")
+id = &"torch"
+display_name = "Đuốc"
+description = "Cầm ở tay phụ thay đèn lồng: soi sáng gần hơn đèn lồng, cháy hết thì mất."
+icon = ExtResource("9_icon")
+category = 2
+max_stack = 1
+sell_price = 2
+tags = Array[StringName]([&"light", &"fuel"])
+equip_slot = &"offhand"
+burn_minutes = 240.0
+light_radius = 64.0
+light_color = Color(1, 0.6, 0.3, 1)

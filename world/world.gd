@@ -37,6 +37,10 @@ extends Node2D
 @export var sleep_controller: SleepController
 @export var death_controller: DeathController
 @export var death_marker: DeathBagMarker
+## Tùy chọn (TASK M3): sổ công thức + cửa sổ chế tạo / nấu ăn (phím C, bàn chế tạo, lửa trại), lớp node tài nguyên.
+@export var recipe_book: RecipeBook
+@export var crafting_window: CraftingWindow
+@export var resource_layer: ResourceNodeLayer
 
 @onready var _environment: Node2D = $Environment
 @onready var _map_container: Node2D = $MapContainer
@@ -56,6 +60,7 @@ func _ready() -> void:
 	_setup_inventory()
 	_setup_save()
 	_setup_survival()
+	_setup_crafting()
 	_setup_sandbox()
 
 
@@ -260,12 +265,13 @@ func _on_drop_requested(stack: ItemStack) -> void:
 		_show_feedback("Không vứt đồ được ở đây.")
 
 
-## Chặn đánh thường/kỹ năng khi có bảng UI đang mở (Progression, túi đồ). Di chuyển vẫn được.
+## Chặn đánh thường/kỹ năng khi có bảng UI đang mở (Progression, túi đồ, chế tạo). Di chuyển vẫn được.
 func _refresh_combat_block() -> void:
 	if player == null:
 		return
 	var blocked: bool = (progression_panel != null and progression_panel.is_open()) \
-		or (inventory_window != null and inventory_window.is_open())
+		or (inventory_window != null and inventory_window.is_open()) \
+		or (crafting_window != null and crafting_window.is_open())
 	player.set_combat_input_blocked(blocked)
 
 
@@ -287,7 +293,8 @@ func _show_feedback(message: String) -> void:
 
 # --- Thời gian & sinh tồn (TASK M2) ---------------------------------------------------------------
 
-const TENT_FOOTPRINT_RADIUS: float = 14.0
+## Bán kính footprint (px mặt đất) khi kiểm tra chỗ dựng lều / lửa trại.
+const DEPLOY_FOOTPRINT_RADIUS: float = 14.0
 
 var _tent_menu: PopupMenu
 var _tent_menu_target: Tent
@@ -317,6 +324,10 @@ func _setup_survival() -> void:
 	if sleep_controller != null:
 		sleep_controller.slept.connect(func(day: int) -> void: _show_feedback("Ngày %d — đã ngủ dậy và tự lưu." % day))
 		sleep_controller.fainted.connect(func(_day: int) -> void: _show_feedback("Bạn đã ngất vì thức quá khuya."))
+	if death_controller != null:
+		death_controller.bag_discarded.connect(func(_bag_id: String) -> void:
+			_show_feedback("Túi đồ cũ nhất đã biến mất (tối đa %d túi)." % death_controller.max_death_bags))
+	player.get_equipment().item_depleted.connect(_on_item_depleted)
 
 
 ## Dùng item ở ô túi (từ cửa sổ túi đồ): ăn, dựng lều...
@@ -386,23 +397,78 @@ func _on_use_requested(slot: int) -> void:
 	use_item(slot)
 
 
-## Đặt item dựng được (lều) tại chỗ Player đứng. "" = thành công, ngược lại là lý do.
+## Đặt item dựng được (lều, lửa trại — TASK M3) tại chỗ Player đứng (hoặc trước mặt `deploy_offset` px mặt đất).
+## Giới hạn số lượng mỗi map theo ItemDefinition.max_per_map. "" = thành công, ngược lại là lý do.
 func _deploy_item(item: ItemDefinition) -> String:
 	if pickup_layer == null:
 		return "Không dựng được ở đây."
-	for node: Node in pickup_layer.get_deployed():
-		if node is Tent:
-			return "Đã có một lều đang dựng — thu lều cũ trước."
+	if item.max_per_map > 0 and pickup_layer.count_deployed(item.id) >= item.max_per_map:
+		if item.max_per_map == 1:
+			return "Đã có một %s đang dựng — thu %s cũ trước." % [item.display_name.to_lower(), item.display_name.to_lower()]
+		return "Đã đủ %d %s trên map này." % [item.max_per_map, item.display_name.to_lower()]
 	var agent: ElevationAgent = ElevationAgent.find_for(player)
 	if agent != null and agent.is_transitioning():
 		return "Không dựng được trên cầu thang."
 	var tier: int = agent.get_tier() if agent != null else -1
+	var squash: float = pickup_layer.ground_squash
+	var at: Vector2 = player.global_position
+	if item.deploy_offset > 0.0:
+		var ahead: Vector2 = GroundSpace.direction(player.get_facing(), squash)
+		at += GroundSpace.to_screen(ahead * item.deploy_offset, squash)
 	var exclude: Array[RID] = []
 	for node: Node in [player] + player.find_children("*", "CollisionObject2D", true, false):
 		exclude.append((node as CollisionObject2D).get_rid())
-	var reason: String = PlacementCheck.get_block_reason(get_world_2d().direct_space_state, self, player.global_position, tier,
-		TENT_FOOTPRINT_RADIUS, pickup_layer.ground_squash, exclude)
+	var reason: String = PlacementCheck.get_block_reason(get_world_2d().direct_space_state, self, at, tier,
+		DEPLOY_FOOTPRINT_RADIUS, squash, exclude)
 	if not reason.is_empty():
 		return reason
-	pickup_layer.spawn_deployed(item, player.global_position, tier)
+	pickup_layer.spawn_deployed(item, at, tier)
 	return ""
+
+
+# --- Khai thác, chế tạo, nấu ăn (TASK M3) ---------------------------------------------------------
+
+func _setup_crafting() -> void:
+	if player == null:
+		return
+	var database: ItemDatabase = player.get_inventory().database
+	if crafting_window != null and recipe_book != null:
+		crafting_window.bind(recipe_book, database, player.get_inventory(), player,
+			pickup_layer.ground_squash if pickup_layer != null else 1.0)
+		crafting_window.opened.connect(_refresh_combat_block)
+		crafting_window.closed.connect(_refresh_combat_block)
+		crafting_window.message.connect(_show_feedback)
+		for node: Node in find_children("*", "CraftingStation", true, false):
+			_connect_station(node as CraftingStation)
+		if pickup_layer != null:
+			pickup_layer.deployed_added.connect(func(node: Node2D) -> void:
+				if node is CraftingStation:
+					_connect_station(node as CraftingStation))
+	if resource_layer != null and pickup_toast != null:
+		resource_layer.harvested.connect(func(_node: ResourceNode, stacks: Array[ItemStack]) -> void:
+			for stack: ItemStack in stacks:
+				var item: ItemDefinition = database.get_item(stack.item_id)
+				pickup_toast.show_pickup(stack.item_id, item.display_name if item != null else String(stack.item_id), stack.count))
+
+
+## Mở cửa sổ chế tạo tại trạm (bàn chế tạo) hoặc chế độ Nấu (lửa trại).
+func open_station(station: CraftingStation) -> void:
+	if crafting_window == null:
+		return
+	if station is Campfire:
+		crafting_window.open_campfire(station as Campfire)
+	else:
+		crafting_window.open()
+
+
+func _connect_station(station: CraftingStation) -> void:
+	if not station.open_requested.is_connected(open_station):
+		station.open_requested.connect(open_station)
+
+
+## Công cụ vỡ / đuốc cháy hết.
+func _on_item_depleted(item_id: StringName, _slot_name: StringName) -> void:
+	var item: ItemDefinition = player.get_inventory().database.get_item(item_id)
+	if item == null:
+		return
+	_show_feedback("%s đã cháy hết." % item.display_name if item.burn_minutes > 0.0 else "%s đã vỡ!" % item.display_name)

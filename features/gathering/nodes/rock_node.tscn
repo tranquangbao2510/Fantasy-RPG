@@ -1,0 +1,35 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://features/gathering/resource_node.gd" id="1_node"]
+[ext_resource type="Resource" path="res://features/gathering/data/rock.tres" id="2_def"]
+[ext_resource type="PackedScene" path="res://world/environment/props/rock_small.tscn" id="3_prop"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_point"]
+radius = 16.0
+
+[node name="RockNode" type="Area2D"]
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("1_node")
+definition = ExtResource("2_def")
+
+[node name="Available" parent="." instance=ExtResource("3_prop")]
+
+[node name="Depleted" type="Node2D" parent="."]
+visible = false
+
+[node name="PebbleA" type="Polygon2D" parent="Depleted"]
+color = Color(0.5, 0.5, 0.52, 1)
+polygon = PackedVector2Array(-12, 0, -9, -4, -4, -4, -2, 0, -6, 2)
+
+[node name="PebbleB" type="Polygon2D" parent="Depleted"]
+color = Color(0.58, 0.58, 0.6, 1)
+polygon = PackedVector2Array(2, -1, 5, -6, 11, -5, 12, -1, 7, 2)
+
+[node name="PebbleC" type="Polygon2D" parent="Depleted"]
+color = Color(0.45, 0.45, 0.47, 1)
+polygon = PackedVector2Array(-3, 4, 0, 1, 4, 2, 3, 5)
+
+[node name="InteractionShape" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_point")

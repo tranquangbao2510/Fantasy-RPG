@@ -1404,7 +1404,6 @@ position = Vector2(0, -6)
 script = ExtResource("m2_vision")
 radius = 140.0
 color = Color(0.45, 0.9, 1, 1)
-energy = 1.1
 ground_squash = 0.5
 
 [node name="EffectContainer" type="Node2D" parent="." unique_id=88998114]

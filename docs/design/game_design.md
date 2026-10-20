@@ -1,7 +1,7 @@
 # Game Design — Fantasy RPG
 
 > Tài liệu định hướng thiết kế. **Mọi task mới phải đọc file này trước** để biết hệ thống đang làm phục vụ mục tiêu gì.
-> Trạng thái: **v0.2 (2026-10-20)**, cập nhật theo ý tưởng chi tiết của chủ dự án; đánh dấu trạng thái sau M2. Mục **[Chưa quyết định]** chưa được chốt, không tự chọn thay chủ dự án.
+> Trạng thái: **v0.2 (2026-10-20)**, cập nhật theo ý tưởng chi tiết của chủ dự án; đánh dấu trạng thái sau M2 và task M3 (lượm nhặt, chế tạo, nấu ăn — kéo một phần mốc M4 lên trước). Mục **[Chưa quyết định]** chưa được chốt, không tự chọn thay chủ dự án.
 
 ---
 
@@ -67,7 +67,7 @@ Uy tín phe phái → mở/khóa vùng, cửa hàng, nhiệm vụ; thay đổi t
 ### 3.4 Chết
 
 - Hết HP: **túi đồ rơi thành một túi tại chỗ chết**, người chơi **hồi sinh ở nhà**. **Không mất tiền.** ✅ (M2: túi `DeathBag` chứa toàn bộ túi đồ, hồi sinh ở giường "nhà" hoặc lều đã ngủ với 50% HP, mũi tên chỉ túi trên HUD)
-- Quay lại chỗ chết nhặt lại túi. Đã chốt (M2.1): trang bị đang mặc **không rơi**; chết lần nữa trước khi nhặt → **túi mới, túi cũ vẫn giữ**. **[Chưa quyết định]** Túi đồ có biến mất sau N ngày không (M2: không biến mất).
+- Quay lại chỗ chết nhặt lại túi. Đã chốt (M2.1): trang bị đang mặc **không rơi**; chết lần nữa trước khi nhặt → **túi mới, túi cũ vẫn giữ**. **[Chưa quyết định]** Túi đồ có biến mất sau N ngày không (M2: không biến mất; task M3: tối đa 5 túi/map — túi thứ 6 làm túi cũ nhất biến mất, túi rỗng tự xóa).
 
 ## 4. Hệ thống
 
@@ -94,23 +94,24 @@ Ký hiệu: ✅ đã có (prototype) · 🟡 có một phần · ⬜ chưa có.
 ### 4.4 Sinh tồn 🟡
 - **Đói (0–100):** giảm theo thời gian, nhanh hơn khi chạy/đánh. **Hết đói thì máu tụt dần.** ✅ (M2; ăn uống qua item `consumable` ✅)
 - **Không có chỉ số Thể lực/Mệt** (đã chốt 2026-10-20). Lý do để ngủ: qua đêm nguy hiểm, hồi máu, tự lưu.
-- Nguồn đồ ăn: **hái trái cây**, **tự trồng**, **săn thú lấy thịt** (nấu chín ngon hơn), **mua ở chợ**. (M2: mới có đồ ăn nhặt được + trong rương; hái/trồng/săn/chợ ở M4–M5)
+- Nguồn đồ ăn: **hái trái cây**, **tự trồng**, **săn thú lấy thịt** (nấu chín ngon hơn), **mua ở chợ**. (M2: mới có đồ ăn nhặt được + trong rương; task M3: hái bụi mọng, enemy rơi thịt sống, nấu ở lửa trại ✅; trồng/thú săn/chợ ở M4–M5)
 - Không có khát, nhiệt độ, bệnh trong phạm vi luận văn.
 
 ### 4.5 Ngày/đêm & tầm nhìn 🟡
 - Đồng hồ trong game, mặc định **1 ngày = 20 phút thực** (chỉnh được). ✅ Đã chốt mặc định (M2): 1 ngày = 1200 s thực, bắt đầu 6:00; bình minh 5:00, ngày 7:00, hoàng hôn 17:00, đêm 19:00 (`features/time/time_settings.tres`).
 - **Ban đêm tầm nhìn thu nhỏ**: ngoài bán kính quanh nhân vật là bóng tối thật (không chỉ tối màu). ✅ (bán kính 160 px mặt đất ≈ 3.5 ô)
 - **Đèn lồng**: item cầm tay phụ, mở rộng tầm nhìn. ✅ (ô offhand, +96 px). **[Chưa quyết định]** có tốn dầu không (M2: chưa tốn).
-- Nguồn sáng trong thế giới: đuốc, lửa trại, đá rune, đèn nhà. 🟡 (M2: đá rune, đèn cạnh giường)
+- Nguồn sáng trong thế giới: đuốc, lửa trại, đá rune, đèn nhà. ✅ (M2: đá rune, đèn cạnh giường; task M3: lửa trại, đuốc ở tay phụ; đêm còn ánh trăng ~13 %)
 - **Quái ban đêm mạnh hơn và đông hơn.** ⬜ (M6; đã có signal `darkness_changed`)
 
 ### 4.6 Ngủ ✅
-- M2: giường (nhà tạm trong Glade) + lều (dựng/ngủ/thu); ngủ 18:00–trước 6:00, thức tới 2:00 thì ngất.
+- M2: giường (nhà tạm trong Glade) + lều (dựng/ngủ/thu); ngủ 18:00–trước 6:00, thức tới 2:00 thì ngất. Task M3: giường hồi 100 % HP, lều 70 % HP (mana 100 % cả hai); ngất tỉnh tại chỗ lúc 6:00, đói −10.
 - Ngủ ở **giường trong nhà**, hoặc **dựng lều** ở ngoài (lều là item, dựng/thu được).
 - Ngủ → sang sáng hôm sau, hồi HP/mana, **tự lưu game**.
 - **[Chưa quyết định]** Ngủ lều ngoài trời có rủi ro không (bị quái tấn công, hồi ít hơn).
 
-### 4.7 Lượm nhặt & săn bắt ⬜
+### 4.7 Lượm nhặt & săn bắt 🟡
+- Task M3: cây, tảng đá, bụi mọng, bụi cỏ trong Glade; rìu đá + cuốc chim đá có độ bền; mọc lại theo ngày ✅. Chưa có: liềm, cấp công cụ, thú săn.
 - Node tài nguyên: cây (gỗ), đá/quặng, bụi (quả, thảo dược)... **mọc lại** sau N ngày.
 - Cần công cụ (rìu, cuốc chim, liềm), công cụ có cấp.
 - **Săn thú** trong rừng (thú hiền bỏ chạy, thú dữ tấn công) rơi thịt, da, xương.
@@ -120,7 +121,8 @@ Ký hiệu: ✅ đã có (prototype) · 🟡 có một phần · ⬜ chưa có.
 - Cuốc đất → gieo → tưới mỗi ngày → lớn theo ngày → thu hoạch.
 - NPC thân thiết có thể **thu hoạch hộ**.
 
-### 4.9 Chế tạo ⬜
+### 4.9 Chế tạo 🟡
+- Task M3: công thức `.tres` (RecipeDefinition), chế tạo tức thì, phím C; trạm bàn chế tạo (Glade) + lửa trại (nấu ăn) ✅. Chưa có: mở khóa công thức, chế tạo có thời gian chờ, trạm trong nhà theo nâng cấp.
 - Trạm trong nhà (mở dần qua nâng cấp): bàn chế tạo, bếp, bàn thuốc...
 - Công thức dạng dữ liệu `.tres`, mở khóa qua sách, NPC, mastery.
 - Chế được: công cụ, vũ khí, **trang phục**, đồ ăn, thuốc, lều, đèn.

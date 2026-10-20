@@ -524,6 +524,14 @@ func _test_campfire() -> void:
 	check("campfire_lights_area", lighting.is_point_visible(near_fire) and fire.get_light().get_light().is_visible_in_tree()
 		and fire.get_light().get_light().enabled and _player.global_position.distance_to(near_fire) > 300.0,
 		"%.2f %s %s %.0f" % [lighting.get_visibility(near_fire), fire.get_light().get_light().is_visible_in_tree(), fire.get_light().get_light().enabled, _player.global_position.distance_to(near_fire)])
+	# Chồng sáng không cháy trắng: MIX (không cộng dồn), màu đích ban đêm = màu lửa (≤ 1), không vượt mức ban ngày.
+	var mixed: bool = true
+	for node: Node in get_nodes_in_group(VisionLight.GROUP):
+		var vl: VisionLight = node as VisionLight
+		var target: Color = vl.get_light().color * vl.get_light().energy
+		mixed = mixed and vl.get_light().blend_mode == Light2D.BLEND_MODE_MIX and maxf(target.r, maxf(target.g, target.b)) <= 1.0
+	check("lights_mix_no_overexposure", mixed and fire.get_light().get_light().color.is_equal_approx(fire.get_light().color),
+		"%s %s %s" % [mixed, fire.get_light().get_light().color, fire.get_light().color])
 	# Hết giờ → tắt: ánh sáng tắt, còn lại ánh trăng; không nấu được; vẫn đứng đó.
 	var burned: Array[bool] = []
 	fire.lit_changed.connect(func(lit: bool) -> void: burned.append(lit))

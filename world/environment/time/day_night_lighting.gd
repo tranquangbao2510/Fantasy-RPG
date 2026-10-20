@@ -4,7 +4,7 @@ extends Node
 ## - `darkness` (0 ngày → 1 đêm, chuyển mượt trong bình minh/hoàng hôn theo TimeSettings);
 ## - SunTint (CanvasModulate) = DayNightSettings.sun_color(darkness): ban đêm chỉ còn ánh trăng (`moonlight`, TASK M3) cho
 ##   mọi thứ vẽ trên canvas của map (địa hình, quái, item); UI ở CanvasLayer riêng không bị ảnh hưởng;
-## - mọi VisionLight (group `vision_light`) sáng theo darkness (PointLight2D cộng sáng lên vùng tối);
+## - mọi VisionLight (group `vision_light`) sáng theo darkness (PointLight2D MIX kéo vùng tối về màu đèn, TASK M3);
 ##   VisionLight của Player: bán kính = base_vision_radius + bán kính sáng của đồ đang mặc (đèn lồng), màu theo đèn;
 ## - node trong group `daylight_fx` (tia nắng, đốm nắng) mờ dần theo darkness.
 ## Kỹ thuật chọn: CanvasModulate + Light2D chạy trên renderer Compatibility, không cần shader/SDF; xem 2m.
@@ -76,8 +76,9 @@ func update_lighting() -> void:
 	if clock == null:
 		return
 	darkness = darkness_at(clock.get_minute_of_day(), clock.settings)
+	var ambient: Color = settings.sun_color(darkness)
 	if sun_tint != null:
-		sun_tint.color = settings.sun_color(darkness)
+		sun_tint.color = ambient
 	if player_light != null:
 		player_light.radius = get_vision_radius()
 		player_light.inner_ratio = settings.vision_inner_ratio
@@ -85,7 +86,9 @@ func update_lighting() -> void:
 		var equipment: EquipmentSlots = _player_equipment()
 		player_light.color = equipment.get_light_color(settings.vision_color) if equipment != null else settings.vision_color
 	for node: Node in get_tree().get_nodes_in_group(VisionLight.GROUP):
-		(node as VisionLight).set_darkness(darkness)
+		var light: VisionLight = node as VisionLight
+		light.ambient = ambient
+		light.set_darkness(darkness)
 	for item: CanvasItem in _daylight_alpha:
 		if is_instance_valid(item):
 			item.self_modulate.a = _daylight_alpha[item] * (1.0 - darkness)

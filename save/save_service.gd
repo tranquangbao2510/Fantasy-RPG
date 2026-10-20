@@ -6,14 +6,14 @@ extends Node
 ##   người chơi qua mọi map, vd. Player; mặc định thuộc map hiện tại, vd. rương, vật phẩm trên đất).
 ## - Map lưu được: scene hiện tại có `map_id` khác rỗng và có trong MapCatalog.
 ##
-## Cấu trúc file (schema_version 1):
+## Cấu trúc file (schema_version 2):
 ##   { schema_version, saved_at ("YYYY-MM-DD HH:MM:SS", giờ máy), playtime (giây), map_id,
 ##     global: { save_id: state }, maps: { map_id: { save_id: state } } }
 ## Trạng thái của các map khác (đã ghé trong phiên) được giữ nguyên khi lưu ở map hiện tại.
 ##
 ## Ghi an toàn: ghi `.tmp` → đổi file cũ thành `.bak` → đổi `.tmp` thành file chính. Đọc: file chính hỏng/thiếu
 ## thì thử `.bak`; cả hai hỏng thì báo lỗi, không crash. Field thiếu/sai kiểu → giá trị mặc định (+ cảnh báo).
-## Bản cũ hơn → chạy migration theo từng version (khung, chưa có migration thật); bản mới hơn → từ chối.
+## Bản cũ hơn → chạy migration theo từng version (SaveMigrations: v1 → v2 ở TASK M2); bản mới hơn → từ chối.
 
 signal saved(slot: int)
 ## Đã tải xong và áp trạng thái lên scene mới.
@@ -21,7 +21,7 @@ signal loaded(slot: int)
 ## Lưu/tải thất bại (thông báo cho người chơi).
 signal failed(message: String)
 
-const SCHEMA_VERSION: int = 1
+const SCHEMA_VERSION: int = 2
 const GROUP: StringName = &"saveable"
 const DEFAULT_SLOT: int = 1
 const MAP_CATALOG: MapCatalog = preload("res://world/maps/map_catalog.tres")
@@ -46,6 +46,7 @@ var _scene_counts_playtime: bool = false
 
 
 func _ready() -> void:
+	SaveMigrations.register_all(self)
 	new_session()
 	get_tree().scene_changed.connect(_on_scene_changed)
 
@@ -132,15 +133,20 @@ func load_game(slot: int = DEFAULT_SLOT) -> bool:
 func capture(root: Node) -> Dictionary:
 	var map_id: String = _map_id_of(root)
 	var data: Dictionary = _session.duplicate(true) if not _session.is_empty() else _default_data()
-	var global: Dictionary = {}
+	# Giữ trạng thái global của phiên mà scene này không có (vd. đồng hồ khi lưu ở map không có GameClock).
+	var global: Dictionary = (data.get("global", {}) as Dictionary).duplicate(true) if data.get("global") is Dictionary else {}
 	var map_states: Dictionary = {}
+	var captured: Dictionary = {}
 	for node: Node in _saveables_under(root):
 		var id: String = str(node.call(&"get_save_id"))
 		var state: Variant = node.call(&"save_state")
-		var target: Dictionary = global if _is_global(node) else map_states
-		if target.has(id):
+		var is_global: bool = _is_global(node)
+		var target: Dictionary = global if is_global else map_states
+		var key: String = ("g:" if is_global else "m:") + id
+		if captured.has(key):
 			push_error("[SaveService] save_id trùng '%s' (%s) — bỏ qua bản sau." % [id, node.get_path()])
 			continue
+		captured[key] = true
 		target[id] = state if state is Dictionary else {}
 	data["schema_version"] = SCHEMA_VERSION
 	data["saved_at"] = Time.get_datetime_string_from_system(false, true)

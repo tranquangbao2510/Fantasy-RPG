@@ -37,7 +37,13 @@ Quy ước commit: [docs/git_conventions.md](docs/git_conventions.md).
   Godot_v4.7.2-stable_win64_console.exe --headless --path . --quit-after 30
   ```
 
-- Kiểm thử môi trường, nhân vật, túi đồ và save (headless, thoát mã 1 nếu có ca thất bại):
+- Kiểm thử (headless). Chạy tất cả — mỗi test một tiến trình, thoát mã 1 nếu có test fail; test fail cả khi có lỗi runtime / push_error ngoài dự kiến:
+
+  ```sh
+  Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/run_all.gd
+  ```
+
+  Từng test:
 
   ```sh
   Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/environment/test_environment_prototype.gd
@@ -45,6 +51,8 @@ Quy ước commit: [docs/git_conventions.md](docs/git_conventions.md).
   Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/player/test_player_sprite.gd
   Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/inventory/test_inventory.gd
   Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/save/test_save_load.gd
+  Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/survival/test_survival.gd
+  Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/smoke/test_scenes_load.gd
   ```
 
 ## Trạng thái hiện tại
@@ -81,4 +89,6 @@ Quy ước commit: [docs/git_conventions.md](docs/git_conventions.md).
 
 - TASK M1 — Nền tảng dữ liệu (`features/items/`, `features/inventory/`, `save/`, `ui/inventory/`): item database (10 item thử), túi đồ 24 ô + ô trang bị **Vũ khí / Mũ**, vật phẩm trên đất (đi chạm để nhặt), rương (**E**), Save/Load JSON. Phím: **I** hoặc **Tab** mở/đóng túi đồ (**Esc** đóng) — kéo thả để chuyển, **chuột phải** tách nửa stack, **Shift+click** chuyển nhanh túi ↔ rương, **nhấp đúp** trang bị/tháo, kéo ra ngoài cửa sổ để vứt; **F5** lưu nhanh, **F9** tải nhanh (slot 1); màn hình chính có **Tiếp tục**; tự lưu khi đóng game. Rương + 7 vật phẩm thử đặt trong Environment Prototype. Save ở `%APPDATA%/Godot/app_userdata/Fantasy RPG/saves/`. Chi tiết: [architecture.md](docs/architecture.md) mục 2l.
 
-Chưa có ultimate, mana/stamina, animation enemy, hotbar, chế tạo, hội thoại hay quest. Mọi chỉ số combat, vũ khí, kỹ năng, class và EXP là placeholder.
+- TASK M2 (gộp M2.1, thiết kế v0.2) — Thời gian & sinh tồn (`features/time/`, `features/survival/`, `world/environment/time/`): đồng hồ (1 ngày = 20 phút thực, bắt đầu 6:00), ngày/đêm với **bóng tối thật ngoài vùng sáng** quanh nhân vật (đèn lồng ở ô **Tay phụ** mở rộng, đá rune tự sáng), **Mana** cho kỹ năng, **Stamina**, **Đói** (hết đói mất máu), ăn uống (quả mọng, thịt sống, bánh mì, thịt nướng), **giường** (ngủ 18:00–6:00 → sáng hôm sau, hồi máu/mana, tự lưu; thức tới 2:00 thì ngất), **lều** (dựng/ngủ/thu), **chết rơi túi đồ** tại chỗ + hồi sinh ở chỗ nghỉ (giường hoặc lều đã ngủ), mũi tên chỉ túi trên HUD. Phím: **Shift** chạy, **Space** né, **F** dùng nhanh item đang rê chuột trong túi, **chuột phải** trên ô = menu (Dùng / Dựng / Trang bị / Tháo / Tách nửa / Vứt), **E** ngủ / mở menu lều / nhặt lại túi; debug: **F7** tua giờ ×10, **F8** +1 giờ. Không có chỉ số Thể lực. Chi tiết + hệ số: [architecture.md](docs/architecture.md) mục 2m.
+
+Chưa có ultimate, animation enemy, quái đêm, hotbar, chế tạo, hội thoại hay quest. Mọi chỉ số combat, vũ khí, kỹ năng, class và EXP là placeholder.

@@ -19,14 +19,14 @@ Mã nguồn được tổ chức theo **tính năng** (feature) thay vì theo lo
 | `app/` | Main scene, khởi động và vòng đời ứng dụng | Đã triển khai (`main.tscn`, `main.gd` — màn hình tạm) |
 | `docs/` | Tài liệu kỹ thuật | Đã triển khai |
 | `core/` | Thành phần kỹ thuật dùng chung, không phụ thuộc gameplay cụ thể | Chưa triển khai |
-| `features/` | Module gameplay (mỗi tính năng một thư mục con, vd. `features/combat/`) | Đã triển khai (`interaction/`, `combat/`, `character/`, `skills/`, `classes/`, `items/`, `inventory/` — 2l) |
+| `features/` | Module gameplay (mỗi tính năng một thư mục con, vd. `features/combat/`) | Đã triển khai (`interaction/`, `combat/`, `character/`, `skills/`, `classes/`, `items/`, `inventory/` — 2l; `time/`, `survival/` — 2m) |
 | `entities/` | Player, NPC, enemy (scene ghép từ component) | Đã triển khai (`player/`, `enemies/` — placeholder) |
 | `world/` | Bản đồ, môi trường, camera | Đã triển khai (`world.tscn`, `world.gd`, `maps/test_map/`, `camera/`, `sandbox/`, `environment/` (gồm `iso/`), `environment_prototype/` — 2k, isometric) |
-| `ui/` | Thành phần giao diện | Đã triển khai (`interaction/`, `combat/`, `skills/`, `progression/`, `debug/`, `common/`, `inventory/` — 2l) |
+| `ui/` | Thành phần giao diện | Đã triển khai (`interaction/`, `combat/`, `skills/`, `progression/`, `debug/`, `common/`, `inventory/` — 2l; `survival/` — 2m) |
 | `data/` | Dữ liệu game dùng chung (`.tres` Resource) | Chưa triển khai |
 | `assets/` | Tài nguyên dùng chung (sprite, âm thanh, font) | Chưa triển khai |
 | `save/` | Logic lưu / tải game | Đã triển khai (`save_service.gd` — Autoload SaveService, 2l) |
-| `tests/` | Kiểm thử headless (SceneTree script) | Đã triển khai (`environment/`, 2k; `player/`, 2c; `inventory/`, `save/`, 2l) |
+| `tests/` | Kiểm thử headless (SceneTree script) | Đã triển khai (`environment/`, 2k; `player/`, 2c; `inventory/`, `save/`, 2l; `survival/`, `smoke/`, 2m; `test_base.gd` + `run_all.gd`) |
 | `addons/` | Plugin bên thứ ba (chỉ khi thật sự cần) | Chưa triển khai |
 | `tools/` | Công cụ phát triển chạy ngoài game (có `.gdignore`), vd. sinh placeholder art | Đã triển khai (`placeholder_art/`, 2k; `player_sprites/`, 2c; `item_icons/`, 2l) |
 
@@ -146,13 +146,14 @@ Player (CharacterBody2D, motion_mode = Floating) ── player.gd
 │   └── Sprite (AnimatedSprite2D) — player_sprite.gd (PlayerSprite): sprite 8 hướng, chân = origin (CHAR-01)
 ├── CollisionShape2D              — CircleShape2D r=6, tâm (0,-6): chạm tới chân
 └── InteractionDetector, HealthComponent, Hurtbox, HitFlash, WeaponEquipment, BasicAttackController, DebugWeaponSwitcher, SkillLoadout, SkillCastingController, PassiveController, ClassManager, CharacterLevel — xem 2e–2i;
-    Inventory (24 ô), EquipmentSlots (weapon, head) — xem 2l. Player trong group `saveable` (save id `player`, global)
+    Inventory (24 ô), EquipmentSlots (weapon, head, offhand) — xem 2l; ManaComponent, StaminaComponent, HungerComponent,
+    BuffComponent, ItemUser, VisionLight — xem 2m. Player trong group `saveable` (save id `player`, global)
 ```
 
 - **Origin = chân nhân vật**, nên Y-sort trong `EntityContainer` dựa trên điểm tiếp xúc mặt đất. Visual vẽ phía trên origin. Không dùng Z-index.
 - **Input Map** (`project.godot`): `move_up` W/↑, `move_down` S/↓, `move_left` A/←, `move_right` D/→. Dùng physical keycode (đúng vị trí WASD trên mọi layout bàn phím). Script chỉ đọc action, không kiểm tra phím vật lý.
 - **Di chuyển:** `_physics_process` → `Input.get_vector()` → `velocity = direction * move_speed` → `move_and_slide()`. `vertical_speed_scale` (mặc định 1) nhân vào thành phần dọc — map isometric đặt 0.7 qua `IsoActorAdapter` (2k). Liên tục, 8 hướng, chéo được chuẩn hóa (|v| ≤ `move_speed`), thả phím thì dừng ngay; không tăng tốc/quán tính.
-- `move_speed` (`@export`, mặc định **160 px/s**) — giá trị thử nghiệm.
+- `move_speed` (`@export`, mặc định **160 px/s**) — giá trị thử nghiệm. Chạy (Shift ×1.5), né (Space), chỉ số sinh tồn: xem 2m.
 - **Spawn:** đặt trực tiếp trong `world.tscn` tại (480, 320), giữa quảng trường đá. Chưa có SpawnManager/checkpoint.
 - Placeholder: kích thước collision, tốc độ, vị trí spawn. Visual (sprite) là art production — xem mục "Player visual" dưới đây.
 - `player.gd` chỉ đọc input (`basic_attack` → `BasicAttackController.request_attack()`), chặn điều khiển khi chết và cung cấp `is_dead()`, `reset_state()`, `get_aim_direction(world_point)`, `set_combat_input_blocked(bool)` (UI đang mở: bỏ qua đánh thường/kỹ năng, hủy ngắm/vận sức/combo; di chuyển vẫn được). Tốc độ = `move_speed` × hệ số passive. Logic HP/đòn đánh/class nằm trong component.
@@ -390,6 +391,8 @@ ui/skills/  skill_bar.gd/.tscn, skill_slot_view.gd/.tscn      ui/common/input_hi
 ```
 
 **SkillDefinition** (dữ liệu thiết kế, không chứa runtime state, không có field vũ khí): `skill_id` (ổn định), `display_name`, `short_name`, `description`, `default_cast_mode`; *Targeting*: `targeting_type` (SELF / LINE / GROUND_CIRCLE / CONE), `cast_range`, `radius`, `width`, `angle_degrees`; *Timing*: `cast_time`, `cooldown`, `max_charges`, `recast_delay`; *Effect*: `effect_type` (DAMAGE / HEAL), `effect_amount`, `knockback`; *Indicator*: `indicator_color`. `is_valid()` kiểm tra theo loại targeting.
+
+**Mana (TASK M2):** `SkillDefinition.mana_cost`, trừ lúc bắt đầu vận sức cùng charge; thiếu → `cast_rejected("Thiếu mana")` — xem 2m.
 
 **Cooldown & charges (quy tắc prototype):** mỗi lần thi triển tiêu 1 charge; khi charges < max, hồi **lần lượt từng charge** sau mỗi `cooldown` giây (`max_charges = 1` → cooldown thông thường). `recast_delay` = khoảng nghỉ tối thiểu giữa 2 lần thi triển. Thi triển được khi charges > 0 và hết recast delay. Không có global cooldown.
 
@@ -688,6 +691,75 @@ Ví dụ (rút gọn từ file thật):
 
 **Giới hạn:** một slot (chưa có UI chọn slot); ô weapon nhận vũ khí từ phím debug mà không trả item cũ về túi; cooldown/charges kỹ năng, enemy (HP/vị trí), bù nhìn không được lưu (về trạng thái của scene khi tải); không có hotbar/chế tạo/ăn uống/độ bền/tiền/chỉ số trang phục; icon là placeholder; `MapCatalog` mới có 2 map, chưa có chuyển map trong game; vứt đồ luôn rơi dưới chân Player; pickup kiểm tra tầng nhưng không kiểm tra vật cản giữa Player và pickup.
 
+## 2m. Thời gian, ngày/đêm, sinh tồn, ngủ, chết & hồi sinh [Đã triển khai, prototype — TASK M2 (gộp M2.1, thiết kế v0.2)]
+
+Mốc M2 theo [design/game_design.md](design/game_design.md) v0.2 (mục 3.4, 4.3–4.6): "sống sót qua một ngày một đêm". **Không có chỉ số Thể lực/Mệt** (bỏ theo v0.2 trước khi ra bản nào — save chưa từng có field energy nên không cần migration v2 → v3).
+
+```
+features/time/       game_clock.gd (GameClock), time_settings.gd/.tres (TimeSettings)
+features/survival/   activity.gd (Activity.Kind), mana_*.gd/.tres, stamina_*.gd/.tres, hunger_*.gd/.tres,
+                     buff_definition.gd, buff_component.gd, item_user.gd (ItemUser)
+                     rest/   rest_spot.gd (RestSpot), bed.gd/.tscn, tent.gd/.tscn, sleep_controller.gd, sleep_settings.gd/.tres,
+                             placement_check.gd (PlacementCheck)
+                     death/  death_bag.gd/.tscn (DeathBag), death_controller.gd (DeathController)
+features/items/      consumable_effect.gd (ConsumableEffect) + item mới: bread, grilled_meat, lantern, tent
+entities/player/     mobility_settings.gd + player_mobility.tres (chạy / né)
+world/environment/time/  day_night_lighting.gd, day_night_settings.gd/.tres, vision_light.gd (VisionLight)
+ui/survival/         sleep_overlay.gd (SleepOverlay), death_bag_marker.gd (DeathBagMarker)
+save/                save_migrations.gd (SaveMigrations: v1 → v2)
+```
+
+**Đồng hồ** — `GameClock` (Node trong World, **không** Autoload; group `saveable`, global id `clock`). `total_minutes` tính từ 0:00 ngày 1; ngày mới lúc **0:00**. Chạy trong `_process` → dừng khi `SceneTree.paused` (mở túi đồ không pause; game chưa có menu hệ thống — đã chốt với chủ dự án). `advance(phút, sleeping)` là đường duy nhất làm thời gian trôi: phát `time_passed(phút, sleeping)`, `hour_changed` cho **từng** giờ vượt qua, `day_started(day)` mỗi nửa đêm, `phase_changed` cho **từng** mốc phase (dawn 5:00 → day 7:00 → dusk 17:00 → night 19:00), `minute_changed`. Debug (chỉ build debug): **F7** bật/tắt tua ×10, **F8** +1 giờ.
+
+**Ngày/đêm & tầm nhìn đêm** — `DayNightLighting` (một node/map) đọc GameClock mỗi frame: `darkness` 0 (ngày) → 1 (đêm), chuyển mượt (smoothstep) trong bình minh/hoàng hôn; `SunTint` (CanvasModulate) = ngày → hoàng hôn → đêm `(0.03, 0.035, 0.07)`; node group `daylight_fx` (tia nắng, đốm nắng) mờ theo darkness; mọi `VisionLight` (group `vision_light`) sáng theo darkness. Phát `darkness_changed` cho quái đêm (M6).
+
+- **Kỹ thuật:** `CanvasModulate` gần đen ban đêm (mọi thứ trên canvas của map — địa hình, quái, item — chìm vào bóng tối thật; UI ở CanvasLayer riêng không bị ảnh hưởng) + `PointLight2D` (blend Add) cộng sáng lại vùng quanh nguồn sáng. Texture là `GradientTexture2D` radial tạo bằng code (sáng đều tới `inner_ratio` 0.6 rồi mờ dần tới mép), node light nén dọc theo `ground_squash` → vùng sáng là **hình tròn trên mặt đất** (ellipse 2:1 trên map iso). Chọn vì: chạy sẵn trên renderer Compatibility (Light2D 2D hỗ trợ trên GLES3), không cần shader mask/SDF hay SubViewport, nguồn sáng mới chỉ là thêm một node; cùng một mô hình số (`VisionLight.cover_at`, `DayNightLighting.get_visibility / is_point_visible`) dùng cho logic + test.
+- **Bán kính:** `DayNightSettings.base_vision_radius` 160 px mặt đất (≈ 3.5 ô lưới) — đủ thấy quái tới gần, phải chuẩn bị đèn/đi đường quen. Đèn lồng ở ô **offhand**: `ItemDefinition.light_radius` +96 (→ 256) + màu ấm `light_color`; chưa tốn dầu. Nguồn sáng thế giới: đá rune (VisionLight 140 px, xanh), đèn cạnh giường nhà (96 px, ấm).
+- **Hiệu năng** (máy dev: AMD Radeon Graphics tích hợp, `gl_compatibility`, cửa sổ 1152×648, zoom 2×, tắt vsync): ngày 144 FPS, đêm 142 FPS, đêm + đèn lồng 131 FPS (vsync bật: 60 cố định cả ba).
+
+**Chỉ số** (mỗi chỉ số một component, thông số trong Resource; Player có `ManaComponent`, `StaminaComponent`, `HungerComponent`, `BuffComponent`):
+
+| Chỉ số / Resource | Mặc định | Lý do |
+|---|---|---|
+| Mana (`mana_settings.tres`) | max 100, hồi 4/s sau 1 s kể từ lần tiêu cuối | 4 kỹ năng thử tốn 10–25 → spam liên tục cạn trong ~10 s, nghỉ ~25 s là đầy: đánh nhau phải chọn chiêu |
+| `SkillDefinition.mana_cost` | Arc Slash 15, Ground Burst 25, Linear Strike 10, Self Heal 20 | Tỉ lệ theo sát thương/hiệu quả; không đổi chỉ số combat khác. Thiếu mana: không cast, Skill Bar ghi "Thiếu mana (N)" + tô xanh |
+| Stamina (`stamina_settings.tres`) | max 100, hồi 30/s sau 0.6 s; chạy 20/s; né 25/lần; kiệt sức (về 0) → chỉ chạy/né lại khi hồi ≥ 30 | Chạy liên tục ~5 s, né 4 lần liền; hồi đầy ~3.5 s nên giữa các đợt đánh luôn có lại |
+| Chạy / né (`player_mobility.tres`) | đi 160 px/s (giữ nguyên), Shift ×1.5 = 240; né 72 px mặt đất trong 0.2 s, bất tử 0.3 s, hồi né 0.5 s | Đi bộ giữ cảm giác cũ (đã chốt); né ≈ 2 lần bề rộng đòn kiếm để thoát đòn, i-frame dài hơn lướt một chút cho dễ canh |
+| Đói (`hunger_settings.tres`) | 0–100; −4/giờ game khi thức, −2/giờ khi ngủ; chạy 0.08/s, né 0.5, mỗi đòn 0.15, mỗi kỹ năng 0.4; < 25: không hồi stamina; = 0: −1 HP mỗi 3 phút game; ≥ 95: "đang no" | Một ngày thức (~18 h) mất ~72 + hoạt động → 2–3 bữa/ngày; đói lả mất ~20 HP/giờ game — đủ chậm để kịp tìm đồ ăn |
+| Ngủ (`sleep_settings.tres`) | ngủ 18:00 → trước 6:00; dậy 6:00; ngất lúc 2:00; ngủ hồi 50% HP + 100% mana; hồi sinh 50% HP; mờ 0.8 s, "Ngày N" 1.5 s | Bám v0.2 (4.6): ngủ = qua đêm an toàn + hồi + tự lưu |
+| Đồng hồ (`time_settings.tres`) | 1 ngày = 1200 s thực (20 phút), bắt đầu 6:00 ngày 1 | Theo prompt M2 / v0.2 |
+
+Chạy (Shift) và né (Space) qua `Player`: tốc độ chạy × buff MOVE_SPEED; né đi bằng `move_and_slide` nên vách, nước, tầng vẫn chặn; quãng lướt đo trên mặt đất (`set_ground_squash`); né hủy combo + vận sức; i-frame qua `Hurtbox.set_invulnerable()`. Hoạt động (chạy/né/đánh/kỹ năng) báo `HungerComponent.exert(Activity.Kind)`. `PlayerSprite`: đi = `walk`, Shift = `run` (tua theo tốc độ thật so với mốc 120 / 240 px/s), né = `run` tua cho vừa 0.2 s (chưa có animation né riêng).
+
+**Ăn uống / dùng item** — `ItemDefinition.consumable: ConsumableEffect` (hunger, health, mana + `buff: BuffDefinition` tùy chọn; số âm = trừ). M3 thêm món chỉ cần item + ConsumableEffect. `ItemUser` (trên Player): đói ≥ 95 thì không ăn món có hồi đói; HP âm không làm chết (còn tối thiểu 1). Item thử: quả mọng (+8 đói, +2 HP), thịt sống (+10 đói, −3 HP), bánh mì (+30, +5 HP), thịt nướng (+40, +15 HP, buff "Ấm bụng" hồi stamina ×1.5 trong 120 s). Cửa sổ túi đồ: **chuột phải** = menu Dùng/Dựng · Trang bị · Tháo · Tách nửa · Vứt (thay cho tách nửa trực tiếp của M1 — đã chốt); **F** (`item_use`) khi rê chuột lên ô hoặc **nhấp đúp** = hành động chính. Ô trang bị mới: **Tay phụ** (`offhand`).
+
+**Ngủ** — `RestSpot` (Interactable, `spot_id`): `Bed` (E → ngủ; `home` = "nhà" tạm trong Glade, chuyển vào nhà ở M5) và `Tent`. `SleepController` (node trong World): `try_sleep` chỉ trong khung giờ → khóa điều khiển, đồng hồ dừng, mờ → `advance(tới 6:00, sleeping=true)` (đói giảm nhịp ngủ) → hồi HP/mana → chỗ ngủ thành **điểm tỉnh dậy / hồi sinh** (`Player.respawn_point = {map_id, kind, id}`) → **tự lưu** (SaveService) → "Ngày N" → sáng lại. Còn thức lúc 2:00 → ngất (hoãn `call_deferred` khỏi signal giờ): tỉnh ở điểm tỉnh dậy lúc 6:00, không hồi, không tự lưu. Điểm tỉnh dậy không còn (lều đã thu) → giường `home` gần nhất → tại chỗ.
+
+**Lều** — item `tent` (`ItemDefinition.deploy_scene` = `tent.tscn`). Dùng từ túi → `World._deploy_item`: chỉ **một lều** dựng cùng lúc; không trên cầu thang; `PlacementCheck`: đúng tầng (ElevationMap), không phải nước/vách/vực (TerrainLogic), footprint ellipse 14 px không chạm vật cản tầng đó / enemy / vật tương tác khác (rương, giường...). Lều dựng tại chỗ Player đứng, không có thân va chạm. E → menu **Ngủ / Thu lều** (thu: vào túi, điểm tỉnh dậy về nhà). Lưu trong `world_items.deployed`.
+
+**Chết & hồi sinh** — `DeathController` (chỉ map có save; Combat Sandbox giữ "bị hạ gục / R"): HP về 0 → khóa → mờ → **toàn bộ túi đồ** thành một `DeathBag` tại chỗ chết, cùng tầng (đồ đang mặc giữ nguyên, không mất tiền) → hồi sinh ở điểm tỉnh dậy với 50% HP → sáng lại. Chết tiếp khi chưa nhặt túi cũ → túi mới, túi cũ còn. `DeathBag` (Interactable, E): đồ về túi, phần không vừa rơi xuống đất cạnh đó. `DeathBagMarker` (HUD): dấu trên túi trong màn hình, mũi tên ở mép màn hình + khoảng cách cho túi ngoài màn hình. Lưu trong `world_items.death_bags`.
+
+**HUD** (`CombatHUD`, gộp vào cột trái): "Ngày N · HH:MM · phase" + ô màu phase, HP, thanh Mana (xanh) / Stamina (vàng, đỏ khi kiệt sức), "Đói x / 100" (đỏ nhấp nháy + "cần ăn!" khi < 25), buff đang có; dòng gợi ý phím thứ 3. Bảng "bị hạ gục" tắt ở map có DeathController. (Đã bỏ độ lệch (77, −65) của CombatHUD trong scene Glade — do Godot Editor lưu vào ở commit 619f391 — vì đẩy dòng trên cùng của HUD ra ngoài màn hình.)
+
+**Save v2** — `SCHEMA_VERSION = 2`; `save/save_migrations.gd` đăng ký migration **v1 → v2**: thêm `global.clock = {day 1, minute 360}`, `global.player.survival = {}` (→ chỉ số đầy, chưa có điểm hồi sinh), `world_items.death_bags = []`, `world_items.deployed = []`. `SaveService.capture()` giữ trạng thái global của phiên mà scene hiện tại không có (vd. đồng hồ khi lưu ở test_map). Player lưu thêm `survival: {mana, stamina, hunger, respawn}`; buff không lưu.
+
+```json
+"global": {
+  "clock": {"version": 1, "day": 5, "minute": 1215.0},
+  "player": {"...": "...", "survival": {"mana": 42.5, "stamina": 61.0, "hunger": 37.25,
+             "respawn": {"map_id": "glade", "kind": "bed", "id": "glade_home_bed"}}}},
+"maps": {"glade": {"world_items": {"version": 2, "collected": ["glade_wood_1"], "dropped": [],
+  "death_bags": [{"id": "bag_1760900000_31", "position": [-416.0, 912.0], "tier": 0,
+                  "inventory": {"version": 1, "size": 24, "slots": [{"slot": 0, "id": "wood", "count": 7}]}}],
+  "deployed": [{"item_id": "tent", "id": "tent_1760900000", "position": [-416.0, 912.0], "tier": 0}]}}}
+```
+
+**Trong Glade:** GameClock, DayNightLighting, SleepController, DeathController (gốc scene); `EntityContainer/Bed` (giường nhà tạm, dưới rương); pickup mới: quả mọng, bánh mì, đèn lồng, lều; rương thêm 2 thịt nướng; VisionLight trên đá rune; UILayer thêm DeathBagMarker, SleepOverlay. Script dựng Glade đã cập nhật (chạy trên bản sao → test đều pass).
+
+**Kiểm thử** (`tests/run_all.gd` chạy tất cả; mọi test kế thừa `tests/test_base.gd` — fail khi có lỗi runtime / push_error ngoài dự kiến): `tests/survival/test_survival.gd` (88 ca, đi qua input thật khi có thể: phím ô kỹ năng, Shift/WASD, Space, I, chuột phải + rê chuột + F trên ô túi đồ, E với giường/lều/túi, F7/F8) — đồng hồ, mana, stamina/chạy/né (quãng 72 px mặt đất, vách chặn, i-frame, kiệt sức), đói, ăn, tầm nhìn đêm + đèn lồng + đá rune, ngủ/ngất, lều (hợp lệ/không, một lều, ngủ, thu, lưu/tải), chết (túi, hồi sinh, đồ mặc, nhặt lại, 2 túi, HUD, lưu/tải), save v2, migration v1 → v2, không còn Energy. `tests/smoke/test_scenes_load.gd` (nạp + chạy 4 scene chính).
+
+**Giới hạn:** chưa có menu hệ thống/pause (đồng hồ chỉ theo SceneTree.paused); đèn lồng chưa tốn dầu; chưa có animation né riêng (dùng run tua nhanh); buff không lưu vào save; ngủ lều không có rủi ro; quái đêm chưa làm (chỉ có signal `darkness_changed`/`phase_changed`); giường "nhà" tạm đặt trong Glade; DeathBag không biến mất theo thời gian; vùng sáng là hình tròn trên mặt đất nên vật cao (cây) bị cắt theo vòng sáng, không có bóng đổ; enemy (HP, vị trí) không lưu; dưới gầm cầu không dựng được lều (điểm thuộc tầng cao).
+
 ## 3. Quy ước đặt tên [Đã quyết định]
 
 Theo [GDScript style guide](https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/gdscript_styleguide.html):
@@ -743,7 +815,7 @@ Resource dùng chung giữa nhiều instance **không được** bị sửa tron
 - Chỉ thêm Autoload khi có nhu cầu thực sự mang tính toàn cục (vd. dịch vụ save, điều phối chuyển scene) và phải được người dùng đồng ý.
 - Không dùng Autoload làm "manager" chứa logic gameplay hoặc làm kho trạng thái tùy tiện.
 
-## 10. Save / Load [Đã triển khai — TASK M1, chi tiết 2l]
+## 10. Save / Load [Đã triển khai — TASK M1, chi tiết 2l; schema 2 + migration v1 → v2 ở 2m]
 
 lưu **runtime state** ra file JSON trong `user://`, logic nằm ở `save/`. File save chỉ chứa dữ liệu thuần (số, chuỗi, ID), tham chiếu dữ liệu thiết kế bằng ID/đường dẫn, không serialize trực tiếp Resource hay node. Định dạng có trường phiên bản (`schema_version`) để hỗ trợ migrate. Hệ thống mới muốn được lưu: thêm node vào group `saveable` + 3 hàm `get_save_id` / `save_state` / `load_state` (ID ổn định), không sửa SaveService.
 
@@ -753,6 +825,6 @@ Các mục sau sẽ quyết định trong task riêng, không tự chọn trư�
 
 - Độ phân giải pixel-art gốc, viewport scale, chế độ stretch cuối cùng. (Môi trường mới theo hướng hand-painted độ phân giải cao — 2k. Đã có: cửa sổ mặc định 1920×1080, viewport gốc vẫn 1152×648 — mục 2k; độ phân giải thiết kế cuối cùng vẫn chưa chốt.)
 - Độ phân giải thiết kế / stretch mode cuối cùng (ảnh hưởng zoom và pixel-perfect).
-- Điều khiển nhân vật chính thức (animation, dodge, gamepad, remapping). Input Map di chuyển cơ bản đã có (mục 2c).
+- Điều khiển nhân vật chính thức (gamepad, remapping). Input Map di chuyển, chạy, né đã có (2c, 2m).
 - Luồng chuyển scene / menu.
 - Công cụ kiểm thử.

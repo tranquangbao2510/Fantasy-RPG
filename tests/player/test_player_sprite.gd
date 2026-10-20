@@ -3,7 +3,7 @@ extends "res://tests/test_base.gd"
 ## 1. SpriteFrames sinh từ hero_sprites.json: đủ 9 animation × 8 hướng, anchor/texel_scale, sheet có mipmaps,
 ##    nhân vật cao < 64 px world.
 ## 2. Chọn hướng: 8 vector mặt đất → đúng hàng sheet, trên map iso (squash 0.5) và map cũ (squash 1).
-## 3. Trạng thái → animation trong Environment Prototype: idle / run / walk, combo attack_1/2/3 (tua khớp
+## 3. Trạng thái → animation trong Environment Prototype: idle / walk / run (Shift), combo attack_1/2/3 (tua khớp
 ##    windup + active + recovery của mọi vũ khí thử), cast (tua theo cast time), hit (không chặn di chuyển),
 ##    death giữ frame cuối, reset về idle.
 ## 4. Map cũ (world.tscn): squash 1, hướng theo màn hình.
@@ -40,6 +40,8 @@ func _run_tests() -> void:
 	root.add_child(_world)
 	_player = _world.get_node("EntityContainer/Player") as Player
 	_sprite = _player.get_node("Visual/Sprite") as PlayerSprite
+	# Sprite test kiểm tra animation chết giữ frame cuối (hành vi map không có cơ chế hồi sinh) → gỡ DeathController.
+	_world.get_node("DeathController").free()
 	await frames(5)
 	_park_enemy()
 	_place_player()
@@ -142,10 +144,12 @@ func _test_locomotion() -> void:
 	check("iso_squash", is_equal_approx(_sprite._ground_squash, S))
 	check("start_idle_S", _sprite.animation == &"idle_S" and _sprite.is_playing(), String(_sprite.animation))
 	var cases: Array = [
-		[[&"move_right"], &"run_E"],
-		[[&"move_down"], &"run_S"],
-		[[&"move_up", &"move_left"], &"run_NW"],
-		[[&"move_up", &"move_right"], &"run_NE"],
+		[[&"move_right"], &"walk_E"],
+		[[&"move_down"], &"walk_S"],
+		[[&"move_up", &"move_left"], &"walk_NW"],
+		[[&"move_up", &"move_right"], &"walk_NE"],
+		[[&"move_right", &"sprint"], &"run_E"],
+		[[&"move_down", &"sprint"], &"run_S"],
 	]
 	for c: Array in cases:
 		var actions: Array[StringName] = []
@@ -155,17 +159,15 @@ func _test_locomotion() -> void:
 		_release(actions)
 		await frames(3)
 		# Thả phím: đứng yên, giữ hướng vừa đi.
-		var idle: StringName = StringName(String(c[1]).replace("run_", "idle_"))
+		var idle: StringName = StringName(String(c[1]).replace("run_", "idle_").replace("walk_", "idle_"))
 		check("release_%s" % idle, _sprite.animation == idle, String(_sprite.animation))
 		_place_player()
 		await frames(2)
-	# Chậm hơn ngưỡng run (vd. passive làm chậm) → walk.
-	var speed: float = _player.move_speed
-	_player.move_speed = _sprite.run_speed_threshold * 0.6
+	# Đi bộ: walk tua theo tốc độ thật (160 px/s so với mốc 120 → ×1.33); chạy Shift: run.
 	await _hold([&"move_left"], 6)
-	check("slow_move_walk", _sprite.animation == &"walk_W", String(_sprite.animation))
+	check("walk_speed_scale", _sprite.animation == &"walk_W" and is_equal_approx(_sprite.speed_scale, clampf(160.0 / _sprite.walk_reference_speed, 0.6, 2.0)),
+		"%s ×%.2f" % [_sprite.animation, _sprite.speed_scale])
 	_release([&"move_left"])
-	_player.move_speed = speed
 	_place_player()
 	await frames(2)
 
@@ -295,6 +297,6 @@ func _test_legacy_map() -> void:
 	check("legacy_squash", is_equal_approx(sprite._ground_squash, 1.0))
 	check("legacy_offset_scale", sprite.offset == -(FRAMES.get_meta(&"anchor") as Vector2) and sprite.scale == Vector2(0.5, 0.5))
 	await _hold([&"move_up", &"move_right"], 6)
-	check("legacy_move_NE", sprite.animation == &"run_NE", String(sprite.animation))
+	check("legacy_move_NE", sprite.animation == &"walk_NE", String(sprite.animation))
 	_release([&"move_up", &"move_right"])
 	legacy.queue_free()

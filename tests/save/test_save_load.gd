@@ -191,7 +191,7 @@ func _test_window_actions(window: InventoryWindow, chest: Chest) -> void:
 	var empty: int = bag.first_empty_slot()
 	window.drop_on_slot(weapon_view, window.get_bag_view(empty))
 	check("ui_unequip_by_drag", weapons.get_weapon() == null and bag.get_stack(empty).item_id == &"test_sword")
-	window.toggle_equip(window.get_bag_view(empty))
+	window.primary_action(window.get_bag_view(empty))
 	check("ui_double_click_equip", weapons.get_weapon().weapon_id == &"test_sword" and bag.is_slot_empty(empty))
 	# Kéo ra ngoài cửa sổ → rơi xuống đất dưới chân, cùng tầng.
 	var before: int = _layer.get_pickups().size()

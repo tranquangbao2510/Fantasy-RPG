@@ -12,7 +12,8 @@ extends SceneTree
 ## Kết quả in "RESULT <đạt>/<tổng> passed" + danh sách lỗi ngoài dự kiến. Chạy tất cả: tests/run_all.gd.
 ##
 ## Lưu ý: script test được biên dịch TRƯỚC khi Autoload đăng ký → không dùng tên Autoload (SaveService) trực tiếp
-## trong file test (dùng preload script + /root/<Tên>), và mọi thứ chạy sau _init (call_deferred).
+## trong file test (dùng preload script + /root/<Tên>), không khai báo kiểu bằng class có dùng tên Autoload (vd. World —
+## dùng Node rồi truy cập thuộc tính động), và mọi thứ chạy sau _init (call_deferred).
 
 
 class ErrorCatcher extends Logger:

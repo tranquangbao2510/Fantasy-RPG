@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://features/items/item_definition.gd" id="1_item"]
+[ext_resource type="Texture2D" path="res://features/items/icons/bread.png" id="3_icon"]
+[ext_resource type="Script" path="res://features/items/consumable_effect.gd" id="4_consumable"]
+
+[sub_resource type="Resource" id="Resource_food"]
+script = ExtResource("4_consumable")
+hunger = 30.0
+health = 5
+
+[resource]
+script = ExtResource("1_item")
+id = &"bread"
+display_name = "Bánh mì"
+description = "Ổ bánh mì nướng giòn, ăn no lâu."
+icon = ExtResource("3_icon")
+category = 1
+max_stack = 20
+sell_price = 8
+tags = Array[StringName]([&"bread", &"cooked"])
+consumable = SubResource("Resource_food")

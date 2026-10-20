@@ -10,13 +10,15 @@ extends AnimatedSprite2D
 ## - Ưu tiên: death > attack / cast (cái bắt đầu sau thắng) > hit > run / walk / idle.
 ##   attack_1/2/3 theo bước combo, tua tốc độ cho đúng windup + active + recovery của bước;
 ##   cast tua theo cast time; hit/death tua về `hit_duration`/`death_duration`; death giữ frame cuối.
-## - Player chỉ có một tốc độ (`move_speed`): chọn run khi tốc độ trên mặt đất ≥ `run_speed_threshold`, walk khi
-##   thấp hơn (vd. bị passive làm chậm, trượt dọc tường). Locomotion phát ở fps gốc.
+## - Đi / chạy (TASK M2): thân có is_sprinting() (Player) → chạy (Shift) = run, đi = walk; thân không có (map cũ,
+##   actor khác) → run khi tốc độ trên mặt đất ≥ `run_speed_threshold`. Walk/run tua theo tốc độ thật so với
+##   `walk_reference_speed` / `run_reference_speed` (kẹp 0.6–2) để chân đỡ trượt.
+## - Né: thân phát `dodged(duration)` → tạm dùng run tua cho hết đúng thời gian lướt (chưa có animation né riêng).
 
 const DIRECTIONS: PackedStringArray = ["S", "SW", "W", "NW", "N", "NE", "E", "SE"]
 const ATTACK_ANIMATIONS: Array[StringName] = [&"attack_1", &"attack_2", &"attack_3"]
 
-enum Action { NONE, ATTACK, CAST, HIT, DEATH }
+enum Action { NONE, ATTACK, CAST, HIT, DEATH, DODGE }
 
 @export var body: CharacterBody2D
 @export var health: HealthComponent
@@ -24,6 +26,9 @@ enum Action { NONE, ATTACK, CAST, HIT, DEATH }
 @export var skills: SkillCastingController
 ## Tốc độ trên mặt đất (px/s) từ đó trở lên dùng run thay cho walk.
 @export var run_speed_threshold: float = 110.0
+## Tốc độ mặt đất (px/s) mà walk / run phát ở fps gốc.
+@export var walk_reference_speed: float = 120.0
+@export var run_reference_speed: float = 240.0
 ## Dưới tốc độ này (px/s trên mặt đất) coi như đứng yên.
 @export var idle_speed_threshold: float = 8.0
 ## Thời lượng hiển thị animation hit (không chặn input; đang đánh/cast thì không phát).
@@ -75,6 +80,8 @@ func _ready() -> void:
 		health.revived.connect(_on_revived)
 	if attack != null:
 		attack.step_started.connect(_on_attack_step_started)
+	if body != null and body.has_signal(&"dodged"):
+		body.connect(&"dodged", _on_dodged)
 	if skills != null:
 		skills.cast_started.connect(_on_cast_started)
 		skills.cast_cancelled.connect(_on_cast_cancelled)
@@ -120,7 +127,7 @@ func get_action_duration() -> float:
 func _physics_process(delta: float) -> void:
 	if _action_time_left > 0.0:
 		_action_time_left -= delta
-		if _action_time_left <= 0.0 and (_action == Action.CAST or _action == Action.HIT):
+		if _action_time_left <= 0.0 and (_action == Action.CAST or _action == Action.HIT or _action == Action.DODGE):
 			_action = Action.NONE
 	if _action == Action.ATTACK and not _restart_pending and (attack == null or not attack.is_attacking()):
 		_action = Action.NONE
@@ -139,11 +146,26 @@ func _locks_direction() -> bool:
 	return _action == Action.ATTACK or _action == Action.CAST or _action == Action.DEATH
 
 
+func _ground_speed() -> float:
+	return GroundSpace.length(body.get_real_velocity(), _ground_squash) if body != null else 0.0
+
+
 func _locomotion_base() -> StringName:
-	var speed: float = GroundSpace.length(body.get_real_velocity(), _ground_squash) if body != null else 0.0
+	var speed: float = _ground_speed()
 	if speed < idle_speed_threshold:
 		return &"idle"
+	if body.has_method(&"is_sprinting"):
+		return &"run" if body.call(&"is_sprinting") else &"walk"
 	return &"run" if speed >= run_speed_threshold else &"walk"
+
+
+## Hệ số tua cho walk/run theo tốc độ thật (1 cho idle).
+func _locomotion_speed_scale(base: StringName) -> float:
+	if base == &"walk":
+		return clampf(_ground_speed() / walk_reference_speed, 0.6, 2.0)
+	if base == &"run":
+		return clampf(_ground_speed() / run_reference_speed, 0.6, 2.0)
+	return 1.0
 
 
 func _refresh() -> void:
@@ -162,10 +184,13 @@ func _refresh() -> void:
 		# Đổi hướng giữa chừng: giữ nhịp (mọi hướng cùng số frame); đổi loại animation: phát từ đầu.
 		var keep_frame: int = frame
 		var keep_progress: float = frame_progress
-		speed_scale = _action_speed if _action != Action.NONE else 1.0
 		play(animation_name)
 		if base == _base:
 			set_frame_and_progress(keep_frame, keep_progress)
+	if _action == Action.NONE:
+		speed_scale = _locomotion_speed_scale(base)
+	else:
+		speed_scale = _action_speed
 	_base = base
 
 
@@ -202,3 +227,9 @@ func _on_revived() -> void:
 	_action = Action.NONE
 	_action_time_left = 0.0
 	_restart_pending = false
+
+
+func _on_dodged(duration: float) -> void:
+	if _action == Action.DEATH:
+		return
+	_start_action(Action.DODGE, &"run", duration)

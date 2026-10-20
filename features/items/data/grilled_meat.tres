@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://features/items/item_definition.gd" id="1_item"]
+[ext_resource type="Texture2D" path="res://features/items/icons/grilled_meat.png" id="3_icon"]
+[ext_resource type="Script" path="res://features/items/consumable_effect.gd" id="4_consumable"]
+[ext_resource type="Script" path="res://features/survival/buff_definition.gd" id="5_buff"]
+
+[sub_resource type="Resource" id="Resource_buff"]
+script = ExtResource("5_buff")
+buff_id = &"warm_meal"
+display_name = "Ấm bụng"
+stat = 0
+multiplier = 1.5
+duration = 120.0
+
+[sub_resource type="Resource" id="Resource_food"]
+script = ExtResource("4_consumable")
+hunger = 40.0
+health = 15
+buff = SubResource("Resource_buff")
+
+[resource]
+script = ExtResource("1_item")
+id = &"grilled_meat"
+display_name = "Thịt nướng"
+description = "Thịt nướng thơm lừng: no lâu, hồi máu và ấm bụng (hồi stamina nhanh hơn một lúc)."
+icon = ExtResource("3_icon")
+category = 1
+max_stack = 20
+sell_price = 15
+tags = Array[StringName]([&"meat", &"cooked"])
+consumable = SubResource("Resource_food")

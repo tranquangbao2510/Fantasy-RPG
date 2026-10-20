@@ -11,9 +11,30 @@ const GROUP: StringName = &"hurtboxes"
 ## Tầng hiện tại của thực thể (bit mask, xem DamageInfo.tier_mask). 0 = không lọc. Map có elevation đặt qua set_elevation().
 var tier_mask: int = 0
 
+## Thời gian bất tử còn lại (giây, vd. i-frame khi né — TASK M2). > 0 thì không nhận đòn.
+var _invulnerable_left: float = 0.0
+
 
 func _ready() -> void:
 	add_to_group(GROUP)
+	set_physics_process(false)
+
+
+func _physics_process(delta: float) -> void:
+	_invulnerable_left -= delta
+	if _invulnerable_left <= 0.0:
+		_invulnerable_left = 0.0
+		set_physics_process(false)
+
+
+## Bất tử trong `seconds` giây (không rút ngắn khoảng đang có).
+func set_invulnerable(seconds: float) -> void:
+	_invulnerable_left = maxf(_invulnerable_left, seconds)
+	set_physics_process(_invulnerable_left > 0.0)
+
+
+func is_invulnerable() -> bool:
+	return _invulnerable_left > 0.0
 
 
 ## Khóa chống trúng nhiều lần trong một đòn: nhiều Hurtbox cùng một HealthComponent tính là một mục tiêu.
@@ -31,7 +52,7 @@ func get_hit_position() -> Vector2:
 
 
 func can_receive(info: DamageInfo) -> bool:
-	return info != null and info.is_valid() and health != null and not health.is_dead() and info.source != owner \
+	return info != null and info.is_valid() and health != null and not health.is_dead() and info.source != owner and not is_invulnerable() \
 		and (info.tier_mask == 0 or tier_mask == 0 or (info.tier_mask & tier_mask) != 0)
 
 

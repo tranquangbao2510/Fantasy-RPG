@@ -42,6 +42,7 @@ effect_amount_bonus = 4
 [resource]
 script = ExtResource("1_abd2r")
 skill_id = &"test_arc_slash"
+mana_cost = 15.0
 display_name = "Test Arc Slash"
 short_name = "Arc"
 description = "Prototype: sát thương hình quạt phía trước."

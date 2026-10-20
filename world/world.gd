@@ -31,6 +31,12 @@ extends Node2D
 @export var inventory_window: InventoryWindow
 @export var pickup_layer: ItemPickupLayer
 @export var pickup_toast: PickupToast
+## Tùy chọn (TASK M2): đồng hồ, ánh sáng ngày/đêm + tầm nhìn đêm, ngủ, chết & hồi sinh, đánh dấu túi đồ.
+@export var clock: GameClock
+@export var day_night: DayNightLighting
+@export var sleep_controller: SleepController
+@export var death_controller: DeathController
+@export var death_marker: DeathBagMarker
 
 @onready var _environment: Node2D = $Environment
 @onready var _map_container: Node2D = $MapContainer
@@ -49,6 +55,7 @@ func _ready() -> void:
 	_setup_progression()
 	_setup_inventory()
 	_setup_save()
+	_setup_survival()
 	_setup_sandbox()
 
 
@@ -221,6 +228,7 @@ func _setup_inventory() -> void:
 		inventory_window.opened.connect(_refresh_combat_block)
 		inventory_window.closed.connect(_refresh_combat_block)
 		inventory_window.drop_requested.connect(_on_drop_requested)
+		inventory_window.use_requested.connect(_on_use_requested)
 		inventory_window.message.connect(_show_feedback)
 		for node: Node in find_children("*", "Chest", true, false):
 			(node as Chest).open_requested.connect(inventory_window.open_chest)
@@ -275,3 +283,126 @@ func _on_game_loaded(slot: int) -> void:
 func _show_feedback(message: String) -> void:
 	if interaction_feedback != null:
 		interaction_feedback.show_message(message)
+
+
+# --- Thời gian & sinh tồn (TASK M2) ---------------------------------------------------------------
+
+const TENT_FOOTPRINT_RADIUS: float = 14.0
+
+var _tent_menu: PopupMenu
+var _tent_menu_target: Tent
+
+
+func _setup_survival() -> void:
+	if player == null:
+		return
+	var item_user: ItemUser = player.get_item_user()
+	item_user.deploy_handler = _deploy_item
+	item_user.used.connect(func(_item_id: StringName, message: String) -> void: _show_feedback(message))
+	if combat_hud != null:
+		combat_hud.bind_survival(player.get_mana(), player.get_stamina(), player.get_hunger(), player.get_buffs())
+		combat_hud.set_death_panel_enabled(death_controller == null)
+		if clock != null:
+			combat_hud.bind_clock(clock)
+	if clock != null:
+		clock.time_passed.connect(player.pass_game_time)
+	if death_marker != null:
+		death_marker.tracked = player
+	for node: Node in find_children("*", "RestSpot", true, false):
+		_connect_rest_spot(node as RestSpot)
+	if pickup_layer != null:
+		pickup_layer.deployed_added.connect(func(node: Node2D) -> void:
+			if node is RestSpot:
+				_connect_rest_spot(node as RestSpot))
+	if sleep_controller != null:
+		sleep_controller.slept.connect(func(day: int) -> void: _show_feedback("Ngày %d — đã ngủ dậy và tự lưu." % day))
+		sleep_controller.fainted.connect(func(_day: int) -> void: _show_feedback("Bạn đã ngất vì thức quá khuya."))
+
+
+## Dùng item ở ô túi (từ cửa sổ túi đồ): ăn, dựng lều...
+func use_item(slot: int) -> String:
+	var reason: String = player.get_item_user().use_slot(slot)
+	if not reason.is_empty():
+		_show_feedback(reason)
+	return reason
+
+
+## Menu lều (Ngủ / Thu lều). Trả về menu đang mở.
+func open_tent_menu(tent: Tent) -> PopupMenu:
+	if _tent_menu == null:
+		_tent_menu = PopupMenu.new()
+		_tent_menu.id_pressed.connect(func(id: int) -> void: choose_tent_action(_tent_menu_target, id))
+		(get_node(^"UILayer") if has_node(^"UILayer") else self).add_child(_tent_menu)
+	_tent_menu.clear()
+	_tent_menu.add_item("Ngủ", 0)
+	_tent_menu.add_item("Thu lều", 1)
+	_tent_menu_target = tent
+	_tent_menu.reset_size()
+	_tent_menu.position = Vector2i(get_viewport().get_mouse_position()) + get_window().position
+	_tent_menu.popup()
+	return _tent_menu
+
+
+## 0 = ngủ, 1 = thu lều.
+func choose_tent_action(tent: Tent, action: int) -> void:
+	if tent == null or not is_instance_valid(tent):
+		return
+	if action == 0:
+		tent.request_sleep()
+	else:
+		tent.request_pack()
+
+
+func _connect_rest_spot(spot: RestSpot) -> void:
+	if spot.sleep_requested.is_connected(_on_sleep_requested):
+		return
+	spot.sleep_requested.connect(_on_sleep_requested)
+	var tent: Tent = spot as Tent
+	if tent != null:
+		tent.menu_requested.connect(open_tent_menu)
+		tent.pack_requested.connect(_on_tent_pack_requested)
+
+
+func _on_sleep_requested(spot: RestSpot) -> void:
+	if sleep_controller == null:
+		_show_feedback("Không ngủ được ở map này.")
+		return
+	var reason: String = sleep_controller.try_sleep(spot)
+	if not reason.is_empty():
+		_show_feedback(reason)
+
+
+func _on_tent_pack_requested(tent: Tent) -> void:
+	if player.get_inventory().add(tent.item_id, 1) > 0:
+		_show_feedback("Túi đầy, không thu lều được.")
+		return
+	if sleep_controller != null:
+		sleep_controller.forget_spot(tent)
+	tent.queue_free()
+	_show_feedback("Đã thu lều vào túi.")
+
+
+func _on_use_requested(slot: int) -> void:
+	use_item(slot)
+
+
+## Đặt item dựng được (lều) tại chỗ Player đứng. "" = thành công, ngược lại là lý do.
+func _deploy_item(item: ItemDefinition) -> String:
+	if pickup_layer == null:
+		return "Không dựng được ở đây."
+	for node: Node in pickup_layer.get_deployed():
+		if node is Tent:
+			return "Đã có một lều đang dựng — thu lều cũ trước."
+	var agent: ElevationAgent = ElevationAgent.find_for(player)
+	if agent != null and agent.is_transitioning():
+		return "Không dựng được trên cầu thang."
+	var tier: int = agent.get_tier() if agent != null else -1
+	var exclude: Array[RID] = []
+	for node: Node in [player] + player.find_children("*", "CollisionObject2D", true, false):
+		exclude.append((node as CollisionObject2D).get_rid())
+	var reason: String = PlacementCheck.get_block_reason(get_world_2d().direct_space_state, self, player.global_position, tier,
+		TENT_FOOTPRINT_RADIUS, pickup_layer.ground_squash, exclude)
+	if not reason.is_empty():
+		return reason
+	pickup_layer.spawn_deployed(item, player.global_position, tier)
+	return ""

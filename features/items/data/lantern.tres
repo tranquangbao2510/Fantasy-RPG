@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://features/items/item_definition.gd" id="1_item"]
+[ext_resource type="Texture2D" path="res://features/items/icons/lantern.png" id="3_icon"]
+
+[resource]
+script = ExtResource("1_item")
+id = &"lantern"
+display_name = "Đèn lồng"
+description = "Đèn lồng cầm tay phụ. Ban đêm mở rộng tầm nhìn và tỏa ánh sáng ấm. (Chưa tốn dầu.)"
+icon = ExtResource("3_icon")
+category = 2
+max_stack = 1
+sell_price = 25
+tags = Array[StringName]([&"light"])
+equip_slot = &"offhand"
+light_radius = 96.0
+light_color = Color(1, 0.78, 0.45, 1)

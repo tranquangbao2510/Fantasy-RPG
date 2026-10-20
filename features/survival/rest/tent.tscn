@@ -1,0 +1,38 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://features/survival/rest/tent.gd" id="1_tent"]
+[ext_resource type="Script" path="res://world/environment/elevation/elevation_agent.gd" id="2_agent"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_point"]
+radius = 12.0
+
+[node name="Tent" type="Area2D"]
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("1_tent")
+interaction_name = "Lều"
+
+[node name="Visual" type="Node2D" parent="."]
+
+[node name="Shadow" type="Polygon2D" parent="Visual"]
+color = Color(0, 0, 0, 0.35)
+polygon = PackedVector2Array(-20, 0, -12, -6, 12, -6, 20, 0, 12, 6, -12, 6)
+
+[node name="Back" type="Polygon2D" parent="Visual"]
+color = Color(0.45, 0.4, 0.22, 1)
+polygon = PackedVector2Array(-16, 0, 0, -28, 16, 0)
+
+[node name="Front" type="Polygon2D" parent="Visual"]
+color = Color(0.62, 0.55, 0.3, 1)
+polygon = PackedVector2Array(-18, 2, -2, -26, 0, -28, 4, 2)
+
+[node name="Door" type="Polygon2D" parent="Visual"]
+color = Color(0.2, 0.16, 0.08, 1)
+polygon = PackedVector2Array(-6, 2, 0, -12, 4, 2)
+
+[node name="InteractionShape" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_point")
+
+[node name="ElevationAgent" type="Node" parent="."]
+script = ExtResource("2_agent")

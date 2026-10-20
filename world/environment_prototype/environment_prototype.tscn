@@ -78,6 +78,17 @@
 [ext_resource type="Resource" path="res://features/items/data/item_database.tres" id="m1_items"]
 [ext_resource type="PackedScene" path="res://ui/inventory/pickup_toast.tscn" id="m1_toast"]
 [ext_resource type="PackedScene" path="res://ui/inventory/inventory_window.tscn" id="m1_window"]
+[ext_resource type="Script" path="res://features/time/game_clock.gd" id="m2_clock"]
+[ext_resource type="Resource" path="res://features/time/time_settings.tres" id="m2_time"]
+[ext_resource type="Script" path="res://world/environment/time/day_night_lighting.gd" id="m2_lighting"]
+[ext_resource type="Resource" path="res://world/environment/time/day_night_settings.tres" id="m2_daynight"]
+[ext_resource type="Script" path="res://features/survival/rest/sleep_controller.gd" id="m2_sleep"]
+[ext_resource type="Resource" path="res://features/survival/rest/sleep_settings.tres" id="m2_sleep_settings"]
+[ext_resource type="Script" path="res://features/survival/death/death_controller.gd" id="m2_death"]
+[ext_resource type="PackedScene" path="res://features/survival/rest/bed.tscn" id="m2_bed"]
+[ext_resource type="Script" path="res://world/environment/time/vision_light.gd" id="m2_vision"]
+[ext_resource type="Script" path="res://ui/survival/sleep_overlay.gd" id="m2_overlay"]
+[ext_resource type="Script" path="res://ui/survival/death_bag_marker.gd" id="m2_marker"]
 
 [sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_0h8ps"]
 blend_mode = 1
@@ -123,7 +134,7 @@ border_width_right = 1
 border_width_bottom = 1
 border_color = Color(0.45, 0.45, 0.6, 1)
 
-[node name="EnvironmentPrototype" type="Node2D" unique_id=1465201579 node_paths=PackedStringArray("camera", "camera_target", "map_bounds", "interaction_detector", "interaction_prompt", "interaction_feedback", "player_health", "combat_hud", "player_weapon", "player_attack", "player_skills", "player_caster", "skill_bar", "player", "player_classes", "player_level", "progression_panel", "inventory_window", "pickup_layer", "pickup_toast")]
+[node name="EnvironmentPrototype" type="Node2D" unique_id=1465201579 node_paths=PackedStringArray("camera", "camera_target", "map_bounds", "interaction_detector", "interaction_prompt", "interaction_feedback", "player_health", "combat_hud", "player_weapon", "player_attack", "player_skills", "player_caster", "skill_bar", "player", "player_classes", "player_level", "progression_panel", "inventory_window", "pickup_layer", "pickup_toast", "clock", "day_night", "sleep_controller", "death_controller", "death_marker")]
 texture_filter = 4
 script = ExtResource("1_y3y0j")
 camera = NodePath("CameraContainer/GameCamera")
@@ -147,6 +158,11 @@ map_id = &"glade"
 inventory_window = NodePath("UILayer/InventoryWindow")
 pickup_layer = NodePath("EntityContainer/Items")
 pickup_toast = NodePath("UILayer/PickupToast")
+clock = NodePath("GameClock")
+day_night = NodePath("DayNightLighting")
+sleep_controller = NodePath("SleepController")
+death_controller = NodePath("DeathController")
+death_marker = NodePath("UILayer/DeathBagMarker")
 
 [node name="Environment" type="Node2D" parent="." unique_id=978478]
 
@@ -208,7 +224,7 @@ alpha_range = Vector2(0.3, 0.5)
 [node name="Atmosphere" type="Node2D" parent="Environment" unique_id=1681116965]
 z_index = 40
 
-[node name="LightShaft0" type="Sprite2D" parent="Environment/Atmosphere" unique_id=1207482578]
+[node name="LightShaft0" type="Sprite2D" parent="Environment/Atmosphere" unique_id=1207482578 groups=["daylight_fx"]]
 modulate = Color(1, 0.88, 0.62, 0.13)
 material = SubResource("CanvasItemMaterial_0h8ps")
 position = Vector2(-704, 608)
@@ -220,7 +236,7 @@ amplitude = Vector2(10, 0)
 period = 11.0
 alpha_range = Vector2(0.065, 0.13)
 
-[node name="LightShaft1" type="Sprite2D" parent="Environment/Atmosphere" unique_id=1976127327]
+[node name="LightShaft1" type="Sprite2D" parent="Environment/Atmosphere" unique_id=1976127327 groups=["daylight_fx"]]
 modulate = Color(1, 0.88, 0.62, 0.11)
 material = SubResource("CanvasItemMaterial_0h8ps")
 position = Vector2(-640, 768)
@@ -232,7 +248,7 @@ amplitude = Vector2(10, 0)
 period = 13.0
 alpha_range = Vector2(0.055, 0.11)
 
-[node name="LightShaft2" type="Sprite2D" parent="Environment/Atmosphere" unique_id=903053121]
+[node name="LightShaft2" type="Sprite2D" parent="Environment/Atmosphere" unique_id=903053121 groups=["daylight_fx"]]
 modulate = Color(1, 0.88, 0.62, 0.12)
 material = SubResource("CanvasItemMaterial_0h8ps")
 position = Vector2(128, 320)
@@ -244,7 +260,7 @@ amplitude = Vector2(10, 0)
 period = 15.0
 alpha_range = Vector2(0.06, 0.12)
 
-[node name="LightShaft3" type="Sprite2D" parent="Environment/Atmosphere" unique_id=848952048]
+[node name="LightShaft3" type="Sprite2D" parent="Environment/Atmosphere" unique_id=848952048 groups=["daylight_fx"]]
 modulate = Color(1, 0.88, 0.62, 0.1)
 material = SubResource("CanvasItemMaterial_0h8ps")
 position = Vector2(64, 1024)
@@ -724,7 +740,7 @@ avoid_lines = [NodePath("../../Paths/GroundPlane/MainPath"), NodePath("../../Pat
 avoid_nodes = [NodePath("../../../../EntityContainer/Elevation/Plateau"), NodePath("../../../../EntityContainer/Elevation/Outcrop"), NodePath("../../Footbridge")]
 inside_nodes = [NodePath("../../LandMass")]
 
-[node name="SunPatches" type="Node2D" parent="MapContainer/GladeMap/Details" unique_id=1157573064 node_paths=PackedStringArray("inside_nodes")]
+[node name="SunPatches" type="Node2D" parent="MapContainer/GladeMap/Details" unique_id=1157573064 node_paths=PackedStringArray("inside_nodes") groups=["daylight_fx"]]
 modulate = Color(1, 0.9, 0.66, 0.2)
 material = SubResource("CanvasItemMaterial_b2xhr")
 script = ExtResource("16_u0dlr")
@@ -1220,6 +1236,7 @@ interaction_name = "Rương gỗ"
 chest_id = "glade_chest"
 starting_items = Dictionary[StringName, int]({
 &"berry": 3,
+&"grilled_meat": 2,
 &"test_dagger": 1,
 &"wood": 10
 })
@@ -1272,6 +1289,44 @@ item_id = &"ancient_relic"
 count = 1
 pickup_id = "glade_relic_1"
 
+
+[node name="Bed" parent="EntityContainer" instance=ExtResource("m2_bed")]
+position = Vector2(-185.6, 1065.6)
+interaction_name = "Giường (nhà tạm)"
+spot_id = "glade_home_bed"
+
+[node name="BerryPickup2" parent="EntityContainer/Items" instance=ExtResource("m1_pickup")]
+position = Vector2(-249.6, 880)
+item_id = &"berry"
+count = 3
+pickup_id = "glade_berry_2"
+
+[node name="BreadPickup" parent="EntityContainer/Items" instance=ExtResource("m1_pickup")]
+position = Vector2(-89.6, 1024)
+item_id = &"bread"
+count = 2
+pickup_id = "glade_bread_1"
+
+[node name="LanternPickup" parent="EntityContainer/Items" instance=ExtResource("m1_pickup")]
+position = Vector2(-236.8, 905.6)
+item_id = &"lantern"
+count = 1
+pickup_id = "glade_lantern_1"
+
+[node name="TentPickup" parent="EntityContainer/Items" instance=ExtResource("m1_pickup")]
+position = Vector2(-256, 1017.6)
+item_id = &"tent"
+count = 1
+pickup_id = "glade_tent_1"
+
+[node name="VisionLight" type="Node2D" parent="EntityContainer/Props/RuneStone"]
+position = Vector2(0, -6)
+script = ExtResource("m2_vision")
+radius = 140.0
+color = Color(0.45, 0.9, 1, 1)
+energy = 1.1
+ground_squash = 0.5
+
 [node name="EffectContainer" type="Node2D" parent="." unique_id=88998114]
 
 [node name="CameraContainer" type="Node2D" parent="." unique_id=1090960829]
@@ -1284,10 +1339,6 @@ zoom_step = 0.25
 layer = 2
 
 [node name="CombatHUD" parent="UILayer" unique_id=1409758316 instance=ExtResource("73_kg7gh")]
-offset_left = 77.0
-offset_top = -65.0
-offset_right = 77.0
-offset_bottom = -65.0
 
 [node name="SkillBar" parent="UILayer" unique_id=1925085793 instance=ExtResource("75_gfpar")]
 
@@ -1312,3 +1363,51 @@ tracked_body = NodePath("../../EntityContainer/Player")
 [node name="PickupToast" parent="UILayer" instance=ExtResource("m1_toast")]
 
 [node name="InventoryWindow" parent="UILayer" instance=ExtResource("m1_window")]
+
+[node name="DeathBagMarker" type="Control" parent="UILayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("m2_marker")
+
+[node name="SleepOverlay" type="Control" parent="UILayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("m2_overlay")
+
+[node name="GameClock" type="Node" parent="." groups=["saveable"]]
+script = ExtResource("m2_clock")
+settings = ExtResource("m2_time")
+
+[node name="DayNightLighting" type="Node" parent="." node_paths=PackedStringArray("clock", "sun_tint", "player", "player_light")]
+script = ExtResource("m2_lighting")
+clock = NodePath("../GameClock")
+settings = ExtResource("m2_daynight")
+sun_tint = NodePath("../Environment/SunTint")
+player = NodePath("../EntityContainer/Player")
+player_light = NodePath("../EntityContainer/Player/VisionLight")
+
+[node name="SleepController" type="Node" parent="." node_paths=PackedStringArray("clock", "player", "overlay")]
+script = ExtResource("m2_sleep")
+clock = NodePath("../GameClock")
+player = NodePath("../EntityContainer/Player")
+settings = ExtResource("m2_sleep_settings")
+overlay = NodePath("../UILayer/SleepOverlay")
+map_id = &"glade"
+
+[node name="DeathController" type="Node" parent="." node_paths=PackedStringArray("player", "sleep", "pickup_layer", "overlay")]
+script = ExtResource("m2_death")
+player = NodePath("../EntityContainer/Player")
+sleep = NodePath("../SleepController")
+pickup_layer = NodePath("../EntityContainer/Items")
+settings = ExtResource("m2_sleep_settings")
+overlay = NodePath("../UILayer/SleepOverlay")

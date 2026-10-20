@@ -1,4 +1,4 @@
-[gd_scene load_steps=31 format=3]
+[gd_scene load_steps=45 format=3]
 
 [ext_resource type="Script" path="res://entities/player/player.gd" id="1_player"]
 [ext_resource type="PackedScene" path="res://features/interaction/interaction_detector.tscn" id="2_detector"]
@@ -27,6 +27,16 @@
 [ext_resource type="Script" path="res://features/inventory/inventory.gd" id="30_inventory"]
 [ext_resource type="Script" path="res://features/inventory/equipment_slots.gd" id="31_equipment"]
 [ext_resource type="Resource" path="res://features/items/data/item_database.tres" id="32_items"]
+[ext_resource type="Script" path="res://features/survival/mana_component.gd" id="33_mana"]
+[ext_resource type="Resource" path="res://features/survival/mana_settings.tres" id="34_mana_settings"]
+[ext_resource type="Script" path="res://features/survival/stamina_component.gd" id="35_stamina"]
+[ext_resource type="Resource" path="res://features/survival/stamina_settings.tres" id="36_stamina_settings"]
+[ext_resource type="Script" path="res://features/survival/hunger_component.gd" id="37_hunger"]
+[ext_resource type="Resource" path="res://features/survival/hunger_settings.tres" id="38_hunger_settings"]
+[ext_resource type="Script" path="res://features/survival/buff_component.gd" id="39_buffs"]
+[ext_resource type="Script" path="res://features/survival/item_user.gd" id="40_item_user"]
+[ext_resource type="Script" path="res://world/environment/time/vision_light.gd" id="41_vision"]
+[ext_resource type="Resource" path="res://entities/player/player_mobility.tres" id="42_mobility"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_feet"]
 radius = 6.0
@@ -38,6 +48,7 @@ size = Vector2(14, 24)
 collision_layer = 2
 motion_mode = 1
 script = ExtResource("1_player")
+mobility = ExtResource("42_mobility")
 
 [node name="Visual" type="Node2D" parent="."]
 
@@ -101,10 +112,11 @@ weapons = Array[ExtResource("12_weapon_def")]([ExtResource("9_sword"), ExtResour
 [node name="SkillLoadout" type="Node" parent="."]
 script = ExtResource("13_loadout")
 
-[node name="SkillCastingController" parent="." node_paths=PackedStringArray("loadout", "health") instance=ExtResource("19_caster")]
+[node name="SkillCastingController" parent="." node_paths=PackedStringArray("loadout", "health", "mana") instance=ExtResource("19_caster")]
 position = Vector2(0, -12)
 loadout = NodePath("../SkillLoadout")
 health = NodePath("../HealthComponent")
+mana = NodePath("../ManaComponent")
 target_layers = 32
 
 [node name="PassiveController" type="Node" parent="." node_paths=PackedStringArray("health")]
@@ -136,3 +148,36 @@ script = ExtResource("31_equipment")
 database = ExtResource("32_items")
 inventory = NodePath("../Inventory")
 weapon_equipment = NodePath("../WeaponEquipment")
+
+[node name="BuffComponent" type="Node" parent="."]
+script = ExtResource("39_buffs")
+
+[node name="HungerComponent" type="Node" parent="." node_paths=PackedStringArray("health")]
+script = ExtResource("37_hunger")
+settings = ExtResource("38_hunger_settings")
+health = NodePath("../HealthComponent")
+
+[node name="ManaComponent" type="Node" parent="." node_paths=PackedStringArray("buffs")]
+script = ExtResource("33_mana")
+settings = ExtResource("34_mana_settings")
+buffs = NodePath("../BuffComponent")
+
+[node name="StaminaComponent" type="Node" parent="." node_paths=PackedStringArray("hunger", "buffs")]
+script = ExtResource("35_stamina")
+settings = ExtResource("36_stamina_settings")
+hunger = NodePath("../HungerComponent")
+buffs = NodePath("../BuffComponent")
+
+[node name="ItemUser" type="Node" parent="." node_paths=PackedStringArray("inventory", "health", "mana", "hunger", "buffs")]
+script = ExtResource("40_item_user")
+database = ExtResource("32_items")
+inventory = NodePath("../Inventory")
+health = NodePath("../HealthComponent")
+mana = NodePath("../ManaComponent")
+hunger = NodePath("../HungerComponent")
+buffs = NodePath("../BuffComponent")
+
+[node name="VisionLight" type="Node2D" parent="."]
+script = ExtResource("41_vision")
+radius = 160.0
+color = Color(0.8, 0.85, 1, 1)

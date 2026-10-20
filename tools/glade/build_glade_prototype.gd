@@ -480,6 +480,7 @@ func _build_world() -> void:
 	sroot.set("inventory_window", ui.get_node("InventoryWindow"))
 	sroot.set("pickup_layer", entities.get_node("Items"))
 	sroot.set("pickup_toast", ui.get_node("PickupToast"))
+	_survival(sroot, ui, player, entities)
 	var _unused: Node = elevation
 	save_scene(sroot, PROTO + "environment_prototype.tscn")
 
@@ -763,6 +764,8 @@ func _ground(g: Node2D) -> void:
 	(lp as CanvasItem).material = add_mat
 	(lp as CanvasItem).modulate = Color(1, 0.9, 0.66, 0.2)
 	lp.set("tint_variation", 0.0)
+	# TASK M2: đốm nắng mờ dần ban đêm (DayNightLighting).
+	lp.add_to_group(&"daylight_fx", true)
 
 
 func _front_chain(outline_global: PackedVector2Array) -> PackedVector2Array:
@@ -825,6 +828,7 @@ func _environment(env: Node2D) -> void:
 		s.modulate = Color(1, 0.88, 0.62, shafts[i].z)
 		ambient(s, Vector2(10, 0), 11.0 + i * 2.0, Vector2(shafts[i].z * 0.5, shafts[i].z))
 		add(atmo, s, "LightShaft%d" % i)
+		s.add_to_group(&"daylight_fx", true)
 	for gp: Vector2 in [Vector2(14, 25), Vector2(26, 26.5)]:
 		add(atmo, mist(iso(gp.x, gp.y), Vector2(1.2, 0.5), 0.13, Color(1, 0.96, 0.86)), "StreamMist%d" % int(gp.x))
 	var motes: CPUParticles2D = CPUParticles2D.new()
@@ -884,7 +888,16 @@ func _props(entities: Node2D) -> void:
 	_place(props, "ruin_pillar_broken", Vector2(9.6, 11.8), 1)
 	_place(props, "ruin_pillar_broken", Vector2(15.0, 11.8), 1)
 	_place(props, "ruin_blocks", Vector2(13.6, 13.4), 1)
-	_place(props, "rune_stone", Vector2(17.2, 8.6), 1)
+	var rune: Node = _place(props, "rune_stone", Vector2(17.2, 8.6), 1)
+	# TASK M2: nguồn sáng mở vùng nhìn ban đêm quanh đá rune.
+	var rune_light: Node2D = Node2D.new()
+	rune_light.set_script(load(ENV + "time/vision_light.gd"))
+	rune_light.position = Vector2(0, -6)
+	rune_light.set("radius", 140.0)
+	rune_light.set("color", Color(0.45, 0.9, 1))
+	rune_light.set("energy", 1.1)
+	rune_light.set("ground_squash", 0.5)
+	add(rune, rune_light, "VisionLight")
 	_place(props, "tree_pine", Vector2(7.4, 5.6), 1)
 	_place(props, "tree_pine", Vector2(18.8, 5.8), 1)
 	_place(props, "tree_oak_b", Vector2(7.2, 8.8), 1, true)
@@ -960,6 +973,11 @@ const PICKUPS: Array = [
 	["MeatPickup", &"raw_meat", 1, "glade_meat_1", 21.5, 36.5, 0],
 	["HelmetPickup", &"test_helmet", 1, "glade_helmet_1", 24.0, 36.0, 0],
 	["RelicPickup", &"ancient_relic", 1, "glade_relic_1", 12.0, 9.0, 1],
+	# TASK M2: đồ ăn, đèn lồng, lều.
+	["BerryPickup2", &"berry", 3, "glade_berry_2", 23.6, 31.4, 0],
+	["BreadPickup", &"bread", 2, "glade_bread_1", 30.6, 33.4, 0],
+	["LanternPickup", &"lantern", 1, "glade_lantern_1", 24.6, 32.0, 0],
+	["TentPickup", &"tent", 1, "glade_tent_1", 27.8, 35.8, 0],
 ]
 
 
@@ -967,8 +985,12 @@ func _items(entities: Node2D) -> void:
 	var chest: Node = instance(entities, "res://features/inventory/chest/chest.tscn", iso(28.2, 32.4), "Chest")
 	chest.set("interaction_name", "Rương gỗ")
 	chest.set("chest_id", "glade_chest")
-	var loot: Dictionary[StringName, int] = {&"berry": 3, &"test_dagger": 1, &"wood": 10}
+	var loot: Dictionary[StringName, int] = {&"berry": 3, &"grilled_meat": 2, &"test_dagger": 1, &"wood": 10}
 	chest.set("starting_items", loot)
+	# TASK M2: giường "nhà" tạm (điểm hồi sinh mặc định).
+	var bed: Node = instance(entities, "res://features/survival/rest/bed.tscn", iso(30.4, 36.2), "Bed")
+	bed.set("interaction_name", "Giường (nhà tạm)")
+	bed.set("spot_id", "glade_home_bed")
 	var layer: Node2D = Node2D.new()
 	layer.set_script(load("res://features/inventory/pickup/item_pickup_layer.gd"))
 	layer.y_sort_enabled = true
@@ -1041,3 +1063,52 @@ func _sweep(outline_global: PackedVector2Array) -> PackedVector2Array:
 	var result: PackedVector2Array = t.call("get_blocking_polygon")
 	t.queue_free()
 	return result
+
+
+# ---------------------------------------------------------------- thời gian & sinh tồn (TASK M2)
+
+func _ui_control(ui: CanvasLayer, script_path: String, name_: String) -> Control:
+	var control: Control = Control.new()
+	control.set_script(load(script_path))
+	control.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	control.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add(ui, control, name_)
+	return control
+
+
+func _logic_node(script_path: String, name_: String) -> Node:
+	var node: Node = Node.new()
+	node.set_script(load(script_path))
+	return add(sroot, node, name_)
+
+
+func _survival(world: Node, ui: CanvasLayer, player: Node, entities: Node2D) -> void:
+	var marker: Control = _ui_control(ui, "res://ui/survival/death_bag_marker.gd", "DeathBagMarker")
+	var overlay: Control = _ui_control(ui, "res://ui/survival/sleep_overlay.gd", "SleepOverlay")
+	var clock: Node = _logic_node("res://features/time/game_clock.gd", "GameClock")
+	clock.set("settings", load("res://features/time/time_settings.tres"))
+	clock.add_to_group(&"saveable", true)
+	var lighting: Node = _logic_node(ENV + "time/day_night_lighting.gd", "DayNightLighting")
+	lighting.set("clock", clock)
+	lighting.set("settings", load(ENV + "time/day_night_settings.tres"))
+	lighting.set("sun_tint", world.get_node("Environment/SunTint"))
+	lighting.set("player", player)
+	lighting.set("player_light", player.get_node("VisionLight"))
+	var sleep_settings: Resource = load("res://features/survival/rest/sleep_settings.tres")
+	var sleep: Node = _logic_node("res://features/survival/rest/sleep_controller.gd", "SleepController")
+	sleep.set("clock", clock)
+	sleep.set("player", player)
+	sleep.set("settings", sleep_settings)
+	sleep.set("overlay", overlay)
+	sleep.set("map_id", &"glade")
+	var death: Node = _logic_node("res://features/survival/death/death_controller.gd", "DeathController")
+	death.set("player", player)
+	death.set("sleep", sleep)
+	death.set("pickup_layer", entities.get_node("Items"))
+	death.set("settings", sleep_settings)
+	death.set("overlay", overlay)
+	world.set("clock", clock)
+	world.set("day_night", lighting)
+	world.set("sleep_controller", sleep)
+	world.set("death_controller", death)
+	world.set("death_marker", marker)

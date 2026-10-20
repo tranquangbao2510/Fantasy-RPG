@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://features/items/item_definition.gd" id="1_item"]
+[ext_resource type="Texture2D" path="res://features/items/icons/tent.png" id="3_icon"]
+[ext_resource type="PackedScene" path="res://features/survival/rest/tent.tscn" id="4_tent"]
+
+[resource]
+script = ExtResource("1_item")
+id = &"tent"
+display_name = "Lều"
+description = "Lều vải gấp gọn. Dùng để dựng tại chỗ đứng (đất trống), ngủ qua đêm ngoài trời. Thu lại được."
+icon = ExtResource("3_icon")
+category = 2
+max_stack = 1
+sell_price = 30
+tags = Array[StringName]([&"camp"])
+deploy_scene = ExtResource("4_tent")

@@ -23,12 +23,15 @@ enum State { IDLE, TARGETING, CASTING }
 const SLOT_ACTIONS: Array[StringName] = [&"skill_slot_1", &"skill_slot_2", &"skill_slot_3", &"skill_slot_4"]
 const CONFIRM_ACTION: StringName = &"basic_attack"
 const CANCEL_ACTION: StringName = &"skill_cancel"
+const MANA_REASON: String = "Thiếu mana"
 
 @export var loadout: SkillLoadout
 ## HP của người thi triển; chết thì hủy mọi thứ, effect HEAL hồi vào đây.
 @export var health: HealthComponent
 ## Hurtbox layer phe đối địch mà effect DAMAGE nhắm tới.
 @export_flags_2d_physics var target_layers: int = 0
+## Mana của người thi triển (TASK M2). null = kỹ năng không tốn mana (vd. enemy, map cũ không gắn).
+@export var mana: ManaComponent
 
 ## Hướng dùng khi điểm ngắm trùng người thi triển.
 var fallback_direction: Vector2 = Vector2.DOWN
@@ -220,6 +223,9 @@ func _on_slot_pressed(slot: int) -> void:
 	if not runtime.can_cast():
 		cast_rejected.emit(slot, runtime.get_block_reason())
 		return
+	if not has_mana_for(runtime.definition):
+		cast_rejected.emit(slot, MANA_REASON)
+		return
 	if runtime.cast_mode == SkillDefinition.CastMode.INSTANT:
 		_begin_cast(slot, _resolve_target(runtime.definition))
 	else:
@@ -237,9 +243,14 @@ func _on_slot_released(slot: int) -> void:
 
 func _begin_cast(slot: int, target: SkillTarget) -> void:
 	var runtime: SkillRuntime = loadout.get_runtime(slot)
+	if runtime != null and not has_mana_for(runtime.definition):
+		cast_rejected.emit(slot, MANA_REASON)
+		return
 	if runtime == null or not runtime.consume():
 		cast_rejected.emit(slot, runtime.get_block_reason() if runtime != null else "Ô trống")
 		return
+	if mana != null:
+		mana.spend(runtime.definition.mana_cost)
 	runtime.is_casting = true
 	_cast_runtime = runtime
 	_state = State.CASTING
@@ -295,3 +306,8 @@ func _on_slot_changed(slot: int, _definition: SkillDefinition) -> void:
 func _on_cast_mode_changed(slot: int, _mode: SkillDefinition.CastMode) -> void:
 	if slot == _slot and _state == State.TARGETING:
 		cancel_targeting()
+
+
+## Đủ mana cho kỹ năng không (luôn true khi không gắn ManaComponent).
+func has_mana_for(definition: SkillDefinition) -> bool:
+	return mana == null or definition == null or mana.has_mana(definition.mana_cost)

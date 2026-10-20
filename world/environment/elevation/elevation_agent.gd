@@ -99,6 +99,8 @@ func set_tier(tier: int) -> void:
 
 
 func _setup() -> void:
+	if not is_inside_tree():
+		return
 	_map = get_tree().get_first_node_in_group(ElevationMap.GROUP) as ElevationMap
 	if _map == null:
 		return

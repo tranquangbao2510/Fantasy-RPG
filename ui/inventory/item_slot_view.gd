@@ -1,7 +1,7 @@
 class_name ItemSlotView
 extends Panel
 ## Một ô trong cửa sổ túi đồ: ô của Inventory (`inventory` + `index`) hoặc ô trang bị (`equipment` + `slot_name`).
-## Chỉ hiển thị + chuyển thao tác chuột cho InventoryWindow (kéo thả, chuột phải, Shift+click, nhấp đúp);
+## Chỉ hiển thị + chuyển thao tác chuột cho InventoryWindow (kéo thả, chuột phải → menu, Shift+click, nhấp đúp, rê chuột);
 ## không tự sửa dữ liệu.
 
 const SIZE: Vector2 = Vector2(46, 46)
@@ -21,6 +21,8 @@ var _style: StyleBoxFlat
 func _init() -> void:
 	custom_minimum_size = SIZE
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	mouse_entered.connect(_on_hover_changed.bind(true))
+	mouse_exited.connect(_on_hover_changed.bind(false))
 	_style = StyleBoxFlat.new()
 	_style.bg_color = Color(0.14, 0.14, 0.2, 0.95)
 	_style.set_border_width_all(1)
@@ -102,10 +104,10 @@ func _gui_input(event: InputEvent) -> void:
 	if button == null or not button.pressed or window == null:
 		return
 	if button.button_index == MOUSE_BUTTON_RIGHT:
-		window.split_slot(self)
+		window.open_context_menu(self)
 		accept_event()
 	elif button.button_index == MOUSE_BUTTON_LEFT and button.double_click:
-		window.toggle_equip(self)
+		window.primary_action(self)
 		accept_event()
 	elif button.button_index == MOUSE_BUTTON_LEFT and button.shift_pressed:
 		window.quick_move(self)
@@ -126,3 +128,8 @@ func _add_label(horizontal: HorizontalAlignment, vertical: VerticalAlignment, fo
 	label.add_theme_color_override(&"font_color", color)
 	add_child(label)
 	return label
+
+
+func _on_hover_changed(hovered: bool) -> void:
+	if window != null:
+		window.set_hovered(self, hovered)

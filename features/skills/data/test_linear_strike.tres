@@ -11,6 +11,7 @@ max_charges_bonus = 1
 [resource]
 script = ExtResource("1_l016u")
 skill_id = &"test_linear_strike"
+mana_cost = 10.0
 display_name = "Test Linear Strike"
 short_name = "Line"
 description = "Prototype: sát thương theo đường thẳng, nhiều mục tiêu, 2 charge."

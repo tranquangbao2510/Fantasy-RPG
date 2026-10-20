@@ -55,7 +55,9 @@ func _process(delta: float) -> void:
 	var active_slot: int = _caster.get_active_slot()
 	for slot: int in SkillLoadout.SLOT_COUNT:
 		var progress: float = _caster.get_cast_progress() if slot == active_slot else -1.0
-		_views[slot].refresh(_loadout.get_runtime(slot), progress, slot == active_slot and _caster.is_targeting())
+		var runtime: SkillRuntime = _loadout.get_runtime(slot)
+		var mana_ok: bool = runtime == null or _caster.has_mana_for(runtime.definition)
+		_views[slot].refresh(runtime, progress, slot == active_slot and _caster.is_targeting(), mana_ok)
 
 
 func _on_slot_changed(slot: int, definition: SkillDefinition) -> void:

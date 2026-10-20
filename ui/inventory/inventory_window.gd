@@ -1,9 +1,10 @@
 class_name InventoryWindow
 extends Control
-## Cửa sổ túi đồ (TASK M1, style tạm). Mở/đóng: `inventory_toggle` (I / Tab), đóng thêm bằng `ui_cancel` (Esc).
-## Bảng túi (24 ô) + ô trang bị (Vũ khí, Mũ); mở rương thì hiện thêm bảng rương bên trái.
-## Thao tác: kéo thả giữa các ô (túi ↔ túi, túi ↔ rương, túi ↔ trang bị); chuột phải = tách nửa stack;
-## Shift+click = chuyển nhanh túi ↔ rương; nhấp đúp = trang bị / tháo; kéo ra ngoài cửa sổ = vứt xuống đất
+## Cửa sổ túi đồ (TASK M1, M2; style tạm). Mở/đóng: `inventory_toggle` (I / Tab), đóng thêm bằng `ui_cancel` (Esc).
+## Bảng túi (24 ô) + ô trang bị (Vũ khí, Mũ, Tay phụ); mở rương thì hiện thêm bảng rương bên trái.
+## Thao tác: kéo thả giữa các ô (túi ↔ túi, túi ↔ rương, túi ↔ trang bị); chuột phải = menu (Dùng / Dựng /
+## Trang bị / Tháo / Tách nửa / Vứt); `item_use` (F) khi rê chuột lên ô = hành động chính (dùng / trang bị / tháo);
+## Shift+click = chuyển nhanh túi ↔ rương; nhấp đúp = hành động chính; kéo ra ngoài cửa sổ = vứt xuống đất
 ## (`drop_requested`, World quyết định chỗ rơi). Tooltip: tên, loại, mô tả.
 ## Chỉ gọi public API của Inventory / EquipmentSlots; không tự tính luật trang bị.
 
@@ -13,14 +14,19 @@ signal closed
 signal drop_requested(stack: ItemStack)
 ## Thông báo ngắn cho người chơi (vd. túi đầy, không trang bị được).
 signal message(text: String)
+## Người chơi dùng item ở ô túi (ăn, dựng lều). World chuyển cho ItemUser.
+signal use_requested(slot: int)
+
+enum MenuAction { USE, EQUIP, UNEQUIP, SPLIT, DROP }
 
 const TOGGLE_ACTION: StringName = &"inventory_toggle"
 const CLOSE_ACTION: StringName = &"ui_cancel"
+const USE_ACTION: StringName = &"item_use"
 const COLUMNS: int = 6
 const CHEST_COLUMNS: int = 5
 ## Rời rương xa hơn khoảng này (px) thì bảng tự đóng.
 const CHEST_MAX_DISTANCE: float = 80.0
-const HINT: String = "Kéo thả: chuyển · Chuột phải: tách nửa · Shift+click: chuyển nhanh (rương) · Nhấp đúp: trang bị/tháo · Kéo ra ngoài: vứt · I / Tab / Esc: đóng"
+const HINT: String = "Kéo thả: chuyển · Chuột phải: menu (dùng, tách, vứt...) · F / nhấp đúp: dùng hoặc trang bị · Shift+click: chuyển nhanh (rương) · Kéo ra ngoài: vứt · I / Tab / Esc: đóng"
 
 ## Cho phép vứt đồ xuống đất (World bật khi map có ItemPickupLayer).
 var can_drop_to_ground: bool = false
@@ -40,6 +46,9 @@ var _drop_zone: Control
 var _chest_panel: PanelContainer
 var _chest_title: Label
 var _chest_grid: GridContainer
+var _menu: PopupMenu
+var _menu_view: ItemSlotView
+var _hovered: ItemSlotView
 
 
 func _ready() -> void:
@@ -60,7 +69,7 @@ func bind(bag: Inventory, equipment: EquipmentSlots, database: ItemDatabase, act
 		view.setup_inventory(self, _bag, i)
 		_bag_grid.add_child(view)
 		_bag_views.append(view)
-	for slot: Array in [[&"weapon", "Vũ khí"], [&"head", "Mũ"]]:
+	for slot: Array in [[&"weapon", "Vũ khí"], [&"head", "Mũ"], [&"offhand", "Tay phụ"]]:
 		var view: ItemSlotView = ItemSlotView.new()
 		view.setup_equipment(self, _equipment, slot[0], slot[1])
 		_equipment_row.add_child(view)
@@ -120,6 +129,8 @@ func open() -> void:
 func close() -> void:
 	if not visible:
 		return
+	_menu.hide()
+	_hovered = null
 	_set_chest(null)
 	hide()
 	closed.emit()
@@ -149,8 +160,13 @@ func _input(event: InputEvent) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if visible and event.is_action_pressed(CLOSE_ACTION):
+	if not visible:
+		return
+	if event.is_action_pressed(CLOSE_ACTION):
 		close()
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed(USE_ACTION) and _hovered != null and is_instance_valid(_hovered):
+		primary_action(_hovered)
 		get_viewport().set_input_as_handled()
 
 
@@ -212,16 +228,97 @@ func quick_move(view: ItemSlotView) -> void:
 		message.emit("Không còn chỗ trống.")
 
 
-## Nhấp đúp: trang bị món trong túi / tháo món đang mặc về túi.
-func toggle_equip(view: ItemSlotView) -> void:
+## Hành động chính của ô (nhấp đúp / phím F): ô trang bị → tháo; item dùng được → dùng; trang bị được → trang bị.
+func primary_action(view: ItemSlotView) -> void:
+	var actions: Array[MenuAction] = get_actions(view)
+	for action: MenuAction in [MenuAction.UNEQUIP, MenuAction.USE, MenuAction.EQUIP]:
+		if actions.has(action):
+			perform_action(view, action)
+			return
+
+
+## Các hành động hợp lệ của ô (thứ tự hiển thị trong menu chuột phải).
+func get_actions(view: ItemSlotView) -> Array[MenuAction]:
+	var actions: Array[MenuAction] = []
+	var stack: ItemStack = view.get_slot_stack() if view != null else null
+	if stack == null:
+		return actions
 	if view.is_equipment_slot():
-		if view.get_slot_stack() != null and not _equipment.unequip_to_inventory(view.slot_name):
-			message.emit("Túi đầy, không tháo được.")
+		actions.append(MenuAction.UNEQUIP)
+	else:
+		var item: ItemDefinition = _database.get_item(stack.item_id)
+		if view.inventory == _bag and item != null and item.is_usable():
+			actions.append(MenuAction.USE)
+		if view.inventory == _bag and item != null and item.is_equippable():
+			actions.append(MenuAction.EQUIP)
+		if stack.count > 1:
+			actions.append(MenuAction.SPLIT)
+	if can_drop_to_ground:
+		actions.append(MenuAction.DROP)
+	return actions
+
+
+func perform_action(view: ItemSlotView, action: MenuAction) -> void:
+	if view == null or not get_actions(view).has(action):
 		return
-	var stack: ItemStack = view.get_slot_stack()
-	var item: ItemDefinition = _database.get_item(stack.item_id) if stack != null else null
-	if view.inventory == _bag and item != null and item.is_equippable():
-		_equipment.equip_from_inventory(view.index)
+	match action:
+		MenuAction.USE:
+			use_requested.emit(view.index)
+		MenuAction.EQUIP:
+			_equipment.equip_from_inventory(view.index)
+		MenuAction.UNEQUIP:
+			if not _equipment.unequip_to_inventory(view.slot_name):
+				message.emit("Túi đầy, không tháo được.")
+		MenuAction.SPLIT:
+			split_slot(view)
+		MenuAction.DROP:
+			drop_slot_to_ground(view)
+
+
+## Chuột phải: menu hành động của ô tại vị trí chuột. Trả về menu (null nếu ô trống).
+func open_context_menu(view: ItemSlotView) -> PopupMenu:
+	var actions: Array[MenuAction] = get_actions(view)
+	if actions.is_empty():
+		return null
+	_menu.clear()
+	var item: ItemDefinition = _database.get_item(view.get_slot_stack().item_id)
+	for action: MenuAction in actions:
+		_menu.add_item(_action_label(action, item), action)
+	_menu_view = view
+	_menu.reset_size()
+	_menu.position = Vector2i(get_viewport().get_mouse_position()) + get_window().position
+	_menu.popup()
+	return _menu
+
+
+func get_context_menu() -> PopupMenu:
+	return _menu
+
+
+func set_hovered(view: ItemSlotView, hovered: bool) -> void:
+	if hovered:
+		_hovered = view
+	elif _hovered == view:
+		_hovered = null
+
+
+func _action_label(action: MenuAction, item: ItemDefinition) -> String:
+	match action:
+		MenuAction.USE:
+			return "Dựng" if item != null and item.deploy_scene != null else "Dùng"
+		MenuAction.EQUIP:
+			return "Trang bị"
+		MenuAction.UNEQUIP:
+			return "Tháo"
+		MenuAction.SPLIT:
+			return "Tách nửa"
+	return "Vứt"
+
+
+func _on_menu_id_pressed(id: int) -> void:
+	if _menu_view != null and is_instance_valid(_menu_view):
+		perform_action(_menu_view, id as MenuAction)
+	_menu_view = null
 
 
 func _can_drop_to_ground(_at_position: Vector2, data: Variant) -> bool:
@@ -282,6 +379,9 @@ func _build() -> void:
 	_drop_zone.mouse_filter = Control.MOUSE_FILTER_STOP
 	_drop_zone.set_drag_forwarding(Callable(), _can_drop_to_ground, _drop_to_ground)
 	add_child(_drop_zone)
+	_menu = PopupMenu.new()
+	_menu.id_pressed.connect(_on_menu_id_pressed)
+	add_child(_menu)
 	var center: CenterContainer = CenterContainer.new()
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE

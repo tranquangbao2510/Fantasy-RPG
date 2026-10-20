@@ -47,6 +47,10 @@ enum EffectType {
 ## Khoảng nghỉ tối thiểu giữa hai lần thi triển liên tiếp (dù còn charge).
 @export var recast_delay: float = 0.0
 
+@export_group("Cost")
+## Mana tiêu mỗi lần thi triển (TASK M2), trừ lúc bắt đầu vận sức cùng lúc với charge. 0 = miễn phí.
+@export var mana_cost: float = 0.0
+
 @export_group("Effect")
 @export var effect_type: EffectType = EffectType.DAMAGE
 @export var effect_amount: int = 0
@@ -106,7 +110,7 @@ func is_progression_valid() -> bool:
 func is_valid() -> bool:
 	if skill_id == &"" or display_name.is_empty() or effect_amount < 0 or knockback < 0.0:
 		return false
-	if cast_time < 0.0 or cooldown < 0.0 or recast_delay < 0.0 or max_charges < 1:
+	if cast_time < 0.0 or cooldown < 0.0 or recast_delay < 0.0 or max_charges < 1 or mana_cost < 0.0:
 		return false
 	match targeting_type:
 		TargetingType.SELF:

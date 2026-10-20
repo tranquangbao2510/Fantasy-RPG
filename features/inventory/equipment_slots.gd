@@ -1,6 +1,6 @@
 class_name EquipmentSlots
 extends Node
-## Ô trang bị của nhân vật (M1: `weapon`, `head`). Mỗi ô giữ một ItemStack (count 1) hoặc trống.
+## Ô trang bị của nhân vật (M1: `weapon`, `head`; M2: `offhand` — đèn lồng). Mỗi ô giữ một ItemStack (count 1) hoặc trống.
 ## - Ô `weapon` đồng bộ hai chiều với WeaponEquipment (hệ thống vũ khí có sẵn):
 ##   trang bị item vũ khí → equip_weapon(item.weapon) (bị từ chối, vd. luật class, thì item ở lại túi);
 ##   vũ khí đổi từ nơi khác (phím debug 1/2/3) → ô weapon nhận item tương ứng trong database (item cũ bị bỏ — debug);
@@ -40,6 +40,25 @@ func get_stack(slot_name: StringName) -> ItemStack:
 func get_item(slot_name: StringName) -> ItemDefinition:
 	var stack: ItemStack = _slots.get(slot_name)
 	return database.get_item(stack.item_id) if stack != null and database != null else null
+
+
+## Bán kính sáng cộng thêm từ đồ đang mặc (TASK M2: đèn lồng ở ô offhand). 0 = không có.
+func get_light_radius() -> float:
+	var total: float = 0.0
+	for slot_name: StringName in _slots:
+		var item: ItemDefinition = get_item(slot_name)
+		if item != null:
+			total += item.light_radius
+	return total
+
+
+## Màu ánh sáng của món phát sáng đang mặc (món đầu tiên); `fallback` nếu không có.
+func get_light_color(fallback: Color) -> Color:
+	for slot_name: StringName in SLOTS:
+		var item: ItemDefinition = get_item(slot_name)
+		if item != null and item.is_light_source():
+			return item.light_color
+	return fallback
 
 
 ## Lý do không thể trang bị stack vào ô ("" nếu được).

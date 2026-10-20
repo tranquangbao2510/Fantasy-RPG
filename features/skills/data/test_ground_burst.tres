@@ -42,6 +42,7 @@ radius_bonus = 8.0
 [resource]
 script = ExtResource("1_8uqe6")
 skill_id = &"test_ground_burst"
+mana_cost = 25.0
 display_name = "Test Ground Burst"
 short_name = "Burst"
 description = "Prototype: sát thương vùng tròn tại điểm chọn."

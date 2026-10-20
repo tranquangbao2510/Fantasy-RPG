@@ -12,6 +12,7 @@ effect_amount_bonus = 10
 [resource]
 script = ExtResource("1_56751")
 skill_id = &"test_self_heal"
+mana_cost = 20.0
 display_name = "Test Self Heal"
 short_name = "Heal"
 description = "Prototype: tự hồi HP sau thời gian vận sức."

@@ -47,7 +47,8 @@ func get_status_text() -> String:
 
 
 ## Cập nhật trạng thái từ runtime. cast_progress < 0 = không vận sức. highlighted = đang ngắm ô này.
-func refresh(runtime: SkillRuntime, cast_progress: float, highlighted: bool) -> void:
+## mana_ok = false: đủ charge nhưng thiếu mana (TASK M2) → "Thiếu mana", tô xanh mờ.
+func refresh(runtime: SkillRuntime, cast_progress: float, highlighted: bool, mana_ok: bool = true) -> void:
 	if runtime == null:
 		modulate = Color(1, 1, 1, 0.5)
 		_cast_bar.hide()
@@ -55,8 +56,11 @@ func refresh(runtime: SkillRuntime, cast_progress: float, highlighted: bool) -> 
 	var charges_text: String = ""
 	if runtime.get_max_charges() > 1:
 		charges_text = " · %d/%d" % [runtime.get_charges(), runtime.get_max_charges()]
-	if runtime.can_cast():
-		_status_label.text = "Sẵn sàng" + charges_text
+	var cost: float = runtime.definition.mana_cost
+	if runtime.can_cast() and not mana_ok:
+		_status_label.text = "Thiếu mana (%d)" % ceili(cost)
+	elif runtime.can_cast():
+		_status_label.text = "Sẵn sàng" + charges_text + (" · %d MP" % ceili(cost) if cost > 0.0 else "")
 	else:
 		_status_label.text = "%.1fs%s" % [runtime.get_cooldown_remaining(), charges_text]
 	_cast_bar.visible = cast_progress >= 0.0
@@ -64,6 +68,8 @@ func refresh(runtime: SkillRuntime, cast_progress: float, highlighted: bool) -> 
 		_cast_bar.value = cast_progress
 	if highlighted:
 		modulate = Color(1, 1, 0.6)
+	elif runtime.can_cast() and not mana_ok:
+		modulate = Color(0.55, 0.65, 1.0)
 	elif runtime.can_cast():
 		modulate = Color.WHITE
 	else:

@@ -73,6 +73,7 @@ position = Vector2(656, 240)
 [node name="SimpleEnemy" parent="EntityContainer" node_paths=PackedStringArray("target") instance=ExtResource("11_enemy")]
 position = Vector2(300, 420)
 target = NodePath("../Player")
+save_id = "test_map_simple_enemy"
 
 [node name="ClassTrainingStation" parent="EntityContainer" instance=ExtResource("14_station")]
 position = Vector2(560, 256)

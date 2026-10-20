@@ -1,7 +1,8 @@
 class_name SleepController
 extends Node
 ## Ngủ, ngất, điểm tỉnh dậy (TASK M2). Một node trong World (map có GameClock).
-## - try_sleep(chỗ ngủ): chỉ từ `sleep_from_minute` tới trước `wake_minute`. Màn hình mờ → thời gian nhảy tới
+## - try_sleep(chỗ ngủ): chỉ từ `sleep_from_minute` tới trước `wake_minute`. TASK M4: không ngủ được khi có quái đang đuổi hoặc ở
+##   gần (get_nearby_threat, "Có quái gần đây"). Màn hình mờ → thời gian nhảy tới
 ##   wake_minute (time_passed sleeping=true: đói giảm theo nhịp ngủ) → hồi HP (giường 100 %, lều 70 % — TASK M3) + mana
 ##   theo SleepSettings → chỗ ngủ thành điểm tỉnh dậy / hồi sinh của Player → tự lưu game (SaveService) → "Ngày N" → sáng lại.
 ## - Còn thức lúc `faint_hour` (2:00) → ngất (TASK M3): tỉnh lại TẠI CHỖ lúc wake_minute, không hồi HP/mana, không tự lưu,
@@ -44,7 +45,21 @@ func get_sleep_block_reason() -> String:
 		return "Không thể ngủ lúc này."
 	if clock != null and not settings.can_sleep_at(clock.get_minute_of_day()):
 		return "Chưa tới giờ ngủ (ngủ được %s)." % settings.format_window()
+	if get_nearby_threat() != null:
+		return "Có quái gần đây."
 	return ""
+
+
+## Quái đang đuổi Player hoặc ở gần hơn SleepSettings.enemy_block_radius (TASK M4); null nếu an toàn.
+func get_nearby_threat() -> Enemy:
+	var scene: Node = owner if owner != null else get_parent()
+	for node: Node in get_tree().get_nodes_in_group(&"enemies"):
+		var enemy: Enemy = node as Enemy
+		if enemy == null or enemy.is_dead() or enemy.is_fading() or (scene != null and not scene.is_ancestor_of(enemy)):
+			continue
+		if enemy.is_hunting() or enemy.ground_distance_to(player.global_position) < settings.enemy_block_radius:
+			return enemy
+	return null
 
 
 ## Ngủ ở chỗ ngủ. Trả về "" nếu bắt đầu ngủ, ngược lại là lý do.

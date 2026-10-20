@@ -53,6 +53,9 @@ Quy ước commit: [docs/git_conventions.md](docs/git_conventions.md).
   Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/save/test_save_load.gd
   Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/survival/test_survival.gd
   Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/smoke/test_scenes_load.gd
+  Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/crafting/test_crafting.gd
+  Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/gathering/test_gathering.gd
+  Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/night/test_night.gd
   ```
 
 ## Trạng thái hiện tại
@@ -71,7 +74,7 @@ Quy ước commit: [docs/git_conventions.md](docs/git_conventions.md).
 
 - TASK 08 — Vũ khí data-driven (`features/combat/weapons/`): combo đánh thường theo vũ khí, knockback enemy. Phím debug **1/2/3** đổi Test Sword / Dagger / Heavy Weapon.
 
-- TASK 09 — Active skill framework (`features/skills/`, `ui/skills/`): 4 ô kỹ năng **Q / C / V / X**, cast mode Normal / Quick / Instant (bấm nút trên Skill Bar để đổi), hủy ngắm bằng **chuột phải / Esc**.
+- TASK 09 — Active skill framework (`features/skills/`, `ui/skills/`): 4 ô kỹ năng **Q / Z / V / X** (ô 2 là C cho tới TASK M3), cast mode Normal / Quick / Instant (bấm nút trên Skill Bar để đổi), hủy ngắm bằng **chuột phải / Esc**.
 
 - TASK 10 — Class & progression prototype (`features/classes/`, `features/character/`, `ui/progression/`): class **Test Fighter** (khởi đầu) / **Test Caster**, character level dùng chung, mastery theo class, signature + passive bổ sung, học / nâng level / tiến hóa kỹ năng, loadout riêng từng class, luật vũ khí theo class. Đến **Trạm huấn luyện** (cột cờ tím phía trên phải quảng trường) và nhấn **E** để mở khóa (debug) / đổi class. **P** mở bảng Class/Progression (nút **[Debug]** để cộng EXP, mastery, học/nâng/tiến hóa kỹ năng); **Esc** đóng.
 
@@ -91,4 +94,8 @@ Quy ước commit: [docs/git_conventions.md](docs/git_conventions.md).
 
 - TASK M2 (gộp M2.1, thiết kế v0.2) — Thời gian & sinh tồn (`features/time/`, `features/survival/`, `world/environment/time/`): đồng hồ (1 ngày = 20 phút thực, bắt đầu 6:00), ngày/đêm với **bóng tối thật ngoài vùng sáng** quanh nhân vật (đèn lồng ở ô **Tay phụ** mở rộng, đá rune tự sáng), **Mana** cho kỹ năng, **Stamina**, **Đói** (hết đói mất máu), ăn uống (quả mọng, thịt sống, bánh mì, thịt nướng), **giường** (ngủ 18:00–6:00 → sáng hôm sau, hồi máu/mana, tự lưu; thức tới 2:00 thì ngất), **lều** (dựng/ngủ/thu), **chết rơi túi đồ** tại chỗ + hồi sinh ở chỗ nghỉ (giường hoặc lều đã ngủ), mũi tên chỉ túi trên HUD. Phím: **Shift** chạy, **Space** né, **F** dùng nhanh item đang rê chuột trong túi, **chuột phải** trên ô = menu (Dùng / Dựng / Trang bị / Tháo / Tách nửa / Vứt), **E** ngủ / mở menu lều / nhặt lại túi; debug: **F7** tua giờ ×10, **F8** +1 giờ. Không có chỉ số Thể lực. Chi tiết + hệ số: [architecture.md](docs/architecture.md) mục 2m.
 
-Chưa có ultimate, animation enemy, quái đêm, hotbar, chế tạo, hội thoại hay quest. Mọi chỉ số combat, vũ khí, kỹ năng, class và EXP là placeholder.
+- TASK M3 — Lượm nhặt, chế tạo, nấu ăn (`features/gathering/`, `features/crafting/`, `ui/crafting/`): cây / đá / bụi mọng / bụi cỏ khai thác bằng **E** (rìu, cuốc chim, tay không), đồ vào thẳng túi, mọc lại sau vài ngày; rìu / cuốc chim đá có độ bền; **C** mở cửa sổ chế tạo (ô kỹ năng 2 chuyển sang **Z**), bàn chế tạo trong nhà tạm; **lửa trại** dựng được (nguồn sáng, nấu ăn, thêm củi); **đuốc** ở tay phụ. Save v3. Chi tiết: [architecture.md](docs/architecture.md) mục 2n.
+
+- TASK M4 — Đêm nguy hiểm (`features/spawning/`, `entities/enemies/night/`): từ hoàng hôn, quái đêm sinh ngoài màn hình theo bảng spawn — **Bóng ma** (sợ sáng, hút mana), **Sói đêm** (đi bầy 2–3, vây rồi lần lượt lao vào, máu thấp bỏ chạy), **Thây ma rừng** (chậm, trâu, đòn báo trước); không sinh trong vùng sáng của lửa trại / đá rune / đèn giường; bình minh thì tan biến. Cầm đuốc/đèn lồng bị phát hiện từ xa hơn; chạy dễ lộ hơn đi bộ. Rơi da / xương / tinh chất bóng → **giáo xương**, **áo da** (ô Áo mới, giảm sát thương), **đuốc tinh chất**. HUD "Trời sắp tối…" / "Màn đêm buông xuống", viền đỏ khi trúng đòn, mũi tên chỉ quái đang đuổi ngoài màn hình; không ngủ được khi quái gần. Ánh sáng đêm vẽ lại bằng một lớp phủ (hết cháy trắng khi nhiều nguồn sáng chồng nhau). Phím debug: **F1** Bóng ma, **F2** bầy sói, **F4** Thây ma, **F10** vẽ bán kính phát hiện. Save v4. Chi tiết: [architecture.md](docs/architecture.md) mục 2o.
+
+Chưa có ultimate, animation enemy, boss, âm thanh, hotbar, hội thoại hay quest. Mọi chỉ số combat, vũ khí, kỹ năng, class và EXP là placeholder.

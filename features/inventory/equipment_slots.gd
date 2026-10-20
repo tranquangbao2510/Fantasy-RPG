@@ -56,6 +56,16 @@ func get_light_radius() -> float:
 	return total
 
 
+## Tổng giáp của đồ đang mặc (TASK M4, vd. áo da ở ô body). Hurtbox giảm sát thương theo DamageInfo.mitigate().
+func get_armor() -> int:
+	var total: int = 0
+	for slot_name: StringName in _slots:
+		var item: ItemDefinition = get_item(slot_name)
+		if item != null:
+			total += item.armor
+	return total
+
+
 ## Màu ánh sáng của món phát sáng đang mặc (món đầu tiên); `fallback` nếu không có.
 func get_light_color(fallback: Color) -> Color:
 	for slot_name: StringName in SLOTS:

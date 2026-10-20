@@ -43,7 +43,7 @@ func _item(id: StringName, max_stack: int = 10) -> ItemDefinition:
 func _test_database() -> void:
 	var errors: Array[String] = DATABASE.get_validation_errors()
 	check("database_valid", errors.is_empty(), str(errors))
-	check("database_count", DATABASE.get_item_ids().size() == 22, str(DATABASE.get_item_ids()))
+	check("database_count", DATABASE.get_item_ids().size() == 28, str(DATABASE.get_item_ids()))
 	check("database_lookup", DATABASE.get_item(&"wood") != null and DATABASE.get_item(&"nope") == null)
 	check("database_find_by_weapon", DATABASE.find_by_weapon(DAGGER) != null and DATABASE.find_by_weapon(DAGGER).id == &"test_dagger")
 	check("database_icons", DATABASE.get_item_ids().all(func(id: StringName) -> bool: return DATABASE.get_item(id).icon != null))

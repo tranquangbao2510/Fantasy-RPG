@@ -85,6 +85,8 @@ func refresh(database: ItemDatabase) -> void:
 	_count.text = str(stack.count) if stack != null and stack.count > 1 else ""
 	_placeholder.visible = stack == null
 	tooltip_text = "%s\n[%s]\n%s" % [item.display_name, item.get_category_name(), item.description] if item != null else ""
+	if item != null and item.armor > 0:
+		tooltip_text += "\nGiáp %d" % item.armor
 	_wear_back.visible = item != null and item.has_wear()
 	if _wear_back.visible:
 		tooltip_text += "\n" + item.describe_wear(stack)

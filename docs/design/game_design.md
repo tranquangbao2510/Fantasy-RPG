@@ -89,20 +89,21 @@ Ký hiệu: ✅ đã có (prototype) · 🟡 có một phần · ⬜ chưa có.
 ### 4.3 Chiến đấu ✅🟡
 - Đã có: combo theo vũ khí, 4 ô kỹ năng (Normal/Quick/Instant), class/mastery/passive, tiến hóa kỹ năng, combat trên mặt phẳng iso, lọc theo tầng.
 - Đã có (M2): **mana** (kỹ năng tốn mana) ✅, **stamina** (chạy Shift, né Space) ✅, **né (dodge)** có i-frame ✅.
-- Cần thêm: **đấm tay không**, quái có sprite thật + tìm đường, quái đêm, boss.
+- Đã có (TASK M4, prototype): **quái đêm** (Bóng ma, Sói đêm đi bầy, Thây ma rừng — hình placeholder), **giáp** giảm sát thương (áo da).
+- Cần thêm: **đấm tay không**, quái có sprite thật + tìm đường, boss.
 
 ### 4.4 Sinh tồn 🟡
 - **Đói (0–100):** giảm theo thời gian, nhanh hơn khi chạy/đánh. **Hết đói thì máu tụt dần.** ✅ (M2; ăn uống qua item `consumable` ✅)
 - **Không có chỉ số Thể lực/Mệt** (đã chốt 2026-10-20). Lý do để ngủ: qua đêm nguy hiểm, hồi máu, tự lưu.
-- Nguồn đồ ăn: **hái trái cây**, **tự trồng**, **săn thú lấy thịt** (nấu chín ngon hơn), **mua ở chợ**. (M2: mới có đồ ăn nhặt được + trong rương; hái/trồng/săn/chợ ở M4–M5)
+- Nguồn đồ ăn: **hái trái cây**, **tự trồng**, **săn thú lấy thịt** (nấu chín ngon hơn), **mua ở chợ**. (M2: mới có đồ ăn nhặt được + trong rương; TASK M3: hái quả mọng, thịt từ enemy, nấu ở lửa trại; TASK M4: thịt + da từ sói đêm; trồng/chợ chưa có)
 - Không có khát, nhiệt độ, bệnh trong phạm vi luận văn.
 
 ### 4.5 Ngày/đêm & tầm nhìn 🟡
 - Đồng hồ trong game, mặc định **1 ngày = 20 phút thực** (chỉnh được). ✅ Đã chốt mặc định (M2): 1 ngày = 1200 s thực, bắt đầu 6:00; bình minh 5:00, ngày 7:00, hoàng hôn 17:00, đêm 19:00 (`features/time/time_settings.tres`).
 - **Ban đêm tầm nhìn thu nhỏ**: ngoài bán kính quanh nhân vật là bóng tối thật (không chỉ tối màu). ✅ (bán kính 160 px mặt đất ≈ 3.5 ô)
 - **Đèn lồng**: item cầm tay phụ, mở rộng tầm nhìn. ✅ (ô offhand, +96 px). **[Chưa quyết định]** có tốn dầu không (M2: chưa tốn).
-- Nguồn sáng trong thế giới: đuốc, lửa trại, đá rune, đèn nhà. 🟡 (M2: đá rune, đèn cạnh giường)
-- **Quái ban đêm mạnh hơn và đông hơn.** ⬜ (M6; đã có signal `darkness_changed`)
+- Nguồn sáng trong thế giới: đuốc, lửa trại, đá rune, đèn nhà. ✅🟡 (M2: đá rune, đèn cạnh giường; TASK M3: lửa trại, đuốc; TASK M4: đuốc tinh chất; lửa trại / đá rune / đèn giường là **vùng an toàn** — quái không sinh trong đó)
+- **Quái ban đêm mạnh hơn và đông hơn.** 🟡 (TASK M4: quái đêm sinh từ hoàng hôn theo bảng spawn, tan biến lúc bình minh; cầm đèn bị phát hiện xa hơn; không ngủ được khi quái gần. Chưa: sprite, tìm đường, quái ngày)
 
 ### 4.6 Ngủ ✅
 - M2: giường (nhà tạm trong Glade) + lều (dựng/ngủ/thu); ngủ 18:00–trước 6:00, thức tới 2:00 thì ngất.
@@ -110,7 +111,8 @@ Ký hiệu: ✅ đã có (prototype) · 🟡 có một phần · ⬜ chưa có.
 - Ngủ → sang sáng hôm sau, hồi HP/mana, **tự lưu game**.
 - **[Chưa quyết định]** Ngủ lều ngoài trời có rủi ro không (bị quái tấn công, hồi ít hơn).
 
-### 4.7 Lượm nhặt & săn bắt ⬜
+### 4.7 Lượm nhặt & săn bắt 🟡
+- TASK M3: cây / đá / bụi mọng / bụi cỏ, rìu + cuốc chim đá (có độ bền), mọc lại theo ngày. TASK M4: quái đêm rơi da, xương, tinh chất bóng. Chưa: công cụ có cấp, liềm, thú hiền.
 - Node tài nguyên: cây (gỗ), đá/quặng, bụi (quả, thảo dược)... **mọc lại** sau N ngày.
 - Cần công cụ (rìu, cuốc chim, liềm), công cụ có cấp.
 - **Săn thú** trong rừng (thú hiền bỏ chạy, thú dữ tấn công) rơi thịt, da, xương.
@@ -120,7 +122,8 @@ Ký hiệu: ✅ đã có (prototype) · 🟡 có một phần · ⬜ chưa có.
 - Cuốc đất → gieo → tưới mỗi ngày → lớn theo ngày → thu hoạch.
 - NPC thân thiết có thể **thu hoạch hộ**.
 
-### 4.9 Chế tạo ⬜
+### 4.9 Chế tạo 🟡
+- TASK M3: công thức `.tres`, chế tạo tức thì (tay / bàn chế tạo / lửa trại), lều, đuốc, lửa trại, nấu ăn. TASK M4: giáo xương, áo da (trang phục có chỉ số giáp), đuốc tinh chất. Chưa: mở khóa công thức, thời gian chờ, trạm trong nhà.
 - Trạm trong nhà (mở dần qua nâng cấp): bàn chế tạo, bếp, bàn thuốc...
 - Công thức dạng dữ liệu `.tres`, mở khóa qua sách, NPC, mastery.
 - Chế được: công cụ, vũ khí, **trang phục**, đồ ăn, thuốc, lều, đèn.

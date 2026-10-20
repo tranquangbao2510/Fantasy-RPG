@@ -75,6 +75,7 @@ func _park_enemy() -> void:
 	var enemy: Node2D = _world.get_node("EntityContainer/SimpleEnemy") as Node2D
 	enemy.global_position = IsoProjection.to_screen(4.0, 30.0)
 	enemy.process_mode = Node.PROCESS_MODE_DISABLED
+	(_world.get_node("EnemySpawner") as EnemySpawner).enabled = false
 
 
 ## Đặt Player tại điểm lưới trên tầng.

@@ -3,11 +3,11 @@ extends Resource
 ## Ánh sáng ngày/đêm + tầm nhìn đêm (TASK M2). Giá trị mặc định + lý do: docs/architecture.md mục 2m.
 ## Độ tối `darkness` (0 ngày → 1 đêm) chuyển mượt trong bình minh / hoàng hôn theo các mốc của TimeSettings.
 
-@export_group("Màu SunTint (CanvasModulate)")
+@export_group("Màu môi trường (NightOverlay)")
 @export var day_color: Color = Color(1, 0.96, 0.86)
 ## Giữa bình minh / hoàng hôn.
 @export var twilight_color: Color = Color(1, 0.72, 0.55)
-## Ban đêm (TASK M3): không đen hẳn — ngoài vùng sáng còn ánh trăng `moonlight` (kênh sáng nhất của màu SunTint;
+## Ban đêm (TASK M3): không đen hẳn — ngoài vùng sáng còn ánh trăng `moonlight` (kênh sáng nhất của màu môi trường;
 ## 0.16 ≈ 13 % độ sáng), đủ thấy bóng cây và địa hình nhưng không rõ chi tiết. `moon_tint`: sắc lạnh của ánh trăng.
 @export_range(0.0, 1.0) var moonlight: float = 0.16
 @export var moon_tint: Color = Color(0.72, 0.82, 1.0)
@@ -22,15 +22,19 @@ extends Resource
 ## Điểm có độ nhìn thấy ≥ ngưỡng này coi là "thấy được" (dùng cho logic/test).
 @export_range(0.0, 1.0) var visible_threshold: float = 0.5
 
+@export_group("Cảnh báo (TASK M4)")
+## Phút trong ngày hiện "Trời sắp tối…" (17:30). "Màn đêm buông xuống" lúc TimeSettings.night_start (tối hẳn).
+@export_range(0, 1439) var dusk_warning_minute: int = 1050
 
-## Màu SunTint theo độ tối: ngày → hoàng hôn → đêm.
+
+## Màu môi trường theo độ tối: ngày → hoàng hôn → đêm.
 func sun_color(darkness: float) -> Color:
 	if darkness <= 0.5:
 		return day_color.lerp(twilight_color, darkness * 2.0)
 	return twilight_color.lerp(night_color(), (darkness - 0.5) * 2.0)
 
 
-## Màu SunTint lúc tối hẳn: moon_tint chuẩn hóa (kênh lớn nhất = 1) × moonlight.
+## Màu môi trường lúc tối hẳn: moon_tint chuẩn hóa (kênh lớn nhất = 1) × moonlight.
 func night_color() -> Color:
 	var peak: float = maxf(maxf(moon_tint.r, moon_tint.g), maxf(moon_tint.b, 0.001))
 	return Color(moon_tint.r / peak * moonlight, moon_tint.g / peak * moonlight, moon_tint.b / peak * moonlight)

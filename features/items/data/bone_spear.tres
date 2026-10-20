@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://features/items/item_definition.gd" id="1_item"]
+[ext_resource type="Texture2D" path="res://features/items/icons/bone_spear.png" id="9_icon"]
+[ext_resource type="Resource" path="res://features/combat/weapons/data/bone_spear.tres" id="2_weapon"]
+
+[resource]
+script = ExtResource("1_item")
+id = &"bone_spear"
+display_name = "Giáo xương"
+description = "Cán gỗ, mũi xương mài nhọn. Đâm xa hơn kiếm, giữ quái ở ngoài tầm với."
+icon = ExtResource("9_icon")
+category = 3
+max_stack = 1
+sell_price = 25
+tags = Array[StringName]([&"weapon"])
+equip_slot = &"weapon"
+weapon = ExtResource("2_weapon")

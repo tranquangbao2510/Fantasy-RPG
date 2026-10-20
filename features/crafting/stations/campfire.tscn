@@ -72,3 +72,4 @@ radius = 300.0
 color = Color(1, 0.62, 0.32, 1)
 inner_ratio = 0.55
 ground_squash = 0.5
+safe_zone = true

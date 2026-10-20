@@ -82,15 +82,18 @@ func _prepare() -> void:
 	settings.fade_time = 0.0
 	settings.title_time = 0.0
 	var enemy: Node2D = _enemy()
-	enemy.global_position = IsoProjection.to_screen(4.0, 30.0)
-	enemy.process_mode = Node.PROCESS_MODE_DISABLED
+	# TASK M4: enemy đặt sẵn đã chết được lưu → sau khi tải lại thì không còn. Quái đêm không spawn trong test M3.
+	if enemy != null:
+		enemy.global_position = IsoProjection.to_screen(4.0, 30.0)
+		enemy.process_mode = Node.PROCESS_MODE_DISABLED
+	_world.enemy_spawner.enabled = false
 	_clock.running = false
 	for pickup: ItemPickup in _layer.get_pickups():
 		pickup.queue_free()
 
 
 func _enemy() -> Node2D:
-	return _world.get_node("EntityContainer/SimpleEnemy") as Node2D
+	return _world.get_node_or_null("EntityContainer/SimpleEnemy") as Node2D
 
 
 func _place(grid: Vector2, tier: int = 0) -> void:
@@ -465,7 +468,7 @@ func _test_regrow_and_save() -> void:
 	var data: Dictionary = _saves.read_save(2)
 	var nodes: Dictionary = data["maps"]["glade"]["resource_nodes"]["nodes"]
 	var deployed: Array = data["maps"]["glade"]["world_items"]["deployed"]
-	check("save_v3_structure", int(data["schema_version"]) == 3 and nodes.has("glade_tree_1") and nodes["glade_tree_1"]["depleted"] == true
+	check("save_v3_structure", int(data["schema_version"]) == SaveServiceScript.SCHEMA_VERSION and nodes.has("glade_tree_1") and nodes["glade_tree_1"]["depleted"] == true
 		and nodes["glade_tree_1"]["regrow_day"] == 4.0 and not nodes.has("glade_grass_1"), JSON.stringify(nodes))
 	check("save_v3_campfire_state", deployed.size() == 1 and deployed[0]["item_id"] == "campfire"
 		and deployed[0]["state"] == {"fuel": 123.0, "lit": true}, JSON.stringify(deployed))
@@ -521,9 +524,9 @@ func _test_campfire() -> void:
 	await frames(2)
 	var near_fire: Vector2 = fire.global_position + Vector2(fire.get_light().radius * 0.4, 0)
 	check("campfire_radius_bigger_than_lantern", fire.get_light().radius > lighting.settings.base_vision_radius + 96.0)
-	check("campfire_lights_area", lighting.is_point_visible(near_fire) and fire.get_light().get_light().is_visible_in_tree()
-		and fire.get_light().get_light().enabled and _player.global_position.distance_to(near_fire) > 300.0,
-		"%.2f %s %s %.0f" % [lighting.get_visibility(near_fire), fire.get_light().get_light().is_visible_in_tree(), fire.get_light().get_light().enabled, _player.global_position.distance_to(near_fire)])
+	check("campfire_lights_area", lighting.is_point_visible(near_fire) and fire.get_light().is_lit()
+		and fire.get_light().safe_zone and _player.global_position.distance_to(near_fire) > 300.0,
+		"%.2f %s %s %.0f" % [lighting.get_visibility(near_fire), fire.get_light().is_lit(), fire.get_light().safe_zone, _player.global_position.distance_to(near_fire)])
 	# Hết giờ → tắt: ánh sáng tắt, còn lại ánh trăng; không nấu được; vẫn đứng đó.
 	var burned: Array[bool] = []
 	fire.lit_changed.connect(func(lit: bool) -> void: burned.append(lit))
@@ -676,7 +679,7 @@ func _test_load_old_saves() -> void:
 	for node: ResourceNode in _resources.get_nodes():
 		all_full = all_full and not node.depleted
 	check("load_v2_nodes_full", all_full)
-	check("load_v2_resave_v3", _saves.save_game(5) and int(_saves.read_save(5)["schema_version"]) == 3)
+	check("load_v2_resave_current", _saves.save_game(5) and int(_saves.read_save(5)["schema_version"]) == SaveServiceScript.SCHEMA_VERSION)
 	# Save v1 (M1).
 	var v1: Dictionary = {"schema_version": 1, "saved_at": "2026-10-20 00:17:07", "playtime": 12.0, "map_id": "glade",
 		"global": {"player": {"position": [tent_at.x, tent_at.y], "tier": 0, "health": 90,

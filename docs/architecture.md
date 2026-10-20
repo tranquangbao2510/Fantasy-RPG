@@ -19,14 +19,14 @@ Mã nguồn được tổ chức theo **tính năng** (feature) thay vì theo lo
 | `app/` | Main scene, khởi động và vòng đời ứng dụng | Đã triển khai (`main.tscn`, `main.gd` — màn hình tạm) |
 | `docs/` | Tài liệu kỹ thuật | Đã triển khai |
 | `core/` | Thành phần kỹ thuật dùng chung, không phụ thuộc gameplay cụ thể | Chưa triển khai |
-| `features/` | Module gameplay (mỗi tính năng một thư mục con, vd. `features/combat/`) | Đã triển khai (`interaction/`, `combat/`, `character/`, `skills/`, `classes/`, `items/`, `inventory/` — 2l; `time/`, `survival/` — 2m) |
-| `entities/` | Player, NPC, enemy (scene ghép từ component) | Đã triển khai (`player/`, `enemies/` — placeholder) |
+| `features/` | Module gameplay (mỗi tính năng một thư mục con, vd. `features/combat/`) | Đã triển khai (`interaction/`, `combat/`, `character/`, `skills/`, `classes/`, `items/`, `inventory/` — 2l; `time/`, `survival/` — 2m; `gathering/`, `crafting/` — 2n; `spawning/` — 2o) |
+| `entities/` | Player, NPC, enemy (scene ghép từ component) | Đã triển khai (`player/`, `enemies/` — placeholder; `enemies/night/` — quái đêm, 2o) |
 | `world/` | Bản đồ, môi trường, camera | Đã triển khai (`world.tscn`, `world.gd`, `maps/test_map/`, `camera/`, `sandbox/`, `environment/` (gồm `iso/`), `environment_prototype/` — 2k, isometric) |
-| `ui/` | Thành phần giao diện | Đã triển khai (`interaction/`, `combat/`, `skills/`, `progression/`, `debug/`, `common/`, `inventory/` — 2l; `survival/` — 2m) |
+| `ui/` | Thành phần giao diện | Đã triển khai (`interaction/`, `combat/`, `skills/`, `progression/`, `debug/`, `common/`, `inventory/` — 2l; `survival/` — 2m; `crafting/` — 2n) |
 | `data/` | Dữ liệu game dùng chung (`.tres` Resource) | Chưa triển khai |
 | `assets/` | Tài nguyên dùng chung (sprite, âm thanh, font) | Chưa triển khai |
 | `save/` | Logic lưu / tải game | Đã triển khai (`save_service.gd` — Autoload SaveService, 2l) |
-| `tests/` | Kiểm thử headless (SceneTree script) | Đã triển khai (`environment/`, 2k; `player/`, 2c; `inventory/`, `save/`, 2l; `survival/`, `smoke/`, 2m; `test_base.gd` + `run_all.gd`) |
+| `tests/` | Kiểm thử headless (SceneTree script) | Đã triển khai (`environment/`, 2k; `player/`, 2c; `inventory/`, `save/`, 2l; `survival/`, `smoke/`, 2m; `crafting/`, `gathering/`, 2n; `night/`, 2o; `test_base.gd` + `run_all.gd`) |
 | `addons/` | Plugin bên thứ ba (chỉ khi thật sự cần) | Chưa triển khai |
 | `tools/` | Công cụ phát triển chạy ngoài game (có `.gdignore`), vd. sinh placeholder art | Đã triển khai (`placeholder_art/`, 2k; `player_sprites/`, 2c; `item_icons/`, 2l) |
 
@@ -279,7 +279,7 @@ ui/combat/
 
 **HealthComponent** — `max_health` (export), `current_health`, `is_dead()`, `apply_damage(n) -> int`, `heal(n) -> int`, `reset()`. HP kẹp trong [0, max]; amount ≤ 0 bị bỏ qua; đã chết thì không nhận damage/heal; `died` phát đúng 1 lần cho tới `reset()` (phát `revived`). Không biết chủ thể là gì.
 
-**Damage** — `DamageInfo.new(amount, source)` + `knockback: Vector2`; một instance dùng chung cho mọi mục tiêu của một đòn. Mục tiêu = Hurtbox nhận đòn. Chưa có chỉ số/phòng thủ/chí mạng/nguyên tố; mở rộng bằng cách thêm field vào DamageInfo.
+**Damage** — `DamageInfo.new(amount, source)` + `knockback: Vector2`; một instance dùng chung cho mọi mục tiêu của một đòn. Mục tiêu = Hurtbox nhận đòn. Chưa có chí mạng/nguyên tố; mở rộng bằng cách thêm field vào DamageInfo. TASK M4: `mana_drain` (đòn hút mana) và giáp ở Hurtbox (`DamageInfo.mitigate`, xem 2o).
 
 **Hitbox / Hurtbox**
 
@@ -593,7 +593,7 @@ ui/debug/environment_debug_hud.gd/.tscn · tests/environment/test_environment_pr
 
 **Bố cục Glade:** khối đất nổi trên vực (`LandMass`, vách vực 192 px ở mép SE/SW, mép cỏ ở NW/NE, tường `LandEdge`); plateau tầng 1 với **quảng trường đá lát thoi** + tàn tích (vòm, cột, đá rune) và **đường đất chạy xéo** dọc mép vách; **cầu thang đá** chéo trên vách SW; **lối đi tầng 1 trên vòm** sang mỏm đá phía đông, đường nhánh tầng 0 **chui dưới vòm**; suối + **cầu gỗ chéo** ở tầng thấp, suối **đổ thác qua mép vực** có sương; phông xa parallax (núi, lâu đài mờ) + nền sương lấp đầy (`AbyssHaze`) nên camera ra mép không lộ khoảng trống.
 
-**Cây scene (rút gọn):** `Environment` (SunTint, ScenicBackground z −100, Atmosphere z 40, Foreground z 50) → `MapContainer/GladeMap` (z −20: TerrainLogic ẩn, MapBounds = IsoMapBounds, AbyssHaze z −110, LandMass, LandEdge, Transitions, Paths/GroundPlane, Stream/GroundPlane, Footbridge, Waterfall + sương, bóng AO, Details) → `EntityContainer` (Y-sort: `Elevation` [Plateau, Outcrop, StoneBridge, CliffStairs, UpperGroundDetail z 4], `Props`, Player + ElevationAgent + IsoActorAdapter, NoticeBoard, TrainingDummy, SimpleEnemy + agent + adapter) → EffectContainer, CameraContainer (zoom 1–3×, bước 0.25), UILayer.
+**Cây scene (rút gọn):** `Environment` (ScenicBackground z −100 — SunTint bỏ ở M4, 2o —, Atmosphere z 40, Foreground z 50) → `MapContainer/GladeMap` (z −20: TerrainLogic ẩn, MapBounds = IsoMapBounds, AbyssHaze z −110, LandMass, LandEdge, Transitions, Paths/GroundPlane, Stream/GroundPlane, Footbridge, Waterfall + sương, bóng AO, Details) → `EntityContainer` (Y-sort: `Elevation` [Plateau, Outcrop, StoneBridge, CliffStairs, UpperGroundDetail z 4], `Props`, Player + ElevationAgent + IsoActorAdapter, NoticeBoard, TrainingDummy, SimpleEnemy + agent + adapter) → EffectContainer, CameraContainer (zoom 1–3×, bước 0.25), UILayer.
 
 **Terrain logic vs visual:** `TerrainLogic` là TileMapLayer isometric (DIAMOND_DOWN, 64×32, `position = (−32, 0)`), phân loại theo vị trí màn hình; ẩn khi chơi; `IsoMapBounds.get_map_rect()` = khung bao lưới thoi + lề + phần vách vực → giới hạn camera. Hình ảnh mặt đất = texture top-down chiếu lên mặt phẳng iso trong shader (toạ độ lưới), overlay Line2D trong node `GroundPlane` (scale y 0.5). Collision lấy từ hình học logic.
 
@@ -689,7 +689,7 @@ Ví dụ (rút gọn từ file thật):
 
 **Kiểm thử:** `tests/inventory/test_inventory.gd` (52 ca: database hợp lệ + phát hiện id trùng/rỗng/null/vũ khí thiếu weapon; add/stack/tràn/số dư khi đầy/remove/move/swap/merge/split/transfer/quick transfer; to_dict/load_dict với dữ liệu lỗi; trang bị + đồng bộ WeaponEquipment). `tests/save/test_save_load.gd` (57 ca: nhặt khi chạm/hút, ngoài tầm, túi đầy + thông báo, khác tầng, đồ vứt; rương mở bằng E, khóa combat, tự đóng; thao tác cửa sổ; vòng lưu → đổi scene → tải đủ mọi phần; `.bak`/`.tmp`; file hỏng → `.bak`/báo lỗi; field thiếu → mặc định; schema mới hơn/migration; tự lưu khi đóng; Sandbox không lưu). Test là SceneTree script được biên dịch **trước** khi Autoload đăng ký: không dùng tên `SaveService` trực tiếp (preload script + `/root/SaveService`) và nạp scene trong `call_deferred` (đã sửa `test_environment_prototype.gd` + script dựng Glade theo cách này).
 
-**Giới hạn:** một slot (chưa có UI chọn slot); ô weapon nhận vũ khí từ phím debug mà không trả item cũ về túi; cooldown/charges kỹ năng, enemy (HP/vị trí), bù nhìn không được lưu (về trạng thái của scene khi tải); không có hotbar/chế tạo/ăn uống/độ bền/tiền/chỉ số trang phục; icon là placeholder; `MapCatalog` mới có 2 map, chưa có chuyển map trong game; vứt đồ luôn rơi dưới chân Player; pickup kiểm tra tầng nhưng không kiểm tra vật cản giữa Player và pickup.
+**Giới hạn:** một slot (chưa có UI chọn slot); ô weapon nhận vũ khí từ phím debug mà không trả item cũ về túi; cooldown/charges kỹ năng, bù nhìn không được lưu (về trạng thái của scene khi tải; enemy được lưu từ TASK M4 — 2o); không có hotbar/chế tạo/ăn uống/độ bền/tiền/chỉ số trang phục; icon là placeholder; `MapCatalog` mới có 2 map, chưa có chuyển map trong game; vứt đồ luôn rơi dưới chân Player; pickup kiểm tra tầng nhưng không kiểm tra vật cản giữa Player và pickup.
 
 ## 2m. Thời gian, ngày/đêm, sinh tồn, ngủ, chết & hồi sinh [Đã triển khai, prototype — TASK M2 (gộp M2.1, thiết kế v0.2)]
 
@@ -713,9 +713,9 @@ save/                save_migrations.gd (SaveMigrations: v1 → v2)
 
 **Ngày/đêm & tầm nhìn đêm** — `DayNightLighting` (một node/map) đọc GameClock mỗi frame: `darkness` 0 (ngày) → 1 (đêm), chuyển mượt (smoothstep) trong bình minh/hoàng hôn; `SunTint` (CanvasModulate) = ngày → hoàng hôn → đêm `(0.03, 0.035, 0.07)`; node group `daylight_fx` (tia nắng, đốm nắng) mờ theo darkness; mọi `VisionLight` (group `vision_light`) sáng theo darkness. Phát `darkness_changed` cho quái đêm (M6).
 
-- **Kỹ thuật:** `CanvasModulate` gần đen ban đêm (mọi thứ trên canvas của map — địa hình, quái, item — chìm vào bóng tối thật; UI ở CanvasLayer riêng không bị ảnh hưởng) + `PointLight2D` (blend Add) cộng sáng lại vùng quanh nguồn sáng. Texture là `GradientTexture2D` radial tạo bằng code (sáng đều tới `inner_ratio` 0.6 rồi mờ dần tới mép), node light nén dọc theo `ground_squash` → vùng sáng là **hình tròn trên mặt đất** (ellipse 2:1 trên map iso). Chọn vì: chạy sẵn trên renderer Compatibility (Light2D 2D hỗ trợ trên GLES3), không cần shader mask/SDF hay SubViewport, nguồn sáng mới chỉ là thêm một node; cùng một mô hình số (`VisionLight.cover_at`, `DayNightLighting.get_visibility / is_point_visible`) dùng cho logic + test.
+- **Kỹ thuật (M2 — TASK M4 thay bằng NightOverlay, xem 2o; mô hình số `cover_at` / `get_visibility` giữ nguyên):** `CanvasModulate` gần đen ban đêm (mọi thứ trên canvas của map — địa hình, quái, item — chìm vào bóng tối thật; UI ở CanvasLayer riêng không bị ảnh hưởng) + `PointLight2D` (blend Add) cộng sáng lại vùng quanh nguồn sáng. Texture là `GradientTexture2D` radial tạo bằng code (sáng đều tới `inner_ratio` 0.6 rồi mờ dần tới mép), node light nén dọc theo `ground_squash` → vùng sáng là **hình tròn trên mặt đất** (ellipse 2:1 trên map iso). Chọn vì: chạy sẵn trên renderer Compatibility (Light2D 2D hỗ trợ trên GLES3), không cần shader mask/SDF hay SubViewport, nguồn sáng mới chỉ là thêm một node; cùng một mô hình số (`VisionLight.cover_at`, `DayNightLighting.get_visibility / is_point_visible`) dùng cho logic + test.
 - **Bán kính:** `DayNightSettings.base_vision_radius` 160 px mặt đất (≈ 3.5 ô lưới) — đủ thấy quái tới gần, phải chuẩn bị đèn/đi đường quen. Đèn lồng ở ô **offhand**: `ItemDefinition.light_radius` +96 (→ 256) + màu ấm `light_color`; chưa tốn dầu. Nguồn sáng thế giới: đá rune (VisionLight 140 px, xanh), đèn cạnh giường nhà (96 px, ấm).
-- **Hiệu năng** (máy dev: AMD Radeon Graphics tích hợp, `gl_compatibility`, cửa sổ 1152×648, zoom 2×, tắt vsync): ngày 144 FPS, đêm 142 FPS, đêm + đèn lồng 131 FPS (vsync bật: 60 cố định cả ba).
+- **Hiệu năng** (máy dev: AMD Radeon Graphics tích hợp, `gl_compatibility`, cửa sổ 1152×648, zoom 2×, tắt vsync): ngày 144 FPS, đêm 142 FPS, đêm + đèn lồng 131 FPS (vsync bật: 60 cố định cả ba). Số đo sau khi đổi kỹ thuật ở M4: 2o.
 
 **Chỉ số** (mỗi chỉ số một component, thông số trong Resource; Player có `ManaComponent`, `StaminaComponent`, `HungerComponent`, `BuffComponent`):
 
@@ -741,7 +741,7 @@ Chạy (Shift) và né (Space) qua `Player`: tốc độ chạy × buff MOVE_SPE
 
 **HUD** (`CombatHUD`, gộp vào cột trái): "Ngày N · HH:MM · phase" + ô màu phase, HP, thanh Mana (xanh) / Stamina (vàng, đỏ khi kiệt sức), "Đói x / 100" (đỏ nhấp nháy + "cần ăn!" khi < 25), buff đang có; dòng gợi ý phím thứ 3. Bảng "bị hạ gục" tắt ở map có DeathController. (Đã bỏ độ lệch (77, −65) của CombatHUD trong scene Glade — do Godot Editor lưu vào ở commit 619f391 — vì đẩy dòng trên cùng của HUD ra ngoài màn hình.)
 
-**Save v2** — `SCHEMA_VERSION = 2`; `save/save_migrations.gd` đăng ký migration **v1 → v2**: thêm `global.clock = {day 1, minute 360}`, `global.player.survival = {}` (→ chỉ số đầy, chưa có điểm hồi sinh), `world_items.death_bags = []`, `world_items.deployed = []`. `SaveService.capture()` giữ trạng thái global của phiên mà scene hiện tại không có (vd. đồng hồ khi lưu ở test_map). Player lưu thêm `survival: {mana, stamina, hunger, respawn}`; buff không lưu.
+**Save v2** — `SCHEMA_VERSION = 2`; `save/save_migrations.gd` đăng ký migration **v1 → v2**: thêm `global.clock = {day 1, minute 360}`, `global.player.survival = {}` (→ chỉ số đầy, chưa có điểm hồi sinh), `world_items.death_bags = []`, `world_items.deployed = []`. `SaveService.capture()` giữ trạng thái global của phiên mà scene hiện tại không có (vd. đồng hồ khi lưu ở test_map). Player lưu thêm `survival: {mana, stamina, hunger, respawn}`; buff không lưu (TASK M4: lưu — 2o).
 
 ```json
 "global": {
@@ -758,7 +758,133 @@ Chạy (Shift) và né (Space) qua `Player`: tốc độ chạy × buff MOVE_SPE
 
 **Kiểm thử** (`tests/run_all.gd` chạy tất cả; mọi test kế thừa `tests/test_base.gd` — fail khi có lỗi runtime / push_error ngoài dự kiến): `tests/survival/test_survival.gd` (88 ca, đi qua input thật khi có thể: phím ô kỹ năng, Shift/WASD, Space, I, chuột phải + rê chuột + F trên ô túi đồ, E với giường/lều/túi, F7/F8) — đồng hồ, mana, stamina/chạy/né (quãng 72 px mặt đất, vách chặn, i-frame, kiệt sức), đói, ăn, tầm nhìn đêm + đèn lồng + đá rune, ngủ/ngất, lều (hợp lệ/không, một lều, ngủ, thu, lưu/tải), chết (túi, hồi sinh, đồ mặc, nhặt lại, 2 túi, HUD, lưu/tải), save v2, migration v1 → v2, không còn Energy. `tests/smoke/test_scenes_load.gd` (nạp + chạy 4 scene chính).
 
-**Giới hạn:** chưa có menu hệ thống/pause (đồng hồ chỉ theo SceneTree.paused); đèn lồng chưa tốn dầu; chưa có animation né riêng (dùng run tua nhanh); buff không lưu vào save; ngủ lều không có rủi ro; quái đêm chưa làm (chỉ có signal `darkness_changed`/`phase_changed`); giường "nhà" tạm đặt trong Glade; DeathBag không biến mất theo thời gian; vùng sáng là hình tròn trên mặt đất nên vật cao (cây) bị cắt theo vòng sáng, không có bóng đổ; enemy (HP, vị trí) không lưu; dưới gầm cầu không dựng được lều (điểm thuộc tầng cao).
+**Giới hạn:** chưa có menu hệ thống/pause (đồng hồ chỉ theo SceneTree.paused); đèn lồng chưa tốn dầu; chưa có animation né riêng (dùng run tua nhanh); ngủ lều không có rủi ro; (buff, quái đêm, enemy: làm ở TASK M4 — 2o); giường "nhà" tạm đặt trong Glade; DeathBag không biến mất theo thời gian; vùng sáng là hình tròn trên mặt đất nên vật cao (cây) bị cắt theo vòng sáng, không có bóng đổ; dưới gầm cầu không dựng được lều (điểm thuộc tầng cao).
+
+## 2n. Khai thác, công cụ, chế tạo, lửa trại & đuốc [Đã triển khai, prototype — TASK M3]
+
+(Mục này viết bù ở TASK M4 — commit M3 `bbe8f77` để ngỏ tài liệu.)
+
+```
+features/gathering/  resource_node.gd (ResourceNode: Interactable), resource_node_definition.gd, resource_node_layer.gd
+                     data/ (tree, rock, berry_bush, grass .tres), nodes/ (*_node.tscn)
+features/crafting/   recipe_definition.gd, recipe_book.gd, crafting.gd (Crafting — logic thuần), crafting_station.gd
+                     stations/ workbench.gd/.tscn, campfire.gd/.tscn · data/ (công thức + recipe_book.tres)
+features/items/loot/ loot_entry.gd, loot_table.gd, loot_dropper.gd (LootDropper — enemy rơi đồ khi chết)
+ui/crafting/         crafting_window.gd/.tscn (CraftingWindow, phím C)
+```
+
+- **Node tài nguyên** — `ResourceNode` (E = một lần khai thác bằng công cụ ở tay chính). `ResourceNodeDefinition`: `toughness`, `required_tool` (&"" tay không / &"axe" / &"pickaxe"), `yield_table` (LootTable), `hand_table` + `hand_uses` (nhặt cành / đá vụn bằng tay khi thiếu công cụ), `depletes`, `regrow_days`. Đồ vào **thẳng túi** (không vừa thì rơi cạnh node) — vòng lặp khai thác lặp nhiều lần, không phải nhặt từng món, không lạc đồ trong bóng tối, không thêm vật phẩm rơi vào save. Thiếu công cụ: "Cần rìu" / "Cần cuốc". `ResourceNodeLayer` (saveable `resource_nodes`): đếm ngày qua `GameClock.day_started`, mọc lại lúc 0:00 của ngày đến hạn (kể cả sau khi tải save).
+- **Công cụ** — rìu / cuốc chim đá là item vũ khí `weapon_type_id = "tool"` mà **mọi class cầm được** (`ClassDefinition.allows_weapon_type`), combo 1 bước 5 dmg. Độ bền trong `ItemStack.data["durability"]` (thiếu = đầy), mỗi lần khai thác −1, về 0 → vỡ (`EquipmentSlots.item_depleted`, "Rìu đá đã vỡ!"). Thanh + số độ bền trên ô đồ / tooltip.
+- **Chế tạo** — `RecipeDefinition` (id, nguyên liệu, kết quả, số lượng, `station` NONE / WORKBENCH / CAMPFIRE), `RecipeBook` (export, không phải Autoload). `Crafting` (logic thuần, test độc lập): thiếu trạm / nguyên liệu → không trừ đồ; **túi đầy → chặn** (kết quả phải vừa túi sau khi trừ nguyên liệu) để không mất đồ mới làm. `CraftingWindow` (C — ô kỹ năng 2 chuyển sang **Z**, đã chốt với chủ dự án): công thức dùng được ở vị trí hiện tại, nguyên liệu thiếu tô đỏ + nút khóa, chế tạo tức thì. Bàn chế tạo trong "nhà tạm" Glade.
+- **Lửa trại** — item `campfire` dựng như lều (`PlacementCheck`) nhưng đặt trước mặt (`deploy_offset`, có thân va chạm), tối đa `max_per_map` mỗi map. Cháy `initial_fuel_minutes` 240 phút game (tối đa 720), thêm gỗ +120 / cành +45; hết → tắt (vẫn đứng đó, nhóm lại bằng củi). Đang cháy: `VisionLight` 300 px (> đèn lồng 256), trạm nấu ăn (E → chế độ Nấu). Lưu trong `world_items.deployed[*].state = {fuel, lit}`.
+- **Đuốc** — ô tay phụ, `light_radius` 64 (< đèn lồng 96), cháy 240 phút game (`ItemDefinition.burn_minutes`, còn lại trong `ItemStack.data["fuel"]`), hết thì mất.
+- **Đói = 0 (công thức):** mất `starving_percent_per_hour` = 6 % HP tối đa mỗi giờ game ⇒ đầy HP → chết sau 100 / 6 = 16.7 giờ game = 1000 phút game; 1 ngày = 1200 s thực = 1440 phút game ⇒ 1000 × 1200 / 1440 = 833 s ≈ **13.9 phút thực**, không phụ thuộc max HP.
+- **Chỉnh sau M2:** chạy 12 stamina/s; ánh trăng 16 % (`DayNightSettings.moonlight`); giường hồi 100 % HP / lều 70 %, mana 100 %; ngất: tỉnh **tại chỗ** lúc 6:00, không hồi, không tự lưu, đói −10 (ngoài phần giảm theo nhịp ngủ trong mấy giờ ngất); túi đồ rỗng tự xóa, tối đa 5 túi (túi thứ 6 → túi cũ nhất biến mất + thông báo).
+- **Save v3** — migration v2 → v3: `maps.<id>.resource_nodes = {version 1, nodes: {}}`, `world_items.deployed[*].state = {}`, `world_items.version = 3`; độ bền / nhiên liệu nằm trong `ItemStack.data` nên túi, trang bị, rương giữ nguyên.
+
+| Công thức (TASK M3) | Trạm | Nguyên liệu |
+|---|---|---|
+| Rìu đá | Tay | 2 cành, 2 đá, 3 sợi |
+| Cuốc chim đá | Tay | 2 cành, 3 đá, 3 sợi |
+| Đuốc | Tay | 1 cành, 1 sợi |
+| Băng gạc | Tay | 4 sợi |
+| Lửa trại | Tay | 3 gỗ, 2 cành, 2 đá |
+| Lều | Bàn chế tạo | 4 gỗ, 8 sợi, 4 cành |
+| Thịt nướng | Lửa trại | 1 thịt sống |
+| Quả mọng nướng | Lửa trại | 2 quả mọng |
+
+| Node tài nguyên | Công cụ | Độ bền | Thu được | Tay không | Mọc lại |
+|---|---|---|---|---|---|
+| Cây | Rìu | 4 | 3–4 gỗ, 1–2 cành | 1–2 cành, 2 lần / chu kỳ | 3 ngày |
+| Đá | Cuốc | 4 | 3–5 đá | 1 đá vụn, 2 lần / chu kỳ | 4 ngày |
+| Bụi mọng | Tay | 1 | 2–3 quả mọng (không bị phá) | — | 2 ngày |
+| Bụi cỏ | Tay | 1 | 2–3 sợi | — | 1 ngày |
+
+Enemy M3 (LootDropper): Simple / Stationary / Ranged rơi thịt sống (bảng trong `entities/enemies/loot/`).
+
+**Kiểm thử:** `tests/crafting/test_crafting.gd` (logic chế tạo), `tests/gathering/test_gathering.gd` (vòng lặp đầy đủ qua input thật, thiếu công cụ, vỡ công cụ, túi đầy, bàn chế tạo, mọc lại sau save/load, lửa trại, đuốc, túi đồ khi chết, save v1/v2).
+
+## 2o. Đêm nguy hiểm: quái đêm, spawn, giáp, save v4 [Đã triển khai, prototype — TASK M4]
+
+```
+features/spawning/        spawn_entry.gd (SpawnEntry), spawn_table.gd (SpawnTable), enemy_spawner.gd (EnemySpawner)
+                          data/glade_spawn_table.tres
+entities/enemies/         enemy.gd (+ hành vi M4), enemy_pack.gd (EnemyPack), detection_profile.gd (DetectionProfile),
+                          enemy_debug_view.gd (vòng phát hiện trên mặt đất)
+entities/enemies/night/   shade/, night_wolf/, forest_ghoul/ (scene kế thừa enemy_base.tscn), night_detection.tres
+entities/enemies/loot/    shade_loot, night_wolf_loot, forest_ghoul_loot (.tres)
+world/environment/time/   night_overlay.gd + .gdshader (NightOverlay — thay CanvasModulate + PointLight2D)
+ui/combat/                hit_vignette.gd (HitVignette), threat_indicator.gd (ThreatIndicator)
+ui/survival/              night_banner.gd (NightBanner) · ui/common/screen_edge.gd (ScreenEdge)
+features/items/data/      hide, bone, shadow_essence, bone_spear, leather_armor, essence_torch
+```
+
+**Ánh sáng (nợ M3, sửa ở M4):** M2 dùng `CanvasModulate` (tối cả canvas) + `PointLight2D` blend **Add** cho mỗi nguồn sáng → nhiều nguồn chồng nhau (lửa trại + đuốc + tầm nhìn) **cộng dồn** thành cháy trắng; Light2D trên Compatibility còn vẽ lại mọi vật trong vùng của từng đèn (đêm + 5 lửa trại + đuốc: 79 FPS). Thử blend Mix: hết cháy nhưng 47 FPS. M4 thay bằng **NightOverlay**: một hình chữ nhật phủ vùng camera thấy, z gần tối đa trên canvas của map, shader `blend_mul` tô màu = `min(1, màu môi trường + max_i(màu_i × cường độ_i × cover_i))` — lấy **max** giữa các nguồn sáng (không cộng), `cover` giống hệt `VisionLight.cover_at()` (lõi `inner_ratio` sáng đều, mờ tuyến tính tới mép, hình tròn trên mặt đất nén theo `squash`). Một lượt vẽ cho tối đa 32 nguồn sáng trong vùng nhìn (ưu tiên gần tâm). `VisionLight` không còn PointLight2D con (giữ API `radius/color/energy/inner_ratio/ground_squash/cover_at`, thêm `get_strength()`, `is_lit()`, `contains()`, `safe_zone`). `DayNightLighting` tự tạo NightOverlay; node `SunTint` bỏ khỏi Glade (màu ngày/hoàng hôn/ánh trăng giữ nguyên trong `DayNightSettings.sun_color`). Một nguồn sáng đơn lẻ cho kết quả như cũ (cộng vào màu môi trường), chỉ khác ở chỗ chồng nhau và không vượt độ sáng gốc của texture.
+
+**Spawn (data-driven)** — `SpawnTable` (một map): `entries`, `spawn_interval` 6 s, `max_total` 10, `min/max_player_distance` 360 / 720 px mặt đất, `screen_margin` 48, `safe_zone_margin` 24, `pack_spread` 32, `footprint_radius` 10, `dawn_fade_time` 1.5 s, `corpse_time` 3 s. `SpawnEntry`: `enemy_id`, `scene`, `period` (NIGHT / DAY / ANY), `weight`, `max_on_map`, `tiers`, `pack_min/max`. `EnemySpawner` (node trong World, chỉ Glade; Combat Sandbox không có):
+- Mỗi `spawn_interval`: `SpawnTable.pick()` theo trọng số trong các dòng **đúng khung giờ** (đêm = hoàng hôn 17:00 → trước bình minh 5:00) còn chỗ cho ít nhất `pack_min` (theo `max_on_map` và `max_total`); cỡ bầy ngẫu nhiên trong [pack_min, pack_max] kẹp theo chỗ còn lại; chọn điểm quanh người chơi (vành `min…max_player_distance`), **đủ cả bầy mới sinh** (thiếu chỗ → không sinh con nào).
+- Điểm hợp lệ (`get_spawn_block_reason`): trong map; **ngoài vùng camera thấy** + lề; cách người chơi ≥ `min_player_distance`; **không trong vùng sáng an toàn** (`VisionLight.safe_zone`: lửa trại đang cháy, đá rune, đèn cạnh giường) + lề; trong lưới TerrainLogic; rồi `PlacementCheck` (đúng tầng theo ElevationMap, không nước / vách / vực, footprint không chạm vật cản tầng đó / enemy / vật tương tác).
+- Quái sinh ra: `target` = Player, `ElevationAgent` (tầng của dòng bảng), `IsoActorAdapter` nếu map iso, thêm vào EntityContainer, `World.register_entity()` (số sát thương). Chết → rơi đồ (LootDropper) → sau `corpse_time` mờ dần, giải phóng (hết chiếm cap ngay khi chết).
+- **Bình minh** (GameClock vào DAWN/DAY, kể cả nhảy giờ khi ngủ): quái đêm trong vùng camera thấy **mờ dần** `dawn_fade_time` (ngừng AI + nhận đòn), ngoài màn hình **biến mất ngay**; phát `dawn_cleared(n)`.
+- Signal cho âm thanh sau này: `enemy_spawned`, `enemy_alerted`, `dawn_cleared`; `DayNightLighting.dusk_warning`, `night_started`.
+- Phím debug (build debug): **F1** Bóng ma, **F2** bầy sói, **F4** Thây ma (sinh cạnh người chơi, bỏ qua luật màn hình / cap / khung giờ, vẫn đúng tầng / địa hình), **F10** bật/tắt vẽ bán kính phát hiện.
+
+**AI** — giữ một script `Enemy` (2j); hành vi M4 bật bằng export, mặc định tắt nên enemy cũ (Combat Sandbox, SimpleEnemy ở Glade) không đổi. State thêm (giữ thứ tự cũ): WANDER (lang thang quanh điểm sinh), ALERT (vừa phát hiện — khựng `alert_time`, phát `alerted`), CHASE, ATTACK, RECOVERY, FLEE (HP < `flee_health_ratio`), AVOID_LIGHT, CIRCLE (vây quanh khi đi bầy).
+- **Phát hiện** (`DetectionProfile`, dùng chung `night_detection.tres`): bán kính = `detection_range` × (đứng yên 0.5 / đi 0.75 / chạy 1.0) × (**cầm nguồn sáng** — đuốc, đèn lồng — **1.5**). Đang đuổi: bỏ cuộc khi xa hơn bán kính × 1.5. Player cung cấp `is_holding_light()`, `get_held_light_radius()`, `is_sprinting()`, `velocity` (duck-typing).
+- **Sợ sáng** (`light_averse`, Bóng ma): hướng đi bị bỏ thành phần đi vào vùng sáng an toàn sắp chạm (nhìn trước 0.3 s) → **lượn dọc rìa**; đang ở trong (lửa vừa nhóm) → đi thẳng ra; Player cầm đèn ở gần hơn bán kính đèn (phần cộng thêm: đuốc 64, đèn lồng 96, đuốc tinh chất 112) × `held_light_repel_ratio` 1.5 → **lùi lại**. Hệ quả có chủ ý: cầm đuốc thì Bóng ma không áp sát được, nhưng mọi quái thấy mình từ xa hơn.
+- **Bầy** (`EnemyPack`, sói): trong vòng `circle_radius × 1.4` thì vây quanh ở `circle_radius` (các con tản đều theo slot, vòng xoay `circle_speed`); mỗi lúc **một** con giữ "lượt tấn công" lao vào (tốc độ × `lunge_speed_multiplier`), nhả lượt sau đòn đánh (nghỉ `pack_rest_time` 1.2 s) / khi chết / bỏ chạy / sau 4 s; con khác giành lượt.
+- **Telegraph** (Thây ma): MeleeAttack windup 0.9 s hiện đúng vùng đòn (đỏ) — đủ thời gian né (Space, i-frame 0.3 s).
+- **Hút mana** (Bóng ma): `AttackComponent.mana_drain` → `DamageInfo.mana_drain`; Player nghe `Hurtbox.hit_received` → `ManaComponent.drain()` (trừ tới 0, chờ `regen_delay`).
+- Debug: `EnemyDebugView` vẽ bán kính phát hiện **hiện tại** là hình tròn trên mặt đất (ellipse trên map iso), vòng bỏ cuộc khi đang đuổi, vòng tầm đánh, tên state.
+
+| Quái (placeholder) | HP | Đòn | Tốc độ (px/s) | Phát hiện (đi / đứng yên / chạy; ×1.5 nếu cầm đèn) | Hành vi | Rơi đồ |
+|---|---|---|---|---|---|---|
+| Bóng ma (`shade`) | 35 | 5 + **hút 15 mana**, tầm 22, windup 0.45 s, hồi 1.3 s | 55 | 170 → 128 / 85 / 170 | sợ sáng, lang thang 120, knockback × 0.6 | 1 tinh chất bóng (70 %) |
+| Sói đêm (`night_wolf`) | 30 | 8, tầm 24, windup 0.25 s, hồi 0.9 s | 165 (lao vào ×1.4 = 231) | 190 → 143 / 95 / 190 | bầy 2–3, vây + lần lượt lao vào, **HP < 25 % bỏ chạy**, không sợ sáng, knockback × 1.2 | 1–2 thịt sống, 1 da (80 %) |
+| Thây ma rừng (`forest_ghoul`) | 120 | **28**, tầm 34 × 36, **telegraph 0.9 s**, hồi 1.6 s | 45 | 140 → 105 / 70 / 140 | chậm, trâu, không bị đẩy lùi | 2–3 xương, 1 tinh chất bóng (30 %) |
+
+Lý do số: Player 130 HP (Test Fighter), đi 160 / chạy 240 px/s. Sói nhanh hơn người đi bộ (phải chạy hoặc đánh), chậm hơn người chạy (stamina ~5 s chạy liên tục) → bầy sói buộc dùng né/chạy có tính toán. Thây ma 28 dmg ≈ 22 % HP mỗi đòn nhưng báo trước 0.9 s. Bóng ma ít HP, đánh nhẹ nhưng rút mana (kỹ năng 10–25 mana) — đòn chiến thuật, khắc chế bằng đuốc.
+
+| Bảng spawn Glade (`glade_spawn_table.tres`) | Khung giờ | Trọng số | Tối đa trên map | Tầng | Bầy |
+|---|---|---|---|---|---|
+| Bóng ma | Đêm | 4 | 4 | 0, 1 | 1 |
+| Sói đêm | Đêm | 3 | 6 | 0 | 2–3 |
+| Thây ma rừng | Đêm | 2 | 2 | 0 | 1 |
+| (tổng) | | | `max_total` 10 | | thử mỗi 6 s |
+
+**Giáp** — `ItemDefinition.armor`, ô trang bị mới **`body` ("Áo")**; `EquipmentSlots.get_armor()` = tổng giáp đồ đang mặc → Player đặt `Hurtbox.armor` khi đổi đồ. **Công thức:** `sát thương nhận = max(1, round(sát thương × 100 / (100 + giáp)))` (`DamageInfo.mitigate`); giáp ≤ 0 → giữ nguyên. Áo da giáp 30 → × 0.77 (đòn Thây ma 28 → 22, đòn Bóng ma 5 → 4). Hiệu quả giảm dần khi giáp tăng (giáp 100 = −50 %), không bao giờ về 0.
+
+| Công thức mới (TASK M4) | Trạm | Nguyên liệu | Kết quả |
+|---|---|---|---|
+| Giáo xương | Bàn chế tạo | 4 xương, 2 cành, 2 sợi | vũ khí loại `spear`: combo 2 bước 16 / 24 dmg, tầm 50 / 56 (kiếm 32–38) — Test Fighter thêm loại `spear` |
+| Áo da | Bàn chế tạo | 4 da, 3 sợi | ô Áo, giáp 30 |
+| Đuốc tinh chất | Tay | 1 cành, 1 sợi, 1 tinh chất bóng | ô tay phụ, sáng +112 (đuốc 64), cháy 480 phút game (đuốc 240) |
+
+**HUD / cảm giác nguy hiểm** — `NightBanner`: "Trời sắp tối…" lúc 17:30 (`DayNightSettings.dusk_warning_minute`), "Màn đêm buông xuống" lúc tối hẳn (19:00) — chỉ khi thời gian trôi (không khi tải save / đặt giờ). `HitVignette`: viền đỏ khi Player trúng đòn, đậm theo tỉ lệ sát thương / max HP (0.25–0.6), mờ trong 0.6 s. `ThreatIndicator`: mũi tên đỏ ở mép màn hình cho quái đang đuổi (`Enemy.is_hunting()`) ở ngoài màn hình (`ScreenEdge`, tách từ `DeathBagMarker`). Âm thanh chưa làm — chỉ có signal.
+
+**Tương tác hệ cũ** — Ngủ (giường / lều): `SleepController.get_nearby_threat()` — có quái đang đuổi, hoặc ở gần hơn `SleepSettings.enemy_block_radius` 240 px mặt đất → "Có quái gần đây.". Quái không phá lều / lửa trại (chỉ nhắm Player). Chết ban đêm: luật túi đồ M2/M3 giữ nguyên.
+
+**Save v4** — `SCHEMA_VERSION = 4`, migration **v3 → v4**: `maps.<id>.enemies = {version 1, enemies: []}`, `global.player.survival.buffs = []`.
+- `EnemySpawner` (saveable theo map, id `enemies`): `{version, enemies: [{type, hp, position, tier, pack}]}` — chỉ con còn sống; `pack` > 0 nhóm lại thành EnemyPack khi tải. Loại không còn trong bảng / HP ≤ 0 → bỏ (cảnh báo). Sau khi mọi saveable đã nạp (call_deferred — thứ tự đồng hồ / spawner không cố định): ban ngày → **áp luật bình minh**.
+- Enemy đặt sẵn có `save_id` (SimpleEnemy ở Glade: `glade_simple_enemy`) tự là saveable `enemy:<save_id>`: `{version, hp, position, tier, dead}`; đã chết → bị bỏ khỏi map khi tải (không rơi đồ lại).
+- Buff: `survival.buffs = [{id, left}]` (giây thực còn lại); khôi phục tra `ItemDatabase.find_buff(id)` (buff của món ăn).
+
+```json
+"global": {"player": {"survival": {"...": "...", "buffs": [{"id": "warm_meal", "left": 118.4}]}}},
+"maps": {"glade": {
+  "enemy:glade_simple_enemy": {"version": 1, "hp": 25, "position": [-608.0, 976.0], "tier": 0, "dead": false},
+  "enemies": {"version": 1, "enemies": [
+    {"type": "night_wolf", "hp": 30, "position": [-507.55, 1012.02], "tier": 0, "pack": 20},
+    {"type": "forest_ghoul", "hp": 70, "position": [-585.95, 813.62], "tier": 0, "pack": 0}]}}}
+```
+
+**Trong Glade:** `EnemySpawner` (gốc scene), UILayer thêm HitVignette, ThreatIndicator, NightBanner (dưới SleepOverlay); RuneStone/VisionLight, đèn giường, lửa trại `safe_zone = true`; SimpleEnemy `save_id`. Script dựng `tools/glade/build_glade_prototype.gd` cập nhật cả phần M3 còn thiếu (bàn chế tạo, 15 node tài nguyên, cửa sổ chế tạo) và M4.
+
+**Kiểm thử:** `tests/night/test_night.gd` — spawn (không trong vùng sáng / màn hình / quá gần / sai tầng / nước; 53 lần spawn đều đúng luật; chỉ từ hoàng hôn), bầy đúng số lượng, cap từng loại + tổng, đầy cap không sinh; bán kính phát hiện (đuốc × 1.5, đứng < đi < chạy); Bóng ma không vào vùng sáng lửa trại (gần nhất ~317 / 300 px) + ra khỏi vùng sáng + đuốc làm lùi; sói vây, lần lượt (≤ 1 con giữ lượt, ≥ 2 con được lượt), bỏ chạy dưới 25 %; Thây ma telegraph + 28 dmg, áo da → 22, viền đỏ, Bóng ma hút mana; HUD 17:30 / 19:00; chỉ báo ngoài màn hình; không ngủ được khi quái gần / đang đuổi (E thật); phím F1/F2/F4/F10; bình minh; chế tạo qua C + click; save/load giữa đêm (loại, HP, vị trí, bầy, buff, enemy đặt sẵn); tải ban ngày; save v1 / v2 / v3; Combat Sandbox không có spawner, enemy giữ hành vi cũ.
+
+**Hiệu năng** (máy dev: AMD Radeon Graphics tích hợp, `gl_compatibility`, cửa sổ 1152×648, zoom 2×, tắt vsync — đo như M2): ngày 249 FPS, đêm 284 FPS, **đêm + 15 quái (5 Bóng ma, 2 bầy × 3 sói, 4 Thây ma, đều đang đuổi) + 3 lửa trại + đuốc: 211 FPS**; riêng ánh sáng: đêm + 5 lửa trại + đuốc 278 FPS (M3 với PointLight2D: 79). Vsync bật: 60 cố định.
+
+**Giới hạn:** quái không pathfinding (kẹt sau vật cản / chân vách; Bóng ma lượn rìa vùng sáng có thể kẹt vào vật cản); quái tầng 0 không lên tầng 1 (spawn đúng tầng nhưng không đổi tầng); vùng an toàn chỉ xét bán kính, không xét vật cản che sáng; luật "ngoài màn hình" xét khung camera (không xét tầm nhìn đêm — quái luôn sinh ngoài khung camera dù khung đó tối); lượt tấn công của bầy không phối hợp hướng (vây theo slot cố định); hình quái là polygon placeholder, không animation; âm thanh chưa có (chỉ signal); không có quái ban ngày trong bảng Glade (cột khung giờ hỗ trợ sẵn).
 
 ## 3. Quy ước đặt tên [Đã quyết định]
 
@@ -815,7 +941,7 @@ Resource dùng chung giữa nhiều instance **không được** bị sửa tron
 - Chỉ thêm Autoload khi có nhu cầu thực sự mang tính toàn cục (vd. dịch vụ save, điều phối chuyển scene) và phải được người dùng đồng ý.
 - Không dùng Autoload làm "manager" chứa logic gameplay hoặc làm kho trạng thái tùy tiện.
 
-## 10. Save / Load [Đã triển khai — TASK M1, chi tiết 2l; schema 2 + migration v1 → v2 ở 2m]
+## 10. Save / Load [Đã triển khai — TASK M1, chi tiết 2l; schema 2 ở 2m, schema 3 ở 2n, schema 4 (enemy, buff) ở 2o]
 
 lưu **runtime state** ra file JSON trong `user://`, logic nằm ở `save/`. File save chỉ chứa dữ liệu thuần (số, chuỗi, ID), tham chiếu dữ liệu thiết kế bằng ID/đường dẫn, không serialize trực tiếp Resource hay node. Định dạng có trường phiên bản (`schema_version`) để hỗ trợ migrate. Hệ thống mới muốn được lưu: thêm node vào group `saveable` + 3 hàm `get_save_id` / `save_state` / `load_state` (ID ổn định), không sửa SaveService.
 

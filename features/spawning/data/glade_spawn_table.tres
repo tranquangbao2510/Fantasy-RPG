@@ -1,0 +1,38 @@
+[gd_resource type="Resource" script_class="SpawnTable" load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://features/spawning/spawn_entry.gd" id="1_entry"]
+[ext_resource type="Script" path="res://features/spawning/spawn_table.gd" id="2_table"]
+[ext_resource type="PackedScene" path="res://entities/enemies/night/shade/shade.tscn" id="3_shade"]
+[ext_resource type="PackedScene" path="res://entities/enemies/night/night_wolf/night_wolf.tscn" id="4_wolf"]
+[ext_resource type="PackedScene" path="res://entities/enemies/night/forest_ghoul/forest_ghoul.tscn" id="5_ghoul"]
+
+[sub_resource type="Resource" id="Entry_shade"]
+script = ExtResource("1_entry")
+enemy_id = &"shade"
+scene = ExtResource("3_shade")
+weight = 4.0
+max_on_map = 4
+tiers = Array[int]([0, 1])
+
+[sub_resource type="Resource" id="Entry_wolf"]
+script = ExtResource("1_entry")
+enemy_id = &"night_wolf"
+scene = ExtResource("4_wolf")
+weight = 3.0
+max_on_map = 6
+pack_min = 2
+pack_max = 3
+
+[sub_resource type="Resource" id="Entry_ghoul"]
+script = ExtResource("1_entry")
+enemy_id = &"forest_ghoul"
+scene = ExtResource("5_ghoul")
+weight = 2.0
+max_on_map = 2
+
+[resource]
+script = ExtResource("2_table")
+map_id = &"glade"
+entries = Array[ExtResource("1_entry")]([SubResource("Entry_shade"), SubResource("Entry_wolf"), SubResource("Entry_ghoul")])
+spawn_interval = 6.0
+max_total = 10

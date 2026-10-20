@@ -85,6 +85,8 @@ func _prepare() -> void:
 	enemy.global_position = IsoProjection.to_screen(4.0, 30.0)
 	enemy.process_mode = Node.PROCESS_MODE_DISABLED
 	_clock.running = false
+	# TASK M4: test M2 không có quái đêm.
+	_world.enemy_spawner.enabled = false
 
 
 func _place(grid: Vector2, tier: int = 0) -> void:
@@ -386,26 +388,26 @@ func _test_eating() -> void:
 
 func _test_night_vision() -> void:
 	var lighting: DayNightLighting = _world.day_night
-	var sun: CanvasModulate = _world.get_node("Environment/SunTint") as CanvasModulate
 	var light: VisionLight = _player.get_node("VisionLight") as VisionLight
 	_place(ARENA)
 	_clock.set_time(1, 12 * 60)
 	await frames(2)
 	var far: Vector2 = _player.global_position + Vector2(300, 0)
-	check("day_everything_visible", lighting.darkness == 0.0 and lighting.is_point_visible(far) and not light.get_light().enabled)
+	check("day_everything_visible", lighting.darkness == 0.0 and lighting.is_point_visible(far) and not light.is_lit()
+		and lighting.get_overlay().light_count == 0)
 	_clock.set_time(1, 23 * 60)
 	await frames(2)
 	var radius: float = lighting.get_vision_radius()
-	# TASK M3: không đen hẳn — còn ánh trăng 12–18 % (kênh sáng nhất của SunTint).
-	check("night_darkness_moonlight", lighting.darkness == 1.0 and sun.color.v >= 0.12 and sun.color.v <= 0.18
-		and is_equal_approx(sun.color.v, lighting.settings.moonlight) and light.get_light().enabled, "%s" % sun.color)
+	# TASK M3: không đen hẳn — còn ánh trăng 12–18 % (kênh sáng nhất của màu môi trường; TASK M4: NightOverlay).
+	var ambient: Color = lighting.get_ambient_color()
+	check("night_darkness_moonlight", lighting.darkness == 1.0 and ambient.v >= 0.12 and ambient.v <= 0.18
+		and is_equal_approx(ambient.v, lighting.settings.moonlight) and light.is_lit() and lighting.get_overlay().light_count >= 1, "%s" % ambient)
 	check("night_far_is_moonlit", is_equal_approx(lighting.get_visibility(_player.global_position + Vector2(900, 0)), lighting.settings.moonlight))
 	check("night_near_visible", lighting.is_point_visible(_player.global_position + Vector2(radius * 0.5, 0)))
 	check("night_far_hidden", not lighting.is_point_visible(_player.global_position + Vector2(radius * 1.3, 0)))
 	# Bán kính đo trên mặt đất: theo chiều dọc màn hình chỉ bằng một nửa.
 	check("night_radius_ground_ellipse", not lighting.is_point_visible(_player.global_position + Vector2(0, radius * 0.7)))
-	check("light_size_matches_radius", is_equal_approx(light.get_light().texture_scale * VisionLight.TEXTURE_SIZE * 0.5, radius)
-		and is_equal_approx(light.get_light().scale.y, S))
+	check("light_size_matches_radius", is_equal_approx(light.radius, radius) and is_equal_approx(light.ground_squash, S))
 	# Đèn lồng ở ô offhand: bán kính tăng, ánh sáng ấm.
 	var bag: Inventory = _player.get_inventory()
 	bag.clear()
@@ -666,7 +668,7 @@ func _test_save_v2() -> void:
 	check("save_v2", _saves.save_game(4))
 	var data: Dictionary = _saves.read_save(4)
 	var survival: Dictionary = data["global"]["player"]["survival"]
-	check("save_v2_structure", int(data["schema_version"]) == 3 and data["global"]["clock"]["day"] == 5.0
+	check("save_v2_structure", int(data["schema_version"]) == SaveServiceScript.SCHEMA_VERSION and data["global"]["clock"]["day"] == 5.0
 		and is_equal_approx(survival["hunger"], 37.25) and survival["respawn"]["kind"] == "bed", JSON.stringify(survival))
 	mana.refill()
 	hunger.load_value(100.0)
@@ -689,10 +691,11 @@ func _test_migration_v1() -> void:
 	file.store_string(JSON.stringify(v1))
 	file.close()
 	var migrated: Dictionary = _saves.read_save(5)
-	# v1 → v2 → v3 (TASK M3): thêm cả resource_nodes.
-	check("migration_v1_v2_structure", int(migrated["schema_version"]) == 3 and migrated["global"]["clock"]["minute"] == 360
+	# v1 → v2 → v3 (TASK M3): thêm cả resource_nodes; → v4 (TASK M4): enemies + survival.buffs.
+	check("migration_v1_v2_structure", int(migrated["schema_version"]) == SaveServiceScript.SCHEMA_VERSION and migrated["global"]["clock"]["minute"] == 360
 		and migrated["maps"]["glade"]["resource_nodes"] == {"version": 1, "nodes": {}}
-		and migrated["global"]["player"]["survival"] == {} and migrated["maps"]["glade"]["world_items"]["death_bags"] == [],
+		and migrated["global"]["player"]["survival"] == {"buffs": []} and migrated["maps"]["glade"]["enemies"] == {"version": 1, "enemies": []}
+		and migrated["maps"]["glade"]["world_items"]["death_bags"] == [],
 		JSON.stringify(migrated["global"]))
 	await _reload(5)
 	check("migration_v1_loads", _player.get_inventory().count_of(&"wood") == 5 and _player.get_health().current_health == 90

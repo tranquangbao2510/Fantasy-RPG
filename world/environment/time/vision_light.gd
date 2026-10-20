@@ -1,47 +1,29 @@
 class_name VisionLight
 extends Node2D
-## Nguồn sáng mở vùng nhìn ban đêm (TASK M2): quanh Player, đá rune, đèn nhà... Tạo một PointLight2D con dùng texture
-## gradient tròn (sáng đều tới `inner_ratio`, mờ dần tới mép), bán kính đo trên MẶT ĐẤT (node con nén dọc theo
-## `ground_squash` → ellipse 2:1 trên map iso). Năng lượng = độ tối × `energy` (ban ngày tắt).
-## DayNightLighting điều khiển mọi node trong group `vision_light` và dùng cover_at() để tính "điểm nhìn thấy".
+## Nguồn sáng mở vùng nhìn ban đêm (TASK M2): quanh Player, đá rune, đèn nhà, lửa trại... Vùng sáng là hình tròn trên
+## MẶT ĐẤT bán kính `radius` (ellipse 2:1 trên map iso theo `ground_squash`): sáng đều tới `inner_ratio`, mờ dần tới mép.
+## Cường độ = độ tối × `energy` (ban ngày tắt). DayNightLighting điều khiển mọi node trong group `vision_light`, dùng
+## cover_at() để tính "điểm nhìn thấy" và gửi các nguồn sáng cho NightOverlay vẽ (TASK M4: không còn PointLight2D con).
+## TASK M4: `safe_zone` = vùng an toàn (lửa trại đang cháy, đá rune, đèn cạnh giường): quái không spawn trong đó,
+## quái sợ sáng (Shade) không bước vào.
 
 const GROUP: StringName = &"vision_light"
-const TEXTURE_SIZE: int = 256
-
-static var _textures: Dictionary[int, GradientTexture2D] = {}
 
 @export var radius: float = 120.0:
 	set(value):
 		radius = maxf(value, 1.0)
-		_apply_shape()
-@export var color: Color = Color(1, 0.85, 0.6):
-	set(value):
-		color = value
-		if _light != null:
-			_light.color = color
+@export var color: Color = Color(1, 0.85, 0.6)
 @export var energy: float = 1.0
-@export_range(0.0, 0.95) var inner_ratio: float = 0.6:
-	set(value):
-		inner_ratio = value
-		_apply_shape()
-@export var ground_squash: float = 1.0:
-	set(value):
-		ground_squash = value
-		_apply_shape()
+@export_range(0.0, 0.95) var inner_ratio: float = 0.6
+@export var ground_squash: float = 1.0
+## Vùng an toàn trước quái đêm (TASK M4). Tầm nhìn của Player, đèn cầm tay không phải vùng an toàn.
+@export var safe_zone: bool = false
 
 var darkness: float = 0.0
-var _light: PointLight2D
 
 
 func _ready() -> void:
 	add_to_group(GROUP)
-	_light = PointLight2D.new()
-	_light.name = "Light"
-	_light.color = color
-	_light.blend_mode = Light2D.BLEND_MODE_ADD
-	add_child(_light)
-	_apply_shape()
-	set_darkness(darkness)
 
 
 ## Map isometric (IsoActorAdapter gọi khi gắn trên Player).
@@ -51,13 +33,16 @@ func set_ground_squash(squash: float) -> void:
 
 func set_darkness(value: float) -> void:
 	darkness = clampf(value, 0.0, 1.0)
-	if _light != null:
-		_light.energy = darkness * energy
-		_light.enabled = _light.energy > 0.001
 
 
-func get_light() -> PointLight2D:
-	return _light
+## Cường độ hiện tại (0 khi ban ngày hoặc bị ẩn, vd. lửa trại đã tắt).
+func get_strength() -> float:
+	return darkness * energy if is_visible_in_tree() else 0.0
+
+
+## Đang phát sáng (ban đêm/hoàng hôn và không bị ẩn).
+func is_lit() -> bool:
+	return get_strength() > 0.001
 
 
 ## Mức che phủ của nguồn sáng tại điểm world (0..1): 1 trong phần lõi, giảm tuyến tính tới 0 ở mép bán kính.
@@ -70,28 +55,23 @@ func cover_at(point: Vector2) -> float:
 	return clampf((1.0 - distance) / maxf(1.0 - inner_ratio, 0.001), 0.0, 1.0)
 
 
-func _apply_shape() -> void:
-	if _light == null:
-		return
-	_light.texture = _texture_for(inner_ratio)
-	_light.texture_scale = 2.0 * radius / TEXTURE_SIZE
-	_light.scale = Vector2(1.0, ground_squash)
+## Điểm nằm trong vùng sáng (bán kính + `margin` px mặt đất). Không xét ngày/đêm, chỉ xét đèn có đang bật không.
+func contains(point: Vector2, margin: float = 0.0) -> bool:
+	return is_visible_in_tree() and GroundSpace.length(point - global_position, ground_squash) < radius + margin
 
 
-static func _texture_for(inner: float) -> GradientTexture2D:
-	var key: int = roundi(inner * 100.0)
-	if _textures.has(key):
-		return _textures[key]
-	var gradient: Gradient = Gradient.new()
-	gradient.set_color(0, Color.WHITE)
-	gradient.set_color(1, Color.BLACK)
-	gradient.add_point(inner, Color.WHITE)
-	var texture: GradientTexture2D = GradientTexture2D.new()
-	texture.gradient = gradient
-	texture.fill = GradientTexture2D.FILL_RADIAL
-	texture.fill_from = Vector2(0.5, 0.5)
-	texture.fill_to = Vector2(1.0, 0.5)
-	texture.width = TEXTURE_SIZE
-	texture.height = TEXTURE_SIZE
-	_textures[key] = texture
-	return texture
+## Khung bao vùng sáng (màn hình) giao với `rect`.
+func intersects(rect: Rect2) -> bool:
+	var half: Vector2 = Vector2(radius, radius * ground_squash)
+	return Rect2(global_position - half, half * 2.0).intersects(rect)
+
+
+## Nguồn sáng an toàn đang bật chứa điểm (null nếu không có). Chỉ xét nguồn sáng trong `scene`.
+static func find_safe_light(scene: Node, point: Vector2, margin: float = 0.0) -> VisionLight:
+	if scene == null or not scene.is_inside_tree():
+		return null
+	for node: Node in scene.get_tree().get_nodes_in_group(GROUP):
+		var light: VisionLight = node as VisionLight
+		if light != null and light.safe_zone and scene.is_ancestor_of(light) and light.contains(point, margin):
+			return light
+	return null

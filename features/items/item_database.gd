@@ -37,6 +37,15 @@ func find_by_weapon(weapon: WeaponDefinition) -> ItemDefinition:
 	return null
 
 
+## Buff có buff_id này trong tác dụng của một món ăn (TASK M4: khôi phục buff từ save — save chỉ lưu id). null nếu không có.
+func find_buff(buff_id: StringName) -> BuffDefinition:
+	_ensure_index()
+	for item: ItemDefinition in _index.values():
+		if item.consumable != null and item.consumable.buff != null and item.consumable.buff.buff_id == buff_id:
+			return item.consumable.buff
+	return null
+
+
 func get_item_ids() -> Array[StringName]:
 	_ensure_index()
 	return Array(_index.keys(), TYPE_STRING_NAME, &"", null)

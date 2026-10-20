@@ -18,6 +18,8 @@ extends Resource
 ## Màn hình mờ dần / sáng lại (giây) và thời gian hiện "Ngày N".
 @export var fade_time: float = 0.8
 @export var title_time: float = 1.5
+## Không ngủ được khi có quái đang đuổi hoặc ở gần hơn bán kính này (px mặt đất, TASK M4).
+@export var enemy_block_radius: float = 240.0
 
 
 ## Giờ hiện tại có ngủ được không.

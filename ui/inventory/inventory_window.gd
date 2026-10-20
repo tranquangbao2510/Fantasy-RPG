@@ -69,7 +69,7 @@ func bind(bag: Inventory, equipment: EquipmentSlots, database: ItemDatabase, act
 		view.setup_inventory(self, _bag, i)
 		_bag_grid.add_child(view)
 		_bag_views.append(view)
-	for slot: Array in [[&"weapon", "Vũ khí"], [&"head", "Mũ"], [&"offhand", "Tay phụ"]]:
+	for slot: Array in [[&"weapon", "Vũ khí"], [&"head", "Mũ"], [&"body", "Áo"], [&"offhand", "Tay phụ"]]:
 		var view: ItemSlotView = ItemSlotView.new()
 		view.setup_equipment(self, _equipment, slot[0], slot[1])
 		_equipment_row.add_child(view)

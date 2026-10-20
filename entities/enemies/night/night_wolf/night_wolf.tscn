@@ -1,0 +1,55 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="PackedScene" path="res://entities/enemies/enemy_base.tscn" id="1_base"]
+[ext_resource type="Script" path="res://features/items/loot/loot_dropper.gd" id="2_dropper"]
+[ext_resource type="Resource" path="res://entities/enemies/loot/night_wolf_loot.tres" id="3_loot"]
+[ext_resource type="PackedScene" path="res://features/combat/melee_attack.tscn" id="4_melee"]
+[ext_resource type="Resource" path="res://entities/enemies/night/night_detection.tres" id="5_detection"]
+
+[node name="NightWolf" node_paths=PackedStringArray("attack") instance=ExtResource("1_base")]
+attack = NodePath("MeleeAttack")
+enemy_id = &"night_wolf"
+detection = ExtResource("5_detection")
+move_speed = 165.0
+detection_range = 190.0
+attack_trigger_ratio = 0.9
+wander_radius = 160.0
+alert_time = 0.3
+flee_health_ratio = 0.25
+circle_radius = 70.0
+lunge_speed_multiplier = 1.4
+
+[node name="Body" parent="Visual"]
+color = Color(0.32, 0.34, 0.4, 1)
+polygon = PackedVector2Array(-15, -10, -13, -13, -8, -15, 6, -15, 10, -19, 15, -17, 14, -11, 10, -9, 10, -2, 7, -2, 6, -8, -6, -8, -7, -2, -10, -2, -11, -8)
+
+[node name="EyeLeft" parent="Visual"]
+polygon = PackedVector2Array(11, -17, 13, -17, 13, -15, 11, -15)
+
+[node name="EyeRight" parent="Visual"]
+visible = false
+
+[node name="HealthBar" parent="."]
+position = Vector2(0, -26)
+
+[node name="HealthComponent" parent="."]
+max_health = 30
+
+[node name="KnockbackComponent" parent="."]
+strength_multiplier = 1.2
+
+[node name="MeleeAttack" parent="." node_paths=PackedStringArray("health") instance=ExtResource("4_melee")]
+position = Vector2(0, -10)
+target_layers = 16
+health = NodePath("../HealthComponent")
+damage = 8
+attack_range = 24.0
+attack_width = 18.0
+windup = 0.25
+duration = 0.12
+cooldown = 0.9
+
+[node name="LootDropper" type="Node" parent="." node_paths=PackedStringArray("health")]
+script = ExtResource("2_dropper")
+table = ExtResource("3_loot")
+health = NodePath("../HealthComponent")

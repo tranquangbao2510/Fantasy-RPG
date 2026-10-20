@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RecipeDefinition" format=3]
+
+[ext_resource type="Script" path="res://features/crafting/recipe_definition.gd" id="1_recipe"]
+
+[resource]
+script = ExtResource("1_recipe")
+id = &"leather_armor"
+ingredients = Dictionary[StringName, int]({
+&"hide": 4,
+&"fiber": 3
+})
+result_id = &"leather_armor"
+result_count = 1
+station = 1

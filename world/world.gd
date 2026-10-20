@@ -41,6 +41,12 @@ extends Node2D
 @export var recipe_book: RecipeBook
 @export var crafting_window: CraftingWindow
 @export var resource_layer: ResourceNodeLayer
+## Tùy chọn (TASK M4): sinh quái theo bảng spawn (quái đêm), biểu ngữ trời tối, viền đỏ khi trúng đòn, chỉ báo quái
+## đang đuổi ngoài màn hình.
+@export var enemy_spawner: EnemySpawner
+@export var night_banner: NightBanner
+@export var hit_vignette: HitVignette
+@export var threat_indicator: ThreatIndicator
 
 @onready var _environment: Node2D = $Environment
 @onready var _map_container: Node2D = $MapContainer
@@ -61,6 +67,7 @@ func _ready() -> void:
 	_setup_save()
 	_setup_survival()
 	_setup_crafting()
+	_setup_night()
 	_setup_sandbox()
 
 
@@ -472,3 +479,16 @@ func _on_item_depleted(item_id: StringName, _slot_name: StringName) -> void:
 	if item == null:
 		return
 	_show_feedback("%s đã cháy hết." % item.display_name if item.burn_minutes > 0.0 else "%s đã vỡ!" % item.display_name)
+
+
+# --- Đêm nguy hiểm: quái đêm (TASK M4) ------------------------------------------------------------
+
+func _setup_night() -> void:
+	if enemy_spawner != null:
+		enemy_spawner.map_rect = get_map_rect()
+		enemy_spawner.enemy_spawned.connect(register_entity)
+	if night_banner != null and day_night != null:
+		day_night.dusk_warning.connect(night_banner.show_text.bind("Trời sắp tối…"))
+		day_night.night_started.connect(night_banner.show_text.bind("Màn đêm buông xuống"))
+	if hit_vignette != null and player_health != null:
+		hit_vignette.bind(player_health)

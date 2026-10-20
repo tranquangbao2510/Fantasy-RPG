@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="RecipeDefinition" format=3]
+
+[ext_resource type="Script" path="res://features/crafting/recipe_definition.gd" id="1_recipe"]
+
+[resource]
+script = ExtResource("1_recipe")
+id = &"essence_torch"
+ingredients = Dictionary[StringName, int]({
+&"branch": 1,
+&"fiber": 1,
+&"shadow_essence": 1
+})
+result_id = &"essence_torch"
+result_count = 1
+station = 0

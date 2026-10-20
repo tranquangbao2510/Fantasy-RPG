@@ -7,7 +7,7 @@ enum Category { MATERIAL, FOOD, TOOL, WEAPON, ARMOR, SEED, QUEST, MISC }
 
 const CATEGORY_NAMES: Array[String] = ["Nguyên liệu", "Thức ăn", "Công cụ", "Vũ khí", "Trang phục", "Hạt giống", "Nhiệm vụ", "Khác"]
 ## Ô trang bị hợp lệ (EquipmentSlots). &"" = không trang bị được.
-const EQUIP_SLOTS: Array[StringName] = [&"weapon", &"head", &"offhand"]
+const EQUIP_SLOTS: Array[StringName] = [&"weapon", &"head", &"offhand", &"body"]
 
 ## ID ổn định, không phụ thuộc tên hiển thị (vd. &"wood"). Lưu trong save.
 @export var id: StringName = &""
@@ -18,7 +18,7 @@ const EQUIP_SLOTS: Array[StringName] = [&"weapon", &"head", &"offhand"]
 @export_range(1, 999) var max_stack: int = 99
 @export var sell_price: int = 0
 @export var tags: Array[StringName] = []
-## Ô trang bị của item (&"weapon", &"head", &"offhand"); &"" = không trang bị được.
+## Ô trang bị của item (&"weapon", &"head", &"offhand", &"body" — áo, TASK M4); &"" = không trang bị được.
 @export var equip_slot: StringName = &""
 ## Item vũ khí: WeaponDefinition dùng khi trang bị (đánh thường/combo do hệ thống vũ khí xử lý).
 @export var weapon: WeaponDefinition
@@ -41,6 +41,10 @@ const EQUIP_SLOTS: Array[StringName] = [&"weapon", &"head", &"offhand"]
 ## Vật dựng: đặt cách chân người chơi bao nhiêu px mặt đất theo hướng nhìn (vật có thân va chạm như lửa trại đặt trước
 ## mặt để không kẹt người chơi); 0 = ngay chỗ đứng (lều).
 @export var deploy_offset: float = 0.0
+
+@export_group("Giáp (TASK M4)")
+## Giáp khi đang mặc: sát thương nhận vào × 100 / (100 + tổng giáp) (DamageInfo.mitigate). 0 = không giảm.
+@export_range(0, 200) var armor: int = 0
 
 @export_group("Nguồn sáng khi trang bị")
 ## Bán kính nhìn đêm cộng thêm (px) khi đang trang bị (vd. đèn lồng ở ô offhand). 0 = không phát sáng.
@@ -133,6 +137,8 @@ func get_validation_errors() -> Array[String]:
 		errors.append("buff của consumable không hợp lệ")
 	if consumable != null and deploy_scene != null:
 		errors.append("item vừa ăn được vừa dựng được")
+	if armor > 0 and not is_equippable():
+		errors.append("có giáp nhưng không trang bị được")
 	if light_radius < 0.0:
 		errors.append("light_radius < 0")
 	if has_wear() and max_stack != 1:

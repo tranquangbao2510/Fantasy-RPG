@@ -1,0 +1,62 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="PackedScene" path="res://entities/enemies/enemy_base.tscn" id="1_base"]
+[ext_resource type="Script" path="res://features/items/loot/loot_dropper.gd" id="2_dropper"]
+[ext_resource type="Resource" path="res://entities/enemies/loot/shade_loot.tres" id="3_loot"]
+[ext_resource type="PackedScene" path="res://features/combat/melee_attack.tscn" id="4_melee"]
+[ext_resource type="Resource" path="res://entities/enemies/night/night_detection.tres" id="5_detection"]
+
+[node name="Shade" node_paths=PackedStringArray("attack") instance=ExtResource("1_base")]
+attack = NodePath("MeleeAttack")
+enemy_id = &"shade"
+detection = ExtResource("5_detection")
+move_speed = 55.0
+detection_range = 170.0
+attack_trigger_ratio = 0.9
+wander_radius = 120.0
+wander_speed_ratio = 0.6
+alert_time = 0.4
+light_averse = true
+
+[node name="Visual" parent="."]
+modulate = Color(1, 1, 1, 0.85)
+
+[node name="Shadow" parent="Visual"]
+color = Color(0, 0, 0, 0.2)
+
+[node name="Body" parent="Visual"]
+color = Color(0.3, 0.22, 0.5, 0.9)
+polygon = PackedVector2Array(-8, -26, 0, -31, 8, -26, 9, -14, 6, -4, 2, -8, 0, -2, -2, -8, -6, -4, -9, -14)
+
+[node name="EyeLeft" parent="Visual"]
+color = Color(0.7, 0.95, 1, 1)
+polygon = PackedVector2Array(-5, -22, -2, -22, -2, -19, -5, -19)
+
+[node name="EyeRight" parent="Visual"]
+color = Color(0.7, 0.95, 1, 1)
+polygon = PackedVector2Array(2, -22, 5, -22, 5, -19, 2, -19)
+
+[node name="HealthComponent" parent="."]
+max_health = 35
+
+[node name="KnockbackComponent" parent="."]
+strength_multiplier = 0.6
+
+[node name="MeleeAttack" parent="." node_paths=PackedStringArray("health") instance=ExtResource("4_melee")]
+position = Vector2(0, -10)
+target_layers = 16
+health = NodePath("../HealthComponent")
+damage = 5
+attack_range = 22.0
+attack_width = 18.0
+windup = 0.45
+duration = 0.15
+cooldown = 1.3
+mana_drain = 15.0
+windup_color = Color(0.5, 0.4, 1, 0.3)
+active_color = Color(0.7, 0.8, 1, 0.6)
+
+[node name="LootDropper" type="Node" parent="." node_paths=PackedStringArray("health")]
+script = ExtResource("2_dropper")
+table = ExtResource("3_loot")
+health = NodePath("../HealthComponent")

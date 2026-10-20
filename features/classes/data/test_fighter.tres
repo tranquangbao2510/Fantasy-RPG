@@ -14,8 +14,8 @@
 script = ExtResource("4_y7w6g")
 class_id = &"test_fighter"
 display_name = "Test Fighter"
-description = "Class thử nghiệm (không chính thức): kiếm / vũ khí nặng."
-allowed_weapon_type_ids = Array[StringName]([&"sword", &"heavy"])
+description = "Class thử nghiệm (không chính thức): kiếm / vũ khí nặng / giáo (TASK M4)."
+allowed_weapon_type_ids = Array[StringName]([&"sword", &"heavy", &"spear"])
 skills = Array[ExtResource("6_nb443")]([ExtResource("7_x14hq"), ExtResource("8_7yduu"), ExtResource("9_wrl6s")])
 starting_skills = Array[ExtResource("6_nb443")]([ExtResource("7_x14hq"), ExtResource("8_7yduu")])
 signature_passive = ExtResource("5_phfq1")

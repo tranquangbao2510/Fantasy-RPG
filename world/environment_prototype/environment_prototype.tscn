@@ -97,6 +97,11 @@
 [ext_resource type="PackedScene" path="res://features/crafting/stations/workbench.tscn" id="m3_workbench"]
 [ext_resource type="PackedScene" path="res://ui/crafting/crafting_window.tscn" id="m3_crafting"]
 [ext_resource type="Resource" path="res://features/crafting/data/recipe_book.tres" id="m3_recipes"]
+[ext_resource type="Script" path="res://features/spawning/enemy_spawner.gd" id="m4_spawner"]
+[ext_resource type="Resource" path="res://features/spawning/data/glade_spawn_table.tres" id="m4_spawn_table"]
+[ext_resource type="Script" path="res://ui/survival/night_banner.gd" id="m4_banner"]
+[ext_resource type="Script" path="res://ui/combat/hit_vignette.gd" id="m4_vignette"]
+[ext_resource type="Script" path="res://ui/combat/threat_indicator.gd" id="m4_threat"]
 
 [sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_0h8ps"]
 blend_mode = 1
@@ -142,7 +147,7 @@ border_width_right = 1
 border_width_bottom = 1
 border_color = Color(0.45, 0.45, 0.6, 1)
 
-[node name="EnvironmentPrototype" type="Node2D" unique_id=1465201579 node_paths=PackedStringArray("camera", "camera_target", "map_bounds", "interaction_detector", "interaction_prompt", "interaction_feedback", "player_health", "combat_hud", "player_weapon", "player_attack", "player_skills", "player_caster", "skill_bar", "player", "player_classes", "player_level", "progression_panel", "inventory_window", "pickup_layer", "pickup_toast", "clock", "day_night", "sleep_controller", "death_controller", "death_marker", "crafting_window", "resource_layer")]
+[node name="EnvironmentPrototype" type="Node2D" unique_id=1465201579 node_paths=PackedStringArray("camera", "camera_target", "map_bounds", "interaction_detector", "interaction_prompt", "interaction_feedback", "player_health", "combat_hud", "player_weapon", "player_attack", "player_skills", "player_caster", "skill_bar", "player", "player_classes", "player_level", "progression_panel", "inventory_window", "pickup_layer", "pickup_toast", "clock", "day_night", "sleep_controller", "death_controller", "death_marker", "crafting_window", "resource_layer", "enemy_spawner", "night_banner", "hit_vignette", "threat_indicator")]
 texture_filter = 4
 script = ExtResource("1_y3y0j")
 camera = NodePath("CameraContainer/GameCamera")
@@ -174,11 +179,12 @@ death_marker = NodePath("UILayer/DeathBagMarker")
 recipe_book = ExtResource("m3_recipes")
 crafting_window = NodePath("UILayer/CraftingWindow")
 resource_layer = NodePath("EntityContainer/Resources")
+enemy_spawner = NodePath("EnemySpawner")
+night_banner = NodePath("UILayer/NightBanner")
+hit_vignette = NodePath("UILayer/HitVignette")
+threat_indicator = NodePath("UILayer/ThreatIndicator")
 
 [node name="Environment" type="Node2D" parent="." unique_id=978478]
-
-[node name="SunTint" type="CanvasModulate" parent="Environment" unique_id=1497859033]
-color = Color(1, 0.96, 0.86, 1)
 
 [node name="ScenicBackground" type="Parallax2D" parent="Environment" unique_id=929140061]
 z_index = -100
@@ -1231,6 +1237,7 @@ body_shape = NodePath("../BlockingBody/CollisionShape2D")
 [node name="SimpleEnemy" parent="EntityContainer" unique_id=662707432 node_paths=PackedStringArray("target") instance=ExtResource("69_gito7")]
 position = Vector2(-752, 664)
 target = NodePath("../Player")
+save_id = "glade_simple_enemy"
 
 [node name="ElevationAgent" type="Node" parent="EntityContainer/SimpleEnemy" unique_id=506294020]
 script = ExtResource("63_hhfck")
@@ -1406,6 +1413,7 @@ radius = 140.0
 color = Color(0.45, 0.9, 1, 1)
 energy = 1.1
 ground_squash = 0.5
+safe_zone = true
 
 [node name="EffectContainer" type="Node2D" parent="." unique_id=88998114]
 
@@ -1456,6 +1464,36 @@ grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("m2_marker")
 
+[node name="HitVignette" type="Control" parent="UILayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("m4_vignette")
+
+[node name="ThreatIndicator" type="Control" parent="UILayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("m4_threat")
+
+[node name="NightBanner" type="Control" parent="UILayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("m4_banner")
+
 [node name="SleepOverlay" type="Control" parent="UILayer"]
 layout_mode = 3
 anchors_preset = 15
@@ -1470,11 +1508,10 @@ script = ExtResource("m2_overlay")
 script = ExtResource("m2_clock")
 settings = ExtResource("m2_time")
 
-[node name="DayNightLighting" type="Node" parent="." node_paths=PackedStringArray("clock", "sun_tint", "player", "player_light")]
+[node name="DayNightLighting" type="Node" parent="." node_paths=PackedStringArray("clock", "player", "player_light")]
 script = ExtResource("m2_lighting")
 clock = NodePath("../GameClock")
 settings = ExtResource("m2_daynight")
-sun_tint = NodePath("../Environment/SunTint")
 player = NodePath("../EntityContainer/Player")
 player_light = NodePath("../EntityContainer/Player/VisionLight")
 
@@ -1493,3 +1530,11 @@ sleep = NodePath("../SleepController")
 pickup_layer = NodePath("../EntityContainer/Items")
 settings = ExtResource("m2_sleep_settings")
 overlay = NodePath("../UILayer/SleepOverlay")
+
+[node name="EnemySpawner" type="Node" parent="." node_paths=PackedStringArray("clock", "player", "container")]
+script = ExtResource("m4_spawner")
+table = ExtResource("m4_spawn_table")
+clock = NodePath("../GameClock")
+player = NodePath("../EntityContainer/Player")
+container = NodePath("../EntityContainer")
+ground_squash = 0.5

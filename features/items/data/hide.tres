@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://features/items/item_definition.gd" id="1_item"]
+[ext_resource type="Texture2D" path="res://features/items/icons/hide.png" id="9_icon"]
+
+[resource]
+script = ExtResource("1_item")
+id = &"hide"
+display_name = "Da thú"
+description = "Da sói đêm còn dai. Thuộc lại may áo giáp nhẹ."
+icon = ExtResource("9_icon")
+category = 0
+sell_price = 4
+tags = Array[StringName]([&"hide"])
+max_stack = 99

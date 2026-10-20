@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://features/items/item_definition.gd" id="1_item"]
+[ext_resource type="Texture2D" path="res://features/items/icons/essence_torch.png" id="9_icon"]
+
+[resource]
+script = ExtResource("1_item")
+id = &"essence_torch"
+display_name = "Đuốc tinh chất"
+description = "Đuốc tẩm tinh chất bóng: sáng rộng hơn và cháy lâu gấp đôi đuốc thường."
+icon = ExtResource("9_icon")
+category = 2
+sell_price = 10
+tags = Array[StringName]([&"light", &"fuel"])
+max_stack = 1
+equip_slot = &"offhand"
+burn_minutes = 480.0
+light_radius = 112.0
+light_color = Color(0.82, 0.78, 1, 1)

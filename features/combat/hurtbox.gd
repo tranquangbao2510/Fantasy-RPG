@@ -8,6 +8,8 @@ signal hit_received(info: DamageInfo, applied: int)
 const GROUP: StringName = &"hurtboxes"
 
 @export var health: HealthComponent
+## Giáp (TASK M4): giảm sát thương nhận vào theo DamageInfo.mitigate(). Player đặt theo đồ đang mặc.
+var armor: int = 0
 ## Tầng hiện tại của thực thể (bit mask, xem DamageInfo.tier_mask). 0 = không lọc. Map có elevation đặt qua set_elevation().
 var tier_mask: int = 0
 
@@ -65,7 +67,7 @@ func set_elevation(p_tier_mask: int, _obstacle_mask: int, _ground_z: int) -> voi
 func receive_damage(info: DamageInfo) -> int:
 	if not can_receive(info):
 		return 0
-	var applied: int = health.apply_damage(info.amount)
+	var applied: int = health.apply_damage(DamageInfo.mitigate(info.amount, armor))
 	if applied > 0:
 		hit_received.emit(info, applied)
 	return applied

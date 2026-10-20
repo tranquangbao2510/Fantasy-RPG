@@ -48,6 +48,14 @@ func spend(amount: float) -> bool:
 	return true
 
 
+## Bị hút mana (TASK M4, đòn Bóng ma): trừ tới 0, không cần đủ; tính như vừa tiêu (chờ regen_delay mới hồi).
+func drain(amount: float) -> void:
+	if amount <= 0.0:
+		return
+	_set_current(current - amount)
+	_regen_wait = settings.regen_delay
+
+
 func restore(amount: float) -> void:
 	if amount > 0.0:
 		_set_current(current + amount)

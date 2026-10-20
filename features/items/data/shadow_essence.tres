@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://features/items/item_definition.gd" id="1_item"]
+[ext_resource type="Texture2D" path="res://features/items/icons/shadow_essence.png" id="9_icon"]
+
+[resource]
+script = ExtResource("1_item")
+id = &"shadow_essence"
+display_name = "Tinh chất bóng"
+description = "Mảnh bóng tối đông lại khi quái đêm tan. Cháy sáng và lâu."
+icon = ExtResource("9_icon")
+category = 0
+sell_price = 8
+tags = Array[StringName]([&"essence"])
+max_stack = 99

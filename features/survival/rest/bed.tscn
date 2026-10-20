@@ -57,3 +57,4 @@ radius = 96.0
 color = Color(1, 0.8, 0.5, 1)
 energy = 0.8
 ground_squash = 0.5
+safe_zone = true

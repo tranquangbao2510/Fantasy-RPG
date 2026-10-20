@@ -65,6 +65,10 @@ func _ready() -> void:
 	_attack.step_started.connect(_on_attack_step_started)
 	_skills.set_aim_provider(get_global_mouse_position)
 	_skills.cast_started.connect(_on_skill_cast_started)
+	# TASK M4: giáp theo đồ đang mặc; đòn hút mana (Bóng ma).
+	_equipment.changed.connect(_sync_armor)
+	_sync_armor()
+	_hurtbox.hit_received.connect(_on_hit_received)
 
 
 func _physics_process(delta: float) -> void:
@@ -129,6 +133,16 @@ func is_sprinting() -> bool:
 
 func is_dodging() -> bool:
 	return _dodge_left > 0.0
+
+
+## Đang cầm nguồn sáng (đuốc, đèn lồng — TASK M4): quái đêm phát hiện từ xa hơn (DetectionProfile).
+func is_holding_light() -> bool:
+	return _equipment.get_light_radius() > 0.0
+
+
+## Bán kính sáng cộng thêm của đèn đang cầm (px mặt đất; 0 = không cầm). Quái sợ sáng lùi khi ở gần.
+func get_held_light_radius() -> float:
+	return _equipment.get_light_radius()
 
 
 ## Né theo hướng phím đang giữ (đứng yên: hướng nhìn). false nếu đang né/hồi né, thiếu stamina hoặc đã chết.
@@ -281,6 +295,15 @@ func _on_died() -> void:
 	_interaction_detector.set_enabled(false)
 
 
+func _sync_armor() -> void:
+	_hurtbox.armor = _equipment.get_armor()
+
+
+func _on_hit_received(info: DamageInfo, applied: int) -> void:
+	if applied > 0 and info.mana_drain > 0.0:
+		_mana.drain(info.mana_drain)
+
+
 func get_inventory() -> Inventory:
 	return _inventory
 
@@ -289,7 +312,7 @@ func get_equipment() -> EquipmentSlots:
 	return _equipment
 
 
-# --- Save (TASK M1, M2) --------------------------------------------------------------------------
+# --- Save (TASK M1, M2; buff — TASK M4) --------------------------------------------------------------------------
 # Player trong group `saveable`, đi theo người chơi qua mọi map (global). Thứ tự khôi phục: class/level (passive đổi
 # max HP) → trang bị (luật vũ khí theo class) → túi → HP → chỉ số sinh tồn → vị trí/tầng.
 
@@ -316,6 +339,7 @@ func save_state() -> Dictionary:
 			"stamina": snappedf(_stamina.current, 0.01),
 			"hunger": snappedf(_hunger.value, 0.01),
 			"respawn": respawn_point.duplicate(),
+			"buffs": _buffs.to_list(),
 		},
 	}
 
@@ -341,7 +365,7 @@ func load_state(state: Dictionary) -> void:
 	_stamina.load_value(survival.get("stamina"))
 	_hunger.load_value(survival.get("hunger"))
 	respawn_point = survival.get("respawn", {}) if survival.get("respawn") is Dictionary else {}
-	_buffs.clear()
+	_buffs.load_list(survival.get("buffs", []), _inventory.database.find_buff)
 	var saved_position: Variant = state.get("position")
 	if saved_position is Array and saved_position.size() == 2 and (saved_position[0] is float or saved_position[0] is int) \
 			and (saved_position[1] is float or saved_position[1] is int):

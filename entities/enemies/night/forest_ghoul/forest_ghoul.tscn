@@ -1,0 +1,57 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="PackedScene" path="res://entities/enemies/enemy_base.tscn" id="1_base"]
+[ext_resource type="Script" path="res://features/items/loot/loot_dropper.gd" id="2_dropper"]
+[ext_resource type="Resource" path="res://entities/enemies/loot/forest_ghoul_loot.tres" id="3_loot"]
+[ext_resource type="PackedScene" path="res://features/combat/melee_attack.tscn" id="4_melee"]
+[ext_resource type="Resource" path="res://entities/enemies/night/night_detection.tres" id="5_detection"]
+
+[node name="ForestGhoul" node_paths=PackedStringArray("attack") instance=ExtResource("1_base")]
+attack = NodePath("MeleeAttack")
+enemy_id = &"forest_ghoul"
+detection = ExtResource("5_detection")
+move_speed = 45.0
+detection_range = 140.0
+attack_trigger_ratio = 0.85
+wander_radius = 80.0
+wander_speed_ratio = 0.7
+alert_time = 0.6
+
+[node name="Body" parent="Visual"]
+color = Color(0.36, 0.45, 0.3, 1)
+polygon = PackedVector2Array(-12, -30, -5, -36, 6, -35, 13, -28, 14, -14, 11, -2, -11, -2, -14, -16)
+
+[node name="EyeLeft" parent="Visual"]
+color = Color(1, 0.25, 0.2, 1)
+polygon = PackedVector2Array(-6, -29, -2, -29, -2, -26, -6, -26)
+
+[node name="EyeRight" parent="Visual"]
+color = Color(1, 0.25, 0.2, 1)
+polygon = PackedVector2Array(3, -29, 7, -29, 7, -26, 3, -26)
+
+[node name="HealthBar" parent="."]
+position = Vector2(0, -42)
+
+[node name="HealthComponent" parent="."]
+max_health = 120
+
+[node name="KnockbackComponent" parent="."]
+strength_multiplier = 0.0
+
+[node name="MeleeAttack" parent="." node_paths=PackedStringArray("health") instance=ExtResource("4_melee")]
+position = Vector2(0, -10)
+target_layers = 16
+health = NodePath("../HealthComponent")
+damage = 28
+attack_range = 34.0
+attack_width = 36.0
+windup = 0.9
+duration = 0.15
+cooldown = 1.6
+windup_color = Color(1, 0.2, 0.15, 0.3)
+active_color = Color(1, 0.6, 0.5, 0.7)
+
+[node name="LootDropper" type="Node" parent="." node_paths=PackedStringArray("health")]
+script = ExtResource("2_dropper")
+table = ExtResource("3_loot")
+health = NodePath("../HealthComponent")

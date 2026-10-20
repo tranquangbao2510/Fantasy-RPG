@@ -28,6 +28,8 @@ enum Phase { READY, WINDUP, ACTIVE, COOLDOWN }
 @export var health: HealthComponent
 @export var windup_color: Color = Color(1, 0.6, 0.2, 0.35)
 @export var active_color: Color = Color(1, 1, 0.8, 0.6)
+## Mana của mục tiêu bị hút khi trúng đòn (TASK M4, Bóng ma). 0 = không.
+@export var mana_drain: float = 0.0
 
 ## Tỉ lệ dọc của mặt đất (1 = map cũ, 0.5 = isometric). Xem GroundSpace.
 var ground_squash: float = 1.0
@@ -126,6 +128,7 @@ func get_ground_direction() -> Vector2:
 func _make_damage() -> DamageInfo:
 	var info: DamageInfo = DamageInfo.new(damage, owner)
 	info.tier_mask = tier_mask
+	info.mana_drain = mana_drain
 	return info
 
 

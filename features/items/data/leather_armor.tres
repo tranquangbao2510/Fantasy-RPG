@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://features/items/item_definition.gd" id="1_item"]
+[ext_resource type="Texture2D" path="res://features/items/icons/leather_armor.png" id="9_icon"]
+
+[resource]
+script = ExtResource("1_item")
+id = &"leather_armor"
+display_name = "Áo da"
+description = "Áo da sói khâu bằng sợi cỏ. Mặc ở ô Áo: giảm sát thương nhận vào."
+icon = ExtResource("9_icon")
+category = 4
+sell_price = 30
+tags = Array[StringName]([&"armor"])
+max_stack = 1
+equip_slot = &"body"
+armor = 30

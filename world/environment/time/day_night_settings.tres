@@ -1,0 +1,6 @@
+[gd_resource type="Resource" script_class="DayNightSettings" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://world/environment/time/day_night_settings.gd" id="1_daynight"]
+
+[resource]
+script = ExtResource("1_daynight")

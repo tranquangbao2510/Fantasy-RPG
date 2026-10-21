@@ -1155,3 +1155,10 @@ func _survival(world: Node, ui: CanvasLayer, player: Node, entities: Node2D) -> 
 	world.set("night_banner", banner)
 	world.set("hit_vignette", vignette)
 	world.set("threat_indicator", threat)
+	# TASK M4.1: navmesh theo tầng (bake lúc chạy) cho quái tìm đường.
+	var nav: Node2D = Node2D.new()
+	nav.set_script(load(ENV + "navigation/tier_navigation.gd"))
+	add(sroot, nav, "TierNavigation")
+	nav.set("elevation_map", entities.get_node("Elevation"))
+	nav.set("ground_outline", sroot.get_node("MapContainer/GladeMap/LandEdge/Loop"))
+	world.set("tier_navigation", nav)

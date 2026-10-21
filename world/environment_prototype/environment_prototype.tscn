@@ -98,6 +98,7 @@
 [ext_resource type="PackedScene" path="res://ui/crafting/crafting_window.tscn" id="m3_crafting"]
 [ext_resource type="Resource" path="res://features/crafting/data/recipe_book.tres" id="m3_recipes"]
 [ext_resource type="Script" path="res://features/spawning/enemy_spawner.gd" id="m4_spawner"]
+[ext_resource type="Script" path="res://world/environment/navigation/tier_navigation.gd" id="m41_nav"]
 [ext_resource type="Resource" path="res://features/spawning/data/glade_spawn_table.tres" id="m4_spawn_table"]
 [ext_resource type="Script" path="res://ui/survival/night_banner.gd" id="m4_banner"]
 [ext_resource type="Script" path="res://ui/combat/hit_vignette.gd" id="m4_vignette"]
@@ -147,7 +148,7 @@ border_width_right = 1
 border_width_bottom = 1
 border_color = Color(0.45, 0.45, 0.6, 1)
 
-[node name="EnvironmentPrototype" type="Node2D" unique_id=1465201579 node_paths=PackedStringArray("camera", "camera_target", "map_bounds", "interaction_detector", "interaction_prompt", "interaction_feedback", "player_health", "combat_hud", "player_weapon", "player_attack", "player_skills", "player_caster", "skill_bar", "player", "player_classes", "player_level", "progression_panel", "inventory_window", "pickup_layer", "pickup_toast", "clock", "day_night", "sleep_controller", "death_controller", "death_marker", "crafting_window", "resource_layer", "enemy_spawner", "night_banner", "hit_vignette", "threat_indicator")]
+[node name="EnvironmentPrototype" type="Node2D" unique_id=1465201579 node_paths=PackedStringArray("camera", "camera_target", "map_bounds", "interaction_detector", "interaction_prompt", "interaction_feedback", "player_health", "combat_hud", "player_weapon", "player_attack", "player_skills", "player_caster", "skill_bar", "player", "player_classes", "player_level", "progression_panel", "inventory_window", "pickup_layer", "pickup_toast", "clock", "day_night", "sleep_controller", "death_controller", "death_marker", "crafting_window", "resource_layer", "enemy_spawner", "night_banner", "hit_vignette", "threat_indicator", "tier_navigation")]
 texture_filter = 4
 script = ExtResource("1_y3y0j")
 camera = NodePath("CameraContainer/GameCamera")
@@ -183,6 +184,7 @@ enemy_spawner = NodePath("EnemySpawner")
 night_banner = NodePath("UILayer/NightBanner")
 hit_vignette = NodePath("UILayer/HitVignette")
 threat_indicator = NodePath("UILayer/ThreatIndicator")
+tier_navigation = NodePath("TierNavigation")
 
 [node name="Environment" type="Node2D" parent="." unique_id=978478]
 
@@ -1537,3 +1539,8 @@ clock = NodePath("../GameClock")
 player = NodePath("../EntityContainer/Player")
 container = NodePath("../EntityContainer")
 ground_squash = 0.5
+
+[node name="TierNavigation" type="Node2D" parent="." node_paths=PackedStringArray("elevation_map", "ground_outline")]
+script = ExtResource("m41_nav")
+elevation_map = NodePath("../EntityContainer/Elevation")
+ground_outline = NodePath("../MapContainer/GladeMap/LandEdge/Loop")

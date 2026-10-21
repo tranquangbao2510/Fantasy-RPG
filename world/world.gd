@@ -47,6 +47,8 @@ extends Node2D
 @export var night_banner: NightBanner
 @export var hit_vignette: HitVignette
 @export var threat_indicator: ThreatIndicator
+## Tùy chọn (TASK M4.1): navmesh theo tầng cho quái tìm đường — bake lại khi vật dựng / node tài nguyên đổi.
+@export var tier_navigation: TierNavigation
 
 @onready var _environment: Node2D = $Environment
 @onready var _map_container: Node2D = $MapContainer
@@ -492,3 +494,13 @@ func _setup_night() -> void:
 		day_night.night_started.connect(night_banner.show_text.bind("Màn đêm buông xuống"))
 	if hit_vignette != null and player_health != null:
 		hit_vignette.bind(player_health)
+	if tier_navigation != null:
+		if pickup_layer != null:
+			pickup_layer.deployed_added.connect(func(node: Node2D) -> void:
+				tier_navigation.request_rebake()
+				node.tree_exited.connect(tier_navigation.request_rebake))
+		if resource_layer != null:
+			resource_layer.harvested.connect(func(node: ResourceNode, _stacks: Array[ItemStack]) -> void:
+				if node.depleted:
+					tier_navigation.request_rebake())
+			resource_layer.regrown.connect(func(_node: ResourceNode) -> void: tier_navigation.request_rebake())

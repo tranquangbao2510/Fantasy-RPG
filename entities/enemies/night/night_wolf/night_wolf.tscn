@@ -10,6 +10,7 @@
 attack = NodePath("MeleeAttack")
 enemy_id = &"night_wolf"
 detection = ExtResource("5_detection")
+use_navigation = true
 move_speed = 165.0
 detection_range = 190.0
 attack_trigger_ratio = 0.9

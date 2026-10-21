@@ -36,6 +36,9 @@ var _dodge_left: float = 0.0
 var _dodge_remaining: float = 0.0
 var _dodge_cooldown: float = 0.0
 var _dodge_velocity: Vector2 = Vector2.ZERO
+## Bóng ma hút đuốc (TASK M4.1): hệ số cháy thêm + hạn hiệu lực (ms).
+var _light_drain_multiplier: float = 1.0
+var _light_drain_until_ms: int = 0
 
 @onready var _sprite: PlayerSprite = $Visual/Sprite
 @onready var _passives: PassiveController = $PassiveController
@@ -138,6 +141,17 @@ func is_dodging() -> bool:
 ## Đang cầm nguồn sáng (đuốc, đèn lồng — TASK M4): quái đêm phát hiện từ xa hơn (DetectionProfile).
 func is_holding_light() -> bool:
 	return _equipment.get_light_radius() > 0.0
+
+
+## Quái sợ sáng đang lượn quanh vùng đèn (TASK M4.1): món đang cháy (đuốc) cháy nhanh × `multiplier` trong 0.25 s tới (quái
+## gọi lại mỗi physics tick). Đèn lồng không tốn dầu nên không ảnh hưởng; lửa trại không liên quan.
+func drain_held_light(multiplier: float) -> void:
+	_light_drain_multiplier = maxf(multiplier, 1.0)
+	_light_drain_until_ms = Time.get_ticks_msec() + 250
+
+
+func is_held_light_drained() -> bool:
+	return Time.get_ticks_msec() < _light_drain_until_ms
 
 
 ## Bán kính sáng cộng thêm của đèn đang cầm (px mặt đất; 0 = không cầm). Quái sợ sáng lùi khi ở gần.
@@ -251,7 +265,7 @@ func get_item_user() -> ItemUser:
 ## Thời gian game trôi (World nối từ GameClock.time_passed): đói; đuốc đang cầm cháy dần (TASK M3).
 func pass_game_time(minutes: float, sleeping: bool) -> void:
 	_hunger.pass_time(minutes, sleeping)
-	_equipment.burn(minutes)
+	_equipment.burn(minutes * (_light_drain_multiplier if is_held_light_drained() else 1.0))
 
 
 ## Đặt điểm spawn mới (vd. tình huống sandbox) rồi reset_state() để đưa Player về đó an toàn.

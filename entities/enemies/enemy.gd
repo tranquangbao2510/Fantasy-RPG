@@ -16,6 +16,14 @@ extends CharacterBody2D
 ##   thì lùi lại.
 ## - CIRCLE: có `pack` (EnemyPack, do EnemySpawner gán) và `circle_radius` > 0 → vây quanh mục tiêu, lần lượt từng con
 ##   lao vào (tốc độ × `lunge_speed_multiplier`) khi tới lượt.
+##
+## TASK M4.1:
+## - Tìm đường (`use_navigation`): NavigationAgent2D con (navigation layer = tầng hiện tại, navmesh của TierNavigation) —
+##   đuổi, vây, bỏ chạy, lang thang, lượn quanh vùng sáng đều đi theo đường tìm được; map chưa có navmesh → đi thẳng như cũ.
+##   Mục tiêu không tới được (khác tầng, trên đảo...) quá `unreachable_give_up_time` giây → mất dấu, lang thang
+##   `lost_cooldown` giây. Quái gần nhau tách ra (`separation_radius`).
+## - Đuốc: mục tiêu cầm đèn — quái sợ sáng ở trong bán kính đèn thì lùi; trong [bán kính, bán kính × held_light_repel_ratio]
+##   thì lượn quanh, không áp sát, và HÚT thời gian cháy của đuốc (× `torch_drain_multiplier`, Player.drain_held_light).
 
 signal state_changed(state: State)
 ## Vừa phát hiện mục tiêu (TASK M4; âm thanh / HUD gắn sau).
@@ -70,6 +78,17 @@ const LIGHT_LOOKAHEAD: float = 0.3
 @export var lunge_speed_multiplier: float = 1.0
 ## Nghỉ sau khi nhả lượt tấn công của bầy (giây) để con khác vào.
 @export var pack_rest_time: float = 1.2
+## Đuốc của mục tiêu cháy nhanh gấp bao nhiêu lần khi quái sợ sáng lượn quanh vùng đèn (TASK M4.1).
+@export var torch_drain_multiplier: float = 4.0
+## Tốc độ lượn quanh rìa vùng sáng an toàn (radian/giây).
+@export var light_hover_speed: float = 0.6
+
+@export_group("Tìm đường (TASK M4.1)")
+@export var use_navigation: bool = false
+@export var unreachable_give_up_time: float = 3.0
+@export var lost_cooldown: float = 6.0
+## Quái gần nhau hơn khoảng này (px mặt đất) đẩy nhau ra.
+@export var separation_radius: float = 16.0
 
 ## Bầy (EnemySpawner gán trước khi thêm vào cây). null = đánh đơn.
 var pack: EnemyPack
@@ -87,6 +106,13 @@ var _pack_rest: float = 0.0
 var _circle_angle: float = 0.0
 var _fading: bool = false
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
+var _nav: NavigationAgent2D
+var _nav_goal: Vector2 = Vector2.INF
+var _unreachable_time: float = 0.0
+var _lost_left: float = 0.0
+var _hover_sign: float = 1.0
+## Điểm lượn quanh vùng sáng gần nhất (đã kéo về navmesh) — test / debug.
+var hover_point: Vector2 = Vector2.INF
 
 @onready var _health: HealthComponent = $HealthComponent
 @onready var _knockback: KnockbackComponent = $KnockbackComponent
@@ -102,6 +128,14 @@ func _ready() -> void:
 		attack.attack_finished.connect(_on_attack_finished)
 	if not save_id.is_empty():
 		add_to_group(&"saveable")
+	_hover_sign = 1.0 if _rng.randf() < 0.5 else -1.0
+	if use_navigation:
+		_nav = NavigationAgent2D.new()
+		_nav.name = "NavigationAgent2D"
+		_nav.path_desired_distance = 6.0
+		_nav.target_desired_distance = 24.0
+		_nav.path_max_distance = 40.0
+		add_child(_nav)
 
 
 func _exit_tree() -> void:
@@ -114,6 +148,7 @@ func _physics_process(delta: float) -> void:
 		return
 	velocity = Vector2.ZERO
 	_pack_rest = maxf(0.0, _pack_rest - delta)
+	_lost_left = maxf(0.0, _lost_left - delta)
 	_set_state(_think(delta))
 	# Knockback cộng vào velocity rồi đi qua move_and_slide() nên vật cản vẫn chặn.
 	velocity += _knockback.get_velocity()
@@ -150,6 +185,15 @@ func ground_distance_to(point: Vector2) -> float:
 	return GroundSpace.length(point - global_position, _ground_squash)
 
 
+## Đang mất dấu mục tiêu không tới được (lang thang, bỏ qua mục tiêu).
+func is_lost() -> bool:
+	return _lost_left > 0.0
+
+
+func get_navigation_agent() -> NavigationAgent2D:
+	return _nav
+
+
 ## Bán kính phát hiện hiện tại đối với target (px mặt đất).
 func get_detection_radius() -> float:
 	if detection == null or not is_instance_valid(target):
@@ -171,6 +215,8 @@ func reset_state() -> void:
 	_health.reset()
 	_alerted = false
 	_fleeing = false
+	_lost_left = 0.0
+	_unreachable_time = 0.0
 	_set_state(State.IDLE)
 
 
@@ -230,7 +276,7 @@ func _think(delta: float) -> State:
 		attack.cancel()
 	if _fleeing:
 		return _flee()
-	if not _has_live_target():
+	if not _has_live_target() or _lost_left > 0.0:
 		_alerted = false
 		return _idle_or_wander(delta)
 	if attack.is_attacking():
@@ -242,7 +288,7 @@ func _think(delta: float) -> State:
 	if light_averse:
 		var escape: Vector2 = _light_escape(distance)
 		if escape != Vector2.ZERO:
-			velocity = _move_velocity(escape)
+			velocity = _move_velocity((escape + _separation()).normalized())
 			return State.AVOID_LIGHT
 	var radius: float = get_detection_radius()
 	var keep_range: float = radius * (detection.lose_multiplier if detection != null else 1.0)
@@ -256,6 +302,10 @@ func _think(delta: float) -> State:
 	if _alert_left > 0.0:
 		_alert_left -= delta
 		return State.ALERT
+	if light_averse:
+		var light: VisionLight = VisionLight.find_safe_light(_scene_root(), target.global_position, light_margin)
+		if light != null:
+			return _hover_light(light, delta)
 	var in_range: bool = distance <= attack.attack_range * attack_trigger_ratio
 	if movement_mode == MovementMode.KEEP_DISTANCE and distance < preferred_distance * retreat_ratio:
 		velocity = -_move_velocity(ground / distance)
@@ -269,7 +319,14 @@ func _think(delta: float) -> State:
 	if movement_mode == MovementMode.STATIONARY:
 		return State.IDLE
 	var speed: float = lunge_speed_multiplier if pack != null and pack.get_attacker() == self else 1.0
-	velocity = _steer(ground / distance, speed)
+	velocity = _steer_to(target.global_position, speed)
+	if _nav != null and not _nav.get_current_navigation_path().is_empty() and not _nav.is_target_reachable():
+		_unreachable_time += delta
+		if _unreachable_time >= unreachable_give_up_time:
+			_give_up()
+			return _idle_or_wander(delta)
+	else:
+		_unreachable_time = 0.0
 	return State.CHASE
 
 
@@ -287,6 +344,76 @@ func _steer(ground_dir: Vector2, speed_ratio: float = 1.0) -> Vector2:
 	if light_averse:
 		direction = _avoid_light(direction)
 	return _move_velocity(direction) * speed_ratio
+
+
+## Vận tốc đi tới điểm world: theo đường tìm được (nếu có navmesh), tách khỏi quái gần, quái sợ sáng tránh vùng sáng.
+func _steer_to(point: Vector2, speed_ratio: float = 1.0) -> Vector2:
+	var direction: Vector2 = GroundSpace.direction(point - global_position, _ground_squash)
+	if _nav != null:
+		_sync_navigation_layer()
+		if _nav_goal == Vector2.INF or _nav_goal.distance_to(point) > 8.0:
+			_nav_goal = point
+			_nav.target_position = point
+		var next: Vector2 = _nav.get_next_path_position()
+		if not _nav.get_current_navigation_path().is_empty() and next.distance_to(global_position) > 0.5:
+			direction = GroundSpace.direction(next - global_position, _ground_squash)
+	var separation: Vector2 = _separation()
+	if separation != Vector2.ZERO:
+		direction = (direction + separation).normalized()
+	return _steer(direction, speed_ratio)
+
+
+## Đẩy ra khỏi quái khác ở quá gần (hướng mặt đất, độ lớn ≤ 1).
+func _separation() -> Vector2:
+	if separation_radius <= 0.0 or not is_inside_tree():
+		return Vector2.ZERO
+	var push: Vector2 = Vector2.ZERO
+	for node: Node in get_tree().get_nodes_in_group(&"enemies"):
+		var other: Enemy = node as Enemy
+		if other == null or other == self or other.is_dead():
+			continue
+		var away: Vector2 = GroundSpace.to_ground(global_position - other.global_position, _ground_squash)
+		var d: float = away.length()
+		if d < separation_radius:
+			push += (away / maxf(d, 0.01)) * (1.0 - d / separation_radius) if d > 0.01 else Vector2.from_angle(_rng.randf() * TAU)
+	return push.limit_length(1.0)
+
+
+## Navigation layer = tầng hiện tại (ElevationAgent). Quái không đổi tầng (để sau) nên chỉ tìm đường trong tầng mình.
+func _sync_navigation_layer() -> void:
+	var agent: ElevationAgent = ElevationAgent.find_for(self)
+	var layer: int = 1 << clampi(agent.get_tier() if agent != null else 0, 0, 31)
+	if _nav.navigation_layers != layer:
+		_nav.navigation_layers = layer
+		_nav_goal = Vector2.INF
+
+
+## Điểm world về navmesh của tầng mình (điểm cuối của đường tìm tới đó); không có navmesh → giữ nguyên.
+func _snap_to_navmesh(point: Vector2) -> Vector2:
+	if _nav == null or not is_inside_tree():
+		return point
+	var path: PackedVector2Array = NavigationServer2D.map_get_path(get_world_2d().navigation_map, global_position, point, true,
+		_nav.navigation_layers)
+	return path[path.size() - 1] if not path.is_empty() else point
+
+
+func _give_up() -> void:
+	_alerted = false
+	_unreachable_time = 0.0
+	_lost_left = lost_cooldown
+	_nav_goal = Vector2.INF
+	if pack != null:
+		pack.release_turn(self)
+
+
+## Mục tiêu đứng trong vùng sáng an toàn: lượn quanh rìa (điểm trên vòng ngoài vùng sáng, kéo về navmesh).
+func _hover_light(light: VisionLight, delta: float) -> State:
+	var rel: Vector2 = GroundSpace.to_ground(global_position - light.global_position, _ground_squash)
+	var angle: float = rel.angle() + _hover_sign * maxf(light_hover_speed * delta, 0.0) + _hover_sign * 0.35
+	var ring: float = light.radius + light_margin + 12.0
+	hover_point = _snap_to_navmesh(light.global_position + GroundSpace.to_screen(Vector2.from_angle(angle) * ring, _ground_squash))
+	velocity = _steer_to(hover_point, 0.8)
+	return State.AVOID_LIGHT
 
 
 ## Bỏ thành phần hướng vào nguồn sáng an toàn sắp chạm (nhìn trước LIGHT_LOOKAHEAD giây).
@@ -310,8 +437,16 @@ func _light_escape(target_distance: float) -> Vector2:
 		return GroundSpace.direction(global_position - light.global_position, _ground_squash)
 	if target.has_method(&"get_held_light_radius"):
 		var held: float = float(target.call(&"get_held_light_radius"))
+		var away: Vector2 = GroundSpace.direction(global_position - target.global_position, _ground_squash)
+		if held > 0.0 and target_distance < held:
+			return away
 		if held > 0.0 and target_distance < held * held_light_repel_ratio:
-			return GroundSpace.direction(global_position - target.global_position, _ground_squash)
+			# Trong vành đèn: lượn quanh, giữ khoảng giữa vành, hút thời gian cháy của đuốc.
+			if target.has_method(&"drain_held_light"):
+				target.call(&"drain_held_light", torch_drain_multiplier)
+			var middle: float = held * (1.0 + held_light_repel_ratio) * 0.5
+			var radial: float = clampf((middle - target_distance) / maxf(held * 0.25, 1.0), -1.0, 1.0)
+			return (away.orthogonal() * _hover_sign + away * radial).normalized()
 	return Vector2.ZERO
 
 
@@ -329,9 +464,9 @@ func _idle_or_wander(delta: float) -> State:
 	if to_point.length() < 6.0:
 		_wander_wait = _rng.randf_range(1.0, 3.0)
 		var offset: Vector2 = Vector2.from_angle(_rng.randf() * TAU) * _rng.randf_range(wander_radius * 0.3, wander_radius)
-		_wander_point = _spawn_position + GroundSpace.to_screen(offset, _ground_squash)
+		_wander_point = _snap_to_navmesh(_spawn_position + GroundSpace.to_screen(offset, _ground_squash))
 		return State.IDLE
-	velocity = _steer(to_point.normalized(), wander_speed_ratio)
+	velocity = _steer_to(_wander_point, wander_speed_ratio)
 	return State.WANDER
 
 
@@ -341,7 +476,8 @@ func _flee() -> State:
 	var away: Vector2 = GroundSpace.to_ground(global_position - target.global_position, _ground_squash)
 	if away.length() > maxf(detection_range, get_detection_radius()) * 2.0:
 		return State.FLEE
-	velocity = _steer(away.normalized() if away.length() > 0.01 else Vector2.RIGHT)
+	var away_dir: Vector2 = away.normalized() if away.length() > 0.01 else Vector2.RIGHT
+	velocity = _steer_to(global_position + GroundSpace.to_screen(away_dir * 160.0, _ground_squash))
 	return State.FLEE
 
 
@@ -362,7 +498,7 @@ func _circle(distance: float) -> State:
 	var to_spot: Vector2 = GroundSpace.to_ground(spot - global_position, _ground_squash)
 	if to_spot.length() < 4.0:
 		return State.CIRCLE
-	velocity = _steer(to_spot.normalized(), 1.0 if distance > circle_radius * 1.4 else 0.8)
+	velocity = _steer_to(spot, 1.0 if distance > circle_radius * 1.4 else 0.8)
 	return State.CHASE if distance > circle_radius * 1.4 else State.CIRCLE
 
 

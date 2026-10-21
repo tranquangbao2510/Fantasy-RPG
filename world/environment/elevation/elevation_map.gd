@@ -18,6 +18,7 @@ const TIER_Z_STEP: int = 10
 const GROUND_DETAIL_Z_OFFSET: int = -6
 
 var _walkable: Dictionary = {}  # tier -> Array[PackedVector2Array] (global)
+var _blocked: Dictionary = {}  # tier -> Array[PackedVector2Array] (global): khối tầng cao chặn tầng này (TASK M4.1)
 var _built: bool = false
 
 
@@ -60,6 +61,13 @@ func get_walkable_polygons(tier: int) -> Array:
 	return _walkable.get(tier, [])
 
 
+## Vùng bị khối tầng cao chặn ở tầng `tier` (đã trừ hành lang cầu thang; polygon cùng chiều kim đồng hồ là lỗ). Dùng để bake
+## navmesh theo tầng (TierNavigation, TASK M4.1).
+func get_blocked_polygons(tier: int) -> Array:
+	_build()
+	return _blocked.get(tier, [])
+
+
 func _build() -> void:
 	if _built:
 		return
@@ -90,6 +98,7 @@ func _build() -> void:
 			var connector: ElevationConnector = node as ElevationConnector
 			if connector.lower_tier == tier:
 				blocked = _subtract(blocked, connector.get_corridor_polygon())
+		_blocked[tier] = blocked
 		walls.append_array(blocked)
 		if not walls.is_empty():
 			_add_wall_body(tier, walls)

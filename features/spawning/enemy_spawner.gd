@@ -3,6 +3,7 @@ extends Node
 ## Sinh quái theo bảng spawn của map (TASK M4). Một node trong World (map có GameClock); Combat Sandbox không có.
 ## - Mỗi `table.spawn_interval` giây thử một lần: chọn dòng (SpawnTable.pick: đúng khung giờ, còn chỗ dưới
 ##   max_on_map / max_total), chọn điểm hợp lệ (get_spawn_block_reason) quanh người chơi, sinh đủ bầy hoặc không sinh.
+## - Khung giờ sinh quái đêm: SpawnTable.night_from_minute (18:00) → trước bình minh (TASK M4.1).
 ## - Bình minh (GameClock vào DAWN/DAY): quái đêm trong vùng camera thấy mờ dần, ngoài màn hình biến mất ngay.
 ## - Lưu trong save (map, id `enemies`): loại, HP, vị trí, tầng, bầy của từng con còn sống. Tải lại ban ngày → áp luật
 ##   bình minh (sau khi mọi saveable đã nạp, vì thứ tự nạp đồng hồ / spawner không cố định).
@@ -75,12 +76,21 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
-## Khung giờ quái đêm: từ hoàng hôn tới trước bình minh. Map không có đồng hồ: luôn là ngày.
+## Khung giờ quái đêm sinh: từ SpawnTable.night_from_minute (18:00) tới trước bình minh (TASK M4.1; M4: từ hoàng hôn 17:00).
+## Map không có đồng hồ: luôn là ngày.
 func is_night_period() -> bool:
-	if clock == null:
+	if clock == null or table == null:
 		return false
+	var minute: float = clock.get_minute_of_day()
+	return minute >= table.night_from_minute or minute < clock.settings.dawn_start
+
+
+## Bình minh / ban ngày (GameClock phase DAWN, DAY): quái đêm phải tan biến.
+func is_daylight() -> bool:
+	if clock == null:
+		return true
 	var phase: GameClock.Phase = clock.get_phase()
-	return phase == GameClock.Phase.DUSK or phase == GameClock.Phase.NIGHT
+	return phase == GameClock.Phase.DAWN or phase == GameClock.Phase.DAY
 
 
 ## Quái còn sống do spawner quản lý.
@@ -281,13 +291,13 @@ func _on_enemy_died(enemy: Enemy) -> void:
 
 
 func _on_phase_changed(_phase: GameClock.Phase) -> void:
-	if not is_night_period():
+	if is_daylight():
 		clear_night_enemies()
 
 
 ## Sau khi tải save: ban ngày thì dọn quái đêm (luật bình minh).
 func _apply_time_rules() -> void:
-	if not is_night_period():
+	if is_daylight():
 		clear_night_enemies()
 
 

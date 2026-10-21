@@ -23,8 +23,8 @@ extends Resource
 @export_range(0.0, 1.0) var visible_threshold: float = 0.5
 
 @export_group("Cảnh báo (TASK M4)")
-## Phút trong ngày hiện "Trời sắp tối…" (17:30). "Màn đêm buông xuống" lúc TimeSettings.night_start (tối hẳn).
-@export_range(0, 1439) var dusk_warning_minute: int = 1050
+## Phút trong ngày hiện "Trời sắp tối…" (17:00 — TASK M4.1: trước giờ quái đêm sinh SpawnTable.night_from_minute ≥ 1 giờ game). "Màn đêm buông xuống" lúc TimeSettings.night_start (tối hẳn).
+@export_range(0, 1439) var dusk_warning_minute: int = 1020
 
 
 ## Màu môi trường theo độ tối: ngày → hoàng hôn → đêm.

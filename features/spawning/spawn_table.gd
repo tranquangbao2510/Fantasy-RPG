@@ -8,6 +8,9 @@ extends Resource
 @export var map_id: StringName = &""
 @export var entries: Array[SpawnEntry] = []
 ## Giây thực giữa hai lần thử spawn.
+## Quái đêm (SpawnEntry.Period.NIGHT) sinh từ phút này tới trước bình minh (TimeSettings.dawn_start). 18:00 — sau cảnh báo
+## "Trời sắp tối…" (17:00, DayNightSettings.dusk_warning_minute) đúng 1 giờ game, trùng giờ bắt đầu ngủ được (TASK M4.1).
+@export_range(0, 1439) var night_from_minute: int = 1080
 @export var spawn_interval: float = 5.0
 ## Tổng số quái do bảng này sinh ra tối đa cùng lúc.
 @export var max_total: int = 12

@@ -11,6 +11,9 @@ extends "res://tests/test_base.gd"
 ## 6. Chế tạo giáo xương / áo da / đuốc tinh chất; bảng rơi đồ.
 ## 7. Save v4: lưu/tải giữa đêm (quái, HP, vị trí, bầy, buff, enemy đặt sẵn); tải ban ngày áp luật bình minh;
 ##    tải save v1, v2, v3. Combat Sandbox giữ nguyên.
+## TASK M4.1: cảnh báo 17:00 luôn trước lần spawn đầu (18:00, đồng hồ chạy thật); Bóng ma hút đuốc (×4) khi lượn trong vành
+## đèn, không ảnh hưởng đèn lồng / lửa trại, đuốc tắt thì nó đánh; tìm đường: vòng qua plateau, không kẹt sau cây, mất dấu
+## khi mục tiêu khác tầng, quái không chồng nhau, điểm lượn quanh vùng sáng nằm trên navmesh, navmesh bake lại khi dựng lửa trại.
 ## Chạy:  Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/night/test_night.gd
 
 const SCENE_PATH: String = "res://world/environment_prototype/environment_prototype.tscn"
@@ -42,6 +45,9 @@ func _run_tests() -> void:
 	await _test_detection()
 	await _test_shade_light()
 	await _test_wolves()
+	await _test_warning_before_spawn()
+	await _test_torch_drain()
+	await _test_pathfinding()
 	await _test_ghoul_and_hits()
 	await _test_hud_warnings()
 	await _test_threat_indicator()
@@ -280,14 +286,20 @@ func _test_spawn_rules() -> void:
 	for i: int in 10:
 		day_spawns += _spawner.try_spawn().size()
 	check("no_night_spawn_by_day", day_spawns == 0 and not _spawner.is_night_period())
-	await _set_time(17)
-	check("night_period_from_dusk", _spawner.is_night_period())
+	# TASK M4.1: hoàng hôn 17:00 chưa sinh (chỉ cảnh báo), quái đêm sinh từ 18:00.
+	await _set_time(17, 30)
+	var early: int = 0
+	for i: int in 10:
+		early += _spawner.try_spawn().size()
+	check("no_spawn_before_18", early == 0 and not _spawner.is_night_period())
+	await _set_time(18)
+	check("night_period_from_18", _spawner.is_night_period())
 	var dusk: Array[Enemy] = []
 	for i: int in 10:
 		dusk.append_array(_spawner.try_spawn())
 		if not dusk.is_empty():
 			break
-	check("spawn_starts_at_dusk", not dusk.is_empty())
+	check("spawn_starts_at_18", not dusk.is_empty())
 	await _clear_enemies()
 	await _set_time(22)
 	var view: Rect2 = _spawner.get_view_rect()
@@ -432,8 +444,12 @@ func _test_shade_light() -> void:
 		nearest = minf(nearest, _dist(shade.global_position, fire.global_position))
 		states[shade.get_state()] = true
 	check("shade_never_enters_light", nearest >= radius - 1.0, "gần nhất %.1f / bán kính %.0f" % [nearest, radius])
-	check("shade_hovers_at_edge", nearest < radius + shade.light_margin + 30.0 and states.has(Enemy.State.CHASE),
+	check("shade_hovers_at_edge", nearest < radius + shade.light_margin + 30.0 and states.has(Enemy.State.AVOID_LIGHT),
 		"%.1f %s" % [nearest, states.keys()])
+	var map: RID = _world.get_world_2d().navigation_map
+	var hover: Vector2 = shade.hover_point
+	check("shade_hover_point_on_navmesh", hover != Vector2.INF and NavigationServer2D.map_get_closest_point(map, hover).distance_to(hover) < 1.0
+		and not fire.get_light().contains(hover), "%s" % hover)
 	check("shade_alert_signal", _alerts > 0)
 	# Lửa trại vừa nhóm cạnh Shade: nó đi ra khỏi vùng sáng.
 	shade.global_position = fire.global_position + GroundSpace.to_screen(Vector2(radius * 0.8, 0), S)
@@ -451,7 +467,9 @@ func _test_shade_light() -> void:
 		await physics_frame
 		torch_states[shade.get_state()] = true
 	var after_torch: float = _dist(shade.global_position, _player.global_position)
-	check("torch_repels_shade", after_torch > 80.0 and torch_states.has(Enemy.State.AVOID_LIGHT), "%.1f %s" % [after_torch, torch_states.keys()])
+	var held: float = _player.get_held_light_radius()
+	check("torch_repels_shade", after_torch >= held - 2.0 and after_torch <= held * shade.held_light_repel_ratio + 12.0
+		and torch_states.has(Enemy.State.AVOID_LIGHT), "%.1f %s" % [after_torch, torch_states.keys()])
 	_player.get_equipment().unequip_to_inventory(&"offhand")
 	await _clear_enemies()
 	shade = _spawn(&"shade", _around(60.0))
@@ -497,6 +515,243 @@ func _test_wolves() -> void:
 	check("wolf_above_25_keeps_fighting", not brave.is_fleeing())
 	_player.get_health().reset()
 	await _clear_enemies()
+
+
+# ---------------------------------------------------------------- M4.1: cảnh báo trước lần spawn đầu
+
+func _test_warning_before_spawn() -> void:
+	await _place(ARENA)
+	await _set_time(16, 30)
+	var fast: SpawnTable = _table.duplicate(true)
+	fast.spawn_interval = 0.05
+	_spawner.table = fast
+	_spawner.enabled = true
+	var warned_at: Array[float] = []
+	var spawned_at: Array[float] = []
+	var on_warn: Callable = func() -> void: warned_at.append(_clock.total_minutes)
+	var on_spawn: Callable = func(_enemy: Enemy) -> void: spawned_at.append(_clock.total_minutes)
+	(_world.day_night as DayNightLighting).dusk_warning.connect(on_warn)
+	_spawner.enemy_spawned.connect(on_spawn)
+	# Đồng hồ chạy qua advance() (đường thời gian thật) từng 0.5 phút game, spawner tự thử mỗi 0.05 s.
+	for i: int in 400:
+		_clock.advance(0.5)
+		await frames(4)
+		if not spawned_at.is_empty() or _clock.get_hour() >= 19:
+			break
+	_spawner.enabled = false
+	_spawner.table = _table
+	(_world.day_night as DayNightLighting).dusk_warning.disconnect(on_warn)
+	_spawner.enemy_spawned.disconnect(on_spawn)
+	check("warning_before_first_spawn", warned_at.size() == 1 and not spawned_at.is_empty()
+		and spawned_at[0] - warned_at[0] >= 60.0, "%s %s" % [warned_at, spawned_at])
+	await _clear_enemies()
+
+
+# ---------------------------------------------------------------- M4.1: Bóng ma hút đuốc
+
+## Chờ Bóng ma vào vành đèn (Player báo đang bị hút đuốc).
+func _wait_drained(limit: int = 240) -> bool:
+	for i: int in limit:
+		await physics_frame
+		if _player.is_held_light_drained():
+			return true
+	return false
+
+
+func _offhand_fuel() -> float:
+	var item: ItemDefinition = _player.get_equipment().get_item(&"offhand")
+	return item.fuel_of(_player.get_equipment().get_stack(&"offhand")) if item != null else -1.0
+
+
+func _test_torch_drain() -> void:
+	await _place(ARENA)
+	await _set_time(22)
+	_player.get_health().reset()
+	_equip(&"torch")
+	var before: float = _offhand_fuel()
+	_clock.advance(10.0)
+	check("torch_normal_burn", is_equal_approx(before - _offhand_fuel(), 10.0), "%.2f" % (before - _offhand_fuel()))
+	var shade: Enemy = _spawn(&"shade", _around(120.0))
+	shade.detection_range = 2000.0
+	var in_band: bool = await _wait_drained()
+	var distance: float = _dist(shade.global_position, _player.global_position)
+	var held: float = _player.get_held_light_radius()
+	before = _offhand_fuel()
+	_clock.advance(10.0)
+	check("shade_drains_torch_x4", in_band and distance >= held - 2.0 and distance <= held * shade.held_light_repel_ratio + 12.0
+		and is_equal_approx(before - _offhand_fuel(), 10.0 * shade.torch_drain_multiplier), "%s %.1f %.2f" % [in_band, distance, before - _offhand_fuel()])
+	# Lửa trại không bị hút.
+	var fire: Campfire = _layer.spawn_deployed(_bag().database.get_item(&"campfire"), _around(500.0, PI), 0) as Campfire
+	var fuel: float = fire.fuel_minutes
+	await _wait_drained(30)
+	_clock.advance(10.0)
+	check("campfire_not_drained", is_equal_approx(fuel - fire.fuel_minutes, 10.0))
+	fire.queue_free()
+	# Đèn lồng: không tốn dầu → không ảnh hưởng (vẫn đẩy lùi).
+	_player.get_equipment().unequip_to_inventory(&"offhand")
+	_equip(&"lantern")
+	await _wait_drained(120)
+	_clock.advance(30.0)
+	check("lantern_not_drained", _player.get_equipment().get_item(&"offhand") != null
+		and _player.get_equipment().get_item(&"offhand").id == &"lantern" and _dist(shade.global_position, _player.global_position) >= 94.0)
+	_player.get_equipment().unequip_to_inventory(&"offhand")
+	# Đuốc cháy hết → Bóng ma đánh bình thường.
+	_bag().clear()
+	_equip(&"torch")
+	var mana: ManaComponent = _player.get_mana()
+	mana.refill()
+	await _wait_drained()
+	_clock.advance(_offhand_fuel() / shade.torch_drain_multiplier + 1.0)
+	check("torch_burned_out", _player.get_equipment().get_item(&"offhand") == null and not _player.is_holding_light())
+	var hit: bool = false
+	for i: int in 300:
+		await physics_frame
+		if mana.current < mana.get_max() - 1.0:
+			hit = true
+			break
+	check("shade_attacks_after_torch_out", hit, "%.1f" % _dist(shade.global_position, _player.global_position))
+	_player.get_health().reset()
+	mana.refill()
+	await _clear_enemies()
+
+
+# ---------------------------------------------------------------- M4.1: tìm đường
+
+func _wait_navmesh() -> void:
+	var map: RID = _world.get_world_2d().navigation_map
+	var from: Vector2 = IsoProjection.to_screen(ARENA.x, ARENA.y)
+	for i: int in 300:
+		if NavigationServer2D.map_get_path(map, from, from + Vector2(60, 0), true, 1).size() >= 2:
+			return
+		await physics_frame
+
+
+## Quái đi tới Player trong limit physics frame (khoảng cách mặt đất ≤ reach). Ghi lại vị trí đã đi qua.
+func _chase_until(enemy: Enemy, reach: float, limit: int, trail: Array[Vector2]) -> bool:
+	for i: int in limit:
+		await physics_frame
+		trail.append(enemy.global_position)
+		if _dist(enemy.global_position, _player.global_position) <= reach:
+			return true
+	return false
+
+
+func _test_pathfinding() -> void:
+	await _wait_navmesh()
+	await _set_time(22)
+	var nav: TierNavigation = _world.tier_navigation
+	check("navmesh_baked_per_tier", nav.get_region(0) != null and nav.get_region(1) != null
+		and nav.get_region(0).navigation_layers == 1 and nav.get_region(1).navigation_layers == 2
+		and nav.get_region(0).navigation_polygon.get_polygon_count() > 0, "%.0f ms" % nav.last_bake_ms)
+	var elevation: ElevationMap = _world.get_tree().get_first_node_in_group(ElevationMap.GROUP) as ElevationMap
+	# 1. Vòng qua plateau: Player ở phía tây, sói ở phía đông, đường thẳng cắt qua khối tầng cao.
+	# Tìm cặp điểm tầng 0 hợp lệ ở hai phía plateau mà đường thẳng nối chúng cắt qua khối tầng cao.
+	var west: Vector2 = Vector2.INF
+	var east: Vector2 = Vector2.INF
+	var crosses: bool = false
+	for wi: int in range(1, 7):
+		for wj: int in range(6, 18):
+			var a: Vector2 = IsoProjection.to_screen(wi + 0.5, wj + 0.5)
+			if not _spawner.get_spawn_block_reason(a, 0, false).is_empty():
+				continue
+			for ei: int in range(21, 25):
+				for ej: int in range(6, 16):
+					var b: Vector2 = IsoProjection.to_screen(ei + 0.5, ej + 0.5)
+					if east != Vector2.INF or not _spawner.get_spawn_block_reason(b, 0, false).is_empty():
+						continue
+					for polygon: PackedVector2Array in elevation.get_blocked_polygons(0):
+						if not Geometry2D.intersect_polyline_with_polygon(PackedVector2Array([a, b]), polygon).is_empty():
+							west = a
+							east = b
+							crosses = true
+			if crosses:
+				break
+		if crosses:
+			break
+	check("path_setup_valid", crosses, "%s %s" % [west, east])
+	_player.global_position = west
+	ElevationAgent.find_for(_player).set_tier(0)
+	(_world.camera as GameCamera).set_target(_player)
+	await frames(3)
+	var wolf: Enemy = _spawn(&"night_wolf", east)
+	wolf.detection_range = 4000.0
+	var trail: Array[Vector2] = []
+	var reached: bool = await _chase_until(wolf, 40.0, 900, trail)
+	var inside_block: bool = false
+	for at: Vector2 in trail:
+		for polygon: PackedVector2Array in elevation.get_blocked_polygons(0):
+			inside_block = inside_block or Geometry2D.is_point_in_polygon(at, polygon)
+	check("enemy_paths_around_obstacle", crosses and reached and not inside_block, "%s %s %s %d" % [crosses, reached, inside_block, trail.size()])
+	await _clear_enemies()
+	# 2. Không kẹt sau cây (node tài nguyên có thân va chạm): cây nằm giữa sói và Player.
+	var tree: Node2D = _world.get_node("EntityContainer/Resources/Tree3") as Node2D
+	_player.global_position = tree.global_position + GroundSpace.to_screen(Vector2(0, 60), S)
+	ElevationAgent.find_for(_player).set_tier(0)
+	(_world.camera as GameCamera).set_target(_player)
+	await frames(3)
+	wolf = _spawn(&"night_wolf", tree.global_position - GroundSpace.to_screen(Vector2(0, 50), S))
+	wolf.detection_range = 4000.0
+	trail.clear()
+	check("not_stuck_behind_tree", await _chase_until(wolf, 40.0, 400, trail), "%.1f" % _dist(wolf.global_position, _player.global_position))
+	await _clear_enemies()
+	# 3. Quái gần nhau không chồng lên nhau.
+	await _place(ARENA)
+	# Mục tiêu giả (không nhận đòn) để ba con cùng dồn về một điểm.
+	var bait: Node2D = Node2D.new()
+	_world.get_node("EntityContainer").add_child(bait)
+	bait.global_position = _player.global_position
+	var ghouls: Array[Enemy] = []
+	for i: int in 3:
+		var ghoul: Enemy = _spawn(&"forest_ghoul", _around(140.0, 0.1 * i))
+		ghoul.detection_range = 2000.0
+		ghoul.target = bait
+		ghoul.global_position = _around(140.0)
+		ghouls.append(ghoul)
+	await frames(240)
+	bait.queue_free()
+	var closest: float = INF
+	for a: int in ghouls.size():
+		for b: int in range(a + 1, ghouls.size()):
+			closest = minf(closest, _dist(ghouls[a].global_position, ghouls[b].global_position))
+	check("enemies_do_not_stack", closest >= 8.0, "%.1f" % closest)
+	await _clear_enemies()
+	_player.get_health().reset()
+	# 4. Mục tiêu khác tầng (Player trên plateau): mất dấu sau N giây, quay về lang thang.
+	await _place(Vector2(12.0, 14.0), 1)
+	var below: Vector2 = IsoProjection.to_screen(4.0, 12.0)
+	wolf = _spawn(&"night_wolf", below)
+	wolf.detection_range = 4000.0
+	var hunted: bool = false
+	var lost_after: float = -1.0
+	for i: int in 600:
+		await physics_frame
+		hunted = hunted or wolf.is_hunting()
+		if wolf.is_lost():
+			lost_after = i / 60.0
+			break
+	var lost_spot: Vector2 = wolf.global_position
+	await frames(200)
+	check("lose_track_when_unreachable", hunted and lost_after >= wolf.unreachable_give_up_time - 0.2 and lost_after < wolf.unreachable_give_up_time + 3.0
+		and not wolf.is_hunting(), "%s %.2f" % [hunted, lost_after])
+	check("lost_enemy_wanders", wolf.get_state() in [Enemy.State.WANDER, Enemy.State.IDLE] and wolf.global_position.distance_to(lost_spot) > 2.0,
+		"%s %.1f" % [Enemy.State.keys()[wolf.get_state()], wolf.global_position.distance_to(lost_spot)])
+	await _clear_enemies()
+	# 5. Dựng lửa trại → navmesh bake lại, tâm lửa trại không còn trên navmesh.
+	await _place(ARENA)
+	var map: RID = _world.get_world_2d().navigation_map
+	var spot: Vector2 = _around(90.0, PI * 0.5)
+	var on_before: float = NavigationServer2D.map_get_closest_point(map, spot).distance_to(spot)
+	var baked: Array[bool] = []
+	nav.baked.connect(func() -> void: baked.append(true), CONNECT_ONE_SHOT)
+	var fire: Node2D = _layer.spawn_deployed(_bag().database.get_item(&"campfire"), spot, 0)
+	for i: int in 200:
+		await physics_frame
+		if not baked.is_empty() and NavigationServer2D.map_get_closest_point(map, spot).distance_to(spot) > on_before + 8.0:
+			break
+	var on_after: float = NavigationServer2D.map_get_closest_point(map, spot).distance_to(spot)
+	check("campfire_rebakes_navmesh", not baked.is_empty() and on_after > on_before + 8.0, "%.1f → %.1f %s" % [on_before, on_after, baked])
+	fire.queue_free()
+	await frames(2)
 
 
 # ---------------------------------------------------------------- 4. thây ma telegraph, đòn, giáp, viền đỏ, hút mana
@@ -555,16 +810,16 @@ func _test_hud_warnings() -> void:
 	var banner: NightBanner = _world.night_banner
 	var started: Array[bool] = []
 	(_world.day_night as DayNightLighting).night_started.connect(func() -> void: started.append(true), CONNECT_ONE_SHOT)
-	await _set_time(17, 20)
+	await _set_time(16, 50)
 	banner.last_text = ""
 	_clock.advance(15.0)
 	await frames(2)
 	check("hud_dusk_warning", banner.last_text == "Trời sắp tối…" and banner.get_text() == "Trời sắp tối…", banner.last_text)
-	_clock.advance(100.0)
+	_clock.advance(130.0)
 	await frames(2)
 	check("hud_night_falls", banner.last_text == "Màn đêm buông xuống" and started == [true], banner.last_text)
 	banner.last_text = ""
-	await _set_time(17, 45)
+	await _set_time(17, 15)
 	check("hud_no_warning_on_set_time", banner.last_text == "")
 
 

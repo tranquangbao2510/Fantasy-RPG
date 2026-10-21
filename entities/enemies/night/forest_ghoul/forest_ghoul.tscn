@@ -10,6 +10,7 @@
 attack = NodePath("MeleeAttack")
 enemy_id = &"forest_ghoul"
 detection = ExtResource("5_detection")
+use_navigation = true
 move_speed = 45.0
 detection_range = 140.0
 attack_trigger_ratio = 0.85

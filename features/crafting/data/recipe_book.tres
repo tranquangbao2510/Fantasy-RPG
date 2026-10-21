@@ -13,7 +13,13 @@
 [ext_resource type="Resource" path="res://features/crafting/data/bone_spear.tres" id="10_bone_spear"]
 [ext_resource type="Resource" path="res://features/crafting/data/leather_armor.tres" id="11_leather_armor"]
 [ext_resource type="Resource" path="res://features/crafting/data/essence_torch.tres" id="12_essence_torch"]
+[ext_resource type="Resource" path="res://features/crafting/data/stone_hoe.tres" id="13_stone_hoe"]
+[ext_resource type="Resource" path="res://features/crafting/data/watering_can.tres" id="14_watering_can"]
+[ext_resource type="Resource" path="res://features/crafting/data/stone_mill.tres" id="15_stone_mill"]
+[ext_resource type="Resource" path="res://features/crafting/data/flour.tres" id="16_flour"]
+[ext_resource type="Resource" path="res://features/crafting/data/bread.tres" id="17_bread"]
+[ext_resource type="Resource" path="res://features/crafting/data/roasted_potato.tres" id="18_roasted_potato"]
 
 [resource]
 script = ExtResource("1_book")
-recipes = Array[ExtResource("1_recipe")]([ExtResource("2_stone_axe"), ExtResource("3_stone_pickaxe"), ExtResource("4_torch"), ExtResource("5_bandage"), ExtResource("6_campfire"), ExtResource("7_tent"), ExtResource("8_grilled_meat"), ExtResource("9_roasted_berry"), ExtResource("10_bone_spear"), ExtResource("11_leather_armor"), ExtResource("12_essence_torch")])
+recipes = Array[ExtResource("1_recipe")]([ExtResource("2_stone_axe"), ExtResource("3_stone_pickaxe"), ExtResource("4_torch"), ExtResource("5_bandage"), ExtResource("6_campfire"), ExtResource("7_tent"), ExtResource("8_grilled_meat"), ExtResource("9_roasted_berry"), ExtResource("10_bone_spear"), ExtResource("11_leather_armor"), ExtResource("12_essence_torch"), ExtResource("13_stone_hoe"), ExtResource("14_watering_can"), ExtResource("15_stone_mill"), ExtResource("16_flour"), ExtResource("17_bread"), ExtResource("18_roasted_potato")])

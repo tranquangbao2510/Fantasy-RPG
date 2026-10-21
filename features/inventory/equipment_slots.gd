@@ -97,6 +97,16 @@ func wear(slot_name: StringName, amount: int = 1) -> bool:
 	return true
 
 
+## Đặt một giá trị trong ItemStack.data của món ở ô (TASK M5: lượng nước của bình tưới). false nếu ô trống.
+func set_stack_data(slot_name: StringName, key: String, value: Variant) -> bool:
+	var stack: ItemStack = _slots.get(slot_name)
+	if stack == null:
+		return false
+	stack.data[key] = value
+	changed.emit()
+	return true
+
+
 ## Thời gian game trôi `minutes` phút: món cháy được đang mặc (đuốc) hao nhiên liệu; hết → biến mất (`item_depleted`).
 func burn(minutes: float) -> void:
 	if minutes <= 0.0:

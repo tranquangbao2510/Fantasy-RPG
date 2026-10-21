@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemDefinition" format=3]
+
+[ext_resource type="Script" path="res://features/items/item_definition.gd" id="1_item"]
+[ext_resource type="Texture2D" uid="uid://c24aewywa5647" path="res://features/items/icons/seed_potato.png" id="9_icon"]
+
+[resource]
+script = ExtResource("1_item")
+id = &"seed_potato"
+display_name = "Củ giống"
+description = "Củ khoai để gieo trên đất đã cày. Đào ở bụi khoai dại hoặc đôi khi rơi từ bụi mọng."
+icon = ExtResource("9_icon")
+category = 5
+max_stack = 99
+sell_price = 1
+tags = Array[StringName]([&"seed", &"farming"])
+

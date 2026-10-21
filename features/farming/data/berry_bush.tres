@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CropDefinition" format=3]
+
+[ext_resource type="Script" path="res://features/farming/crop_definition.gd" id="1_crop"]
+
+[resource]
+script = ExtResource("1_crop")
+id = &"berry_bush"
+display_name = "Bụi mọng"
+seed_item_id = &"berry"
+stages = 4
+days_per_stage = 2
+yield_item_id = &"berry"
+yield_min = 2
+yield_max = 3
+seed_return_min = 0
+seed_return_max = 0
+multi_harvest = true
+regrow_days = 2
+stage_colors = Array[Color]([Color(0.36, 0.64, 0.32, 1), Color(0.24, 0.52, 0.26, 1), Color(0.22, 0.48, 0.24, 1), Color(0.2, 0.45, 0.22, 1)])
+fruit_color = Color(0.86, 0.16, 0.26, 1)
+mature_height = 16.0

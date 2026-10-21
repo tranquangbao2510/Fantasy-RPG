@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="CropBook" format=3]
+
+[ext_resource type="Script" path="res://features/farming/crop_book.gd" id="1_book"]
+[ext_resource type="Script" path="res://features/farming/crop_definition.gd" id="2_crop"]
+[ext_resource type="Resource" path="res://features/farming/data/wheat.tres" id="3_wheat"]
+[ext_resource type="Resource" path="res://features/farming/data/potato.tres" id="4_potato"]
+[ext_resource type="Resource" path="res://features/farming/data/berry_bush.tres" id="5_berry_bush"]
+
+[resource]
+script = ExtResource("1_book")
+crops = Array[ExtResource("2_crop")]([ExtResource("3_wheat"), ExtResource("4_potato"), ExtResource("5_berry_bush")])

@@ -19,16 +19,16 @@ Mã nguồn được tổ chức theo **tính năng** (feature) thay vì theo lo
 | `app/` | Main scene, khởi động và vòng đời ứng dụng | Đã triển khai (`main.tscn`, `main.gd` — màn hình tạm) |
 | `docs/` | Tài liệu kỹ thuật | Đã triển khai |
 | `core/` | Thành phần kỹ thuật dùng chung, không phụ thuộc gameplay cụ thể | Chưa triển khai |
-| `features/` | Module gameplay (mỗi tính năng một thư mục con, vd. `features/combat/`) | Đã triển khai (`interaction/`, `combat/`, `character/`, `skills/`, `classes/`, `items/`, `inventory/` — 2l; `time/`, `survival/` — 2m; `gathering/`, `crafting/` — 2n; `spawning/` — 2o) |
+| `features/` | Module gameplay (mỗi tính năng một thư mục con, vd. `features/combat/`) | Đã triển khai (`interaction/`, `combat/`, `character/`, `skills/`, `classes/`, `items/`, `inventory/` — 2l; `time/`, `survival/` — 2m; `gathering/`, `crafting/` — 2n; `spawning/` — 2o; `farming/` — 2p) |
 | `entities/` | Player, NPC, enemy (scene ghép từ component) | Đã triển khai (`player/`, `enemies/` — placeholder; `enemies/night/` — quái đêm, 2o) |
 | `world/` | Bản đồ, môi trường, camera | Đã triển khai (`world.tscn`, `world.gd`, `maps/test_map/`, `camera/`, `sandbox/`, `environment/` (gồm `iso/`), `environment_prototype/` — 2k, isometric; `environment/navigation/` — 2o) |
 | `ui/` | Thành phần giao diện | Đã triển khai (`interaction/`, `combat/`, `skills/`, `progression/`, `debug/`, `common/`, `inventory/` — 2l; `survival/` — 2m; `crafting/` — 2n) |
 | `data/` | Dữ liệu game dùng chung (`.tres` Resource) | Chưa triển khai |
 | `assets/` | Tài nguyên dùng chung (sprite, âm thanh, font) | Chưa triển khai |
 | `save/` | Logic lưu / tải game | Đã triển khai (`save_service.gd` — Autoload SaveService, 2l) |
-| `tests/` | Kiểm thử headless (SceneTree script) | Đã triển khai (`environment/`, 2k; `player/`, 2c; `inventory/`, `save/`, 2l; `survival/`, `smoke/`, 2m; `crafting/`, `gathering/`, 2n; `night/`, 2o; `test_base.gd` + `run_all.gd`) |
+| `tests/` | Kiểm thử headless (SceneTree script) | Đã triển khai (`environment/`, 2k; `player/`, 2c; `inventory/`, `save/`, 2l; `survival/`, `smoke/`, 2m; `crafting/`, `gathering/`, 2n; `night/`, 2o; `farming/`, `navigation/`, 2p; `test_base.gd` + `run_all.gd`) |
 | `addons/` | Plugin bên thứ ba (chỉ khi thật sự cần) | Chưa triển khai |
-| `tools/` | Công cụ phát triển chạy ngoài game (có `.gdignore`), vd. sinh placeholder art | Đã triển khai (`placeholder_art/`, 2k; `player_sprites/`, 2c; `item_icons/`, 2l) |
+| `tools/` | Công cụ phát triển chạy ngoài game (có `.gdignore`), vd. sinh placeholder art | Đã triển khai (`placeholder_art/`, 2k; `player_sprites/`, 2c; `item_icons/`, 2l; `perf/`, 2p) |
 
 Thư mục chỉ được tạo khi có nội dung thực tế. Không tạo thư mục, script hoặc class rỗng để "giữ chỗ".
 
@@ -887,8 +887,8 @@ features/items/data/      hide, bone, shadow_essence, bone_spear, leather_armor,
 - Debug: `EnemyDebugView` vẽ bán kính phát hiện **hiện tại** là hình tròn trên mặt đất (ellipse trên map iso), vòng bỏ cuộc khi đang đuổi, vòng tầm đánh, tên state.
 
 **Tìm đường (TASK M4.1)** — `TierNavigation` (`world/environment/navigation/`, node gốc trong Glade):
-- **Bake lúc chạy**, mỗi tầng một `NavigationRegion2D` với `navigation_layers = 1 << tầng` (không dùng polygon theo từng tile). Vùng đi được: tầng 0 = đường bao đất liền (LandEdge/Loop), tầng ≥ 1 = vùng đi được của ElevationMap. Vật cản: khối tầng cao chặn tầng đó (`ElevationMap.get_blocked_polygons`, mới) + shape của mọi StaticBody2D có layer `1 | tier_bit` (tầng 0) / `tier_bit` (tầng ≥ 1) — prop, nước, cây/đá còn tài nguyên, rương, giường, bàn chế tạo, lửa trại; bỏ TierWalls*, đường bao, WorldBoundary, shape tắt. Khoảng đệm `agent_radius` 8 px (thân quái 7). Không bake sẵn trong editor được vì vách tầng do ElevationMap sinh trong `_ready`. Các region tắt `use_edge_connections` (hai tầng chồng nhau trong cùng map) + `merge_rasterizer_cell_scale` 0.05 → không còn cảnh báo gộp cạnh. Region tầng 0 được server dựng bất đồng bộ (~1 s sau khi vào map) — trong lúc đó quái đi thẳng như cũ.
-- **Vật dựng / node tài nguyên:** dựng hoặc thu lửa trại (và mọi vật dựng), cây/đá bị phá hoặc mọc lại → `request_rebake()` (gộp trong 0.4 s rồi bake lại). Chọn bake lại thay vì `NavigationObstacle2D`: obstacle chỉ tác động avoidance chứ không đổi đường tìm được; dựng / chặt hiếm nên chi phí ~70 ms mỗi lần chấp nhận được. Lều không có thân va chạm nên không ảnh hưởng đường.
+- **Bake lúc chạy**, mỗi tầng một `NavigationRegion2D` với `navigation_layers = 1 << tầng` (không dùng polygon theo từng tile). Vùng đi được: tầng 0 = đường bao đất liền (LandEdge/Loop), tầng ≥ 1 = vùng đi được của ElevationMap. Vật cản: khối tầng cao chặn tầng đó (`ElevationMap.get_blocked_polygons`, mới) + shape của mọi StaticBody2D có layer `1 | tier_bit` (tầng 0) / `tier_bit` (tầng ≥ 1) — prop, nước, cây/đá còn tài nguyên, rương, giường, bàn chế tạo, lửa trại; bỏ TierWalls*, đường bao, WorldBoundary, shape tắt. Khoảng đệm `agent_radius` 8 px (thân quái 7). Không bake sẵn trong editor được vì vách tầng do ElevationMap sinh trong `_ready`. Các region tắt `use_edge_connections` (hai tầng chồng nhau trong cùng map) + `merge_rasterizer_cell_scale` 0.05 → không còn cảnh báo gộp cạnh. **TASK M5: bake trên thread** (`NavigationServer2D.bake_from_source_geometry_data_async`, export `threaded` = true): luồng chính chỉ gom hình học nguồn (~3–4 ms), phần bake (~60–80 ms) chạy trên WorkerThreadPool; khi mọi tầng xong mới gán navmesh mới vào các region cùng lúc — tới lúc đó region giữ navmesh cũ. Yêu cầu bake mới trong lúc đang bake → bake thêm một lượt sau khi xong. Navmesh sẵn sàng ~0.1–0.16 s sau khi vào map (đo: `tests/navigation/test_nav_bake.gd`; con số "~1 s" của M4.1 là ước lượng, không phải đo). Trong lúc chưa có navmesh tầng mình (vừa vào map / vừa tải save giữa đêm) quái tìm đường **đứng chờ** (đường tìm được rỗng → `Enemy._steer_to` trả vận tốc 0), không đi thẳng vào vật cản như M4.1.
+- **Vật dựng / node tài nguyên:** dựng hoặc thu lửa trại (và mọi vật dựng), cây/đá bị phá hoặc mọc lại → `request_rebake()` (gộp trong 0.4 s rồi bake lại). Chọn bake lại thay vì `NavigationObstacle2D`: obstacle chỉ tác động avoidance chứ không đổi đường tìm được. M4.1 bake trên luồng chính (~55–70 ms, một frame giật mỗi lần chặt cây / dựng / thu); M5 chuyển sang thread (xem trên) — spike trước / sau ở 2p. Lều không có thân va chạm nên không đổi đường (vẫn bake lại).
 - `Enemy.use_navigation` (quái đêm bật, enemy cũ tắt → Combat Sandbox / SimpleEnemy không đổi): `NavigationAgent2D` con, layer theo tầng hiện tại (ElevationAgent); đuổi, vây (điểm vây), bỏ chạy (điểm cách 160 px theo hướng ra xa), lang thang (điểm lang thang kéo về navmesh), lượn quanh vùng sáng đều đi theo `get_next_path_position()`; mục tiêu đổi > 8 px mới tìm đường lại. Quái gần nhau hơn `separation_radius` 16 px mặt đất đẩy nhau ra (tách đơn giản, không dùng avoidance RVO).
 - **Mất dấu:** đang đuổi mà `is_target_reachable()` sai (khác tầng, trên đảo, trong vật cản) quá `unreachable_give_up_time` 3 s → thôi đuổi, lang thang `lost_cooldown` 6 s (bỏ qua mục tiêu) rồi mới phát hiện lại.
 
@@ -940,6 +940,97 @@ Lý do số: Player 130 HP (Test Fighter), đi 160 / chạy 240 px/s. Sói nhanh
 **Hiệu năng** (máy dev: AMD Radeon Graphics tích hợp, `gl_compatibility`, cửa sổ 1152×648, zoom 2×, tắt vsync — đo như M2): TASK M4.1 có tìm đường: ngày 272 FPS, đêm 263 FPS, **đêm + 15 quái đang đuổi + 3 lửa trại + đuốc: 184 FPS**; bake navmesh 65–100 ms (lúc vào map + mỗi lần bake lại). Số đo M4 (chưa tìm đường): ngày 249 FPS, đêm 284 FPS, **đêm + 15 quái (5 Bóng ma, 2 bầy × 3 sói, 4 Thây ma, đều đang đuổi) + 3 lửa trại + đuốc: 211 FPS**; riêng ánh sáng: đêm + 5 lửa trại + đuốc 278 FPS (M3 với PointLight2D: 79). Vsync bật: 60 cố định.
 
 **Giới hạn:** quái tầng 0 không lên tầng 1 (tìm đường chỉ trong tầng của mình — TASK M4.1; mục tiêu khác tầng → mất dấu) (spawn đúng tầng nhưng không đổi tầng); vùng an toàn chỉ xét bán kính, không xét vật cản che sáng; luật "ngoài màn hình" xét khung camera (không xét tầm nhìn đêm — quái luôn sinh ngoài khung camera dù khung đó tối); lượt tấn công của bầy không phối hợp hướng (vây theo slot cố định); hình quái là polygon placeholder, không animation; âm thanh chưa có (chỉ signal); không có quái ban ngày trong bảng Glade (cột khung giờ hỗ trợ sẵn).
+
+## 2p. Trồng trọt, cối đá, save v5; bake navmesh trên thread [Đã triển khai, prototype — TASK M5]
+
+```
+features/farming/         crop_definition.gd (CropDefinition), crop_book.gd (CropBook), farm_layer.gd (FarmLayer),
+                          farm_field.gd (FarmField), farm_plot.gd (FarmPlot), water_source.gd (WaterSource),
+                          data/ (wheat, potato, berry_bush .tres + crop_book.tres)
+features/crafting/stations/  stone_mill.gd/.tscn (StoneMill — trạm "Cối đá", RecipeDefinition.Station.MILL)
+features/gathering/       data/wild_potato.tres + nodes/wild_potato_node.tscn (bụi khoai dại → củ giống)
+features/items/data/      stone_hoe, watering_can, stone_mill, wheat_seed, wheat, flour, seed_potato, potato, roasted_potato
+features/combat/weapons/data/  stone_hoe, watering_can (weapon type `tool`, combo công cụ đá)
+tests/farming/test_farming.gd · tests/navigation/test_nav_bake.gd · tools/perf/measure_farm_fps.gd
+```
+
+**Cấu trúc** — `FarmLayer` (một node / map, `EntityContainer/Farms`, Y-sort, group `saveable` id `farms`) chứa các `FarmField` (vùng ruộng); mỗi FarmField tạo lúc `_ready` lưới `columns × rows` `FarmPlot` (Interactable, origin = tâm ô). Data-driven: thêm vùng = thêm một node FarmField (export `field_id`, `columns`, `rows`, `axis_i`, `axis_j` — Glade: ô = nửa ô lưới iso, `(16, 8)` / `(−16, 8)`), không sửa code. Chỉ có ô trong vùng ruộng → **không cày được ngoài vùng**. Cây là `CropDefinition` trong `CropBook` (như RecipeBook: export, không Autoload).
+
+**Trong Glade:** `HomeField` (`glade_home`, 6 × 4 ô, góc trên tại lưới (28.5, 33)) ngay trên giường + bàn chế tạo của nhà tạm (khoảng trống duy nhất đủ rộng cạnh nhà — quét bằng PlacementCheck); `WaterSource1/2` ở mép suối (lưới (26.5, 26.8), (30.25, 27.7)); `WildPotato1/2` trong `Resources`. Script dựng Glade có `FARM_FIELDS`, `WATER_SOURCES`, 2 dòng `RESOURCE_NODES` mới (chạy trên bản sao → test pass).
+
+**Ô ruộng (FarmPlot)** — trạng thái: cỏ / đất cày; cây + ngày tuổi; `watered_day` (ngày game được tưới gần nhất); `dry_days`; `fallow_days`. E (thứ tự ưu tiên): cây chín → **thu**; cỏ + cầm **cuốc đất** (`tool_type` `hoe`, ô Vũ khí như rìu M3) → **cày** (−1 độ bền); cây chưa chín + cầm **bình tưới** (`watering_can`) → **tưới** (−1 nước); đất trống + có hạt → **gieo** (một loại hạt → gieo luôn; nhiều loại → `FarmLayer.seed_choice_requested` → World mở menu "Gieo …" như menu lều, lựa chọn được nhớ cho các ô sau); còn lại → báo giai đoạn + ướt / khô. Ô cỏ chỉ là mục tiêu khi cầm cuốc, đất trống chỉ khi có hạt → đi ngang ruộng không "giành" phím E của rương / giường cạnh đó. Thu: nông sản + hạt **vào túi**, phần không vừa **rơi xuống đất cạnh người chơi** (`ItemPickupLayer.spawn_drop`, khác node tài nguyên M3 rơi cạnh node).
+
+**Qua ngày (6:00)** — `FarmLayer` nghe `GameClock.minute_changed`; mỗi lần đồng hồ vượt qua `growth_minute` (360 = 6:00) của một ngày N → `FarmPlot.advance_day(N)` cho mọi ô:
+- cây chưa chín: hôm trước (N − 1) được tưới → +1 ngày tuổi, hết khô; không → +1 ngày khô; **khô 3 ngày liên tục → héo chết**, còn lại đất cày trống (`dry_days_to_die` 3);
+- cây chín: không cần nước, không héo (chờ thu) — tự quyết, xem báo cáo;
+- đất cày trống: +1 ngày bỏ trống; **3 ngày → về cỏ** (`fallow_days_to_grass` 3).
+Tưới → đất ướt tới hết ngày đó (ướt = `watered_day` == ngày hôm nay; sang 0:00 vẽ lại thành khô). Cây lớn theo **thời gian game**, không theo vị trí người chơi: ngủ / ngất nhảy giờ tới 6:00 qua `GameClock.advance` → cùng đường xử lý. `last_tick` (chỉ số lần 6:00 cuối đã xử lý) được lưu → tải save / quay lại Glade sau khi đồng hồ (global) đã trôi ở map khác → `catch_up()` xử lý bù **từng ngày** (thứ tự nạp đồng hồ / ruộng không cố định nên cả `load_state` lẫn `minute_changed` đều gọi bù). Mưa: chưa làm — hook `FarmLayer.rain_hook: Callable(day) -> bool` (true = hôm đó coi như đã tưới).
+
+**Bình tưới / múc nước** — `ItemDefinition.water_capacity` (10), lượng nước ở `ItemStack.data["water"]` (thiếu = rỗng; bình mới chế ra rỗng), hiện như thanh độ bền ("Nước 7/10"). `WaterSource` (Interactable đặt ở mép nước): E khi cầm bình → đầy. `EquipmentSlots.set_stack_data()` (mới) ghi data của món đang cầm.
+
+**Cối đá** — item `stone_mill` (deploy như lửa trại: trước mặt 26 px, có thân va chạm, tối đa 2 / map) với `ItemDefinition.deploy_home_radius` 160 (mới): phải đặt cách giường nhà (`SleepController.get_home_spot()`) ≤ 160 px mặt đất — "Cối đá phải đặt trong nhà (gần giường)." Trạm `MILL` (dùng trong 64 px); E → cửa sổ chế tạo (nút "Xay").
+
+**Hình placeholder** — cây vẽ trong `FarmPlot._draw` (lá tam giác theo `stage_colors[giai đoạn]`, cao dần tới `mature_height`; chín thêm bông / củ / quả `fruit_color`), Y-sort cùng Player. Đất vẽ ở lớp `Soil` (z −1) của FarmField: viền vùng ruộng, ô cày **khô màu đất sáng / ướt màu sẫm**, 2 luống.
+
+**Bảng cây trồng** (`features/farming/data/`; ngày = số lần qua 6:00 được tưới hôm trước):
+
+| Cây | Gieo bằng | Giai đoạn | Ngày / giai đoạn | Chín sau | Thu | Hạt trả lại | Kiểu thu |
+|---|---|---|---|---|---|---|---|
+| Lúa mì | Hạt lúa mì (bụi cỏ 15 %) | 4 | 1 | 3 ngày | 2–3 lúa mì | 1–2 hạt | một lần |
+| Khoai | Củ giống (bụi khoai dại 1–2, bụi mọng 15 %) | 4 | 2 | 6 ngày | 2–4 khoai | 0–1 củ | một lần |
+| Bụi mọng | Quả mọng | 4 | 2 | 6 ngày | 2–3 quả mọng | 0 | nhiều lần: lùi 2 ngày tuổi, có quả lại sau 2 ngày tưới |
+
+**Công thức mới** (ngoài bảng 2n / 2o):
+
+| Công thức | Nguyên liệu | Kết quả | Trạm |
+|---|---|---|---|
+| Cuốc đất (độ bền 40) | 2 cành, 2 đá, 2 sợi | 1 | bàn chế tạo |
+| Bình tưới (10 nước) | 3 gỗ, 2 sợi | 1 | bàn chế tạo |
+| Cối đá | 6 đá, 2 gỗ | 1 | bàn chế tạo |
+| Bột mì | 2 lúa mì | 1 | cối đá |
+| Bánh mì (+30 đói, +5 HP — giữ như M2) | 1 bột mì | 1 | lửa trại |
+| Khoai nướng (+28 đói, +4 HP) | 1 khoai | 1 | lửa trại |
+| (Khoai sống ăn được: +12 đói, +1 HP) | — | — | — |
+
+**Cân bằng** — nhu cầu ≈ 88 đói / ngày (thức 6:00–21:00: 15 h × 4 = 60; ngủ 9 h × 2 = 18; hoạt động ~10):
+
+| Vụ | Sản lượng TB | Đói | Nuôi được |
+|---|---|---|---|
+| 1 ô lúa mì (3 ngày) | 2.5 lúa → 1.25 bánh mì | 37.5 | 0.43 ngày |
+| **24 ô lúa mì (cả ruộng, 3 ngày)** | 60 lúa → 30 bột → 30 bánh mì | 900 | **≈ 10 ngày** |
+| Duy trì liên tục bằng lúa mì | 12.5 đói / ô / ngày | — | cần ~7 ô |
+| 24 ô khoai nướng (6 ngày) | 72 khoai | 2016 | ≈ 23 ngày (ăn sống: 864 ≈ 10 ngày) |
+| 1 ô mọng (sau 6 ngày đầu, mỗi 2 ngày) | 2.5 quả (sống 8) | 20 / 2 ngày | cần ~9 ô để nuôi liên tục |
+
+Lúa trả 1.5 hạt / ô (24 ô → ~36 hạt) đủ gieo lại cả ruộng; khoai trả 0.5 củ / ô → phải đào thêm củ giống. Tưới cả ruộng mỗi ngày: 24 nước = 3 lần múc (bình 10).
+
+**Save v5** — `SCHEMA_VERSION = 5`, migration **v4 → v5** (`SaveMigrations.migrate_4_to_5`): `maps.<id>.farms = {version 1, fields: {}}` (mọi ô cỏ; không có `last_tick` → coi như đã xử lý tới giờ hiện tại). Nước trong bình tưới: `ItemStack.data["water"]` (save v4 chưa có bình). Chuỗi v1 → v5 chạy tự động (test tải v1, v2, v3, v4).
+
+```json
+"maps": {"glade": {"farms": {"version": 1, "last_tick": 3, "fields": {"glade_home": {"plots": {
+  "2,1": {"state": "planted", "crop": "wheat", "stage": 1, "age": 1, "watered_day": 4, "wet": true, "dry_days": 0, "fallow_days": 0},
+  "5,3": {"state": "tilled", "watered_day": 0, "wet": false, "dry_days": 0, "fallow_days": 2}}}}}}},
+"global": {"player": {"equipment": {"version": 1, "slots": {"weapon": {"id": "watering_can", "count": 1, "data": {"water": 7}}}}}}
+```
+
+**Phím debug** (build debug): **F6** (`debug_crop_grow`) cây ở ô dưới con trỏ chuột +1 giai đoạn; **F11** (`debug_farm_water`) tưới hết ruộng.
+
+**Tương tác hệ cũ** — quái đêm không nhắm cây (chỉ nhắm Player); ruộng không phải vùng an toàn (luật spawn giữ nguyên); cây không có thân va chạm → không bake lại navmesh; cối đá có thân → bake lại (trên thread).
+
+**Bake navmesh không giật (nợ M4.1)** — xem 2o. Đo bằng `tests/navigation/test_nav_bake.gd` (thời gian thực giữa hai frame, headless; `NAV_SYNC=1` đo lại bản đồng bộ M4.1):
+
+| Tình huống | Trước (bake luồng chính) | Sau (bake trên thread) |
+|---|---|---|
+| Chặt liên tục 5 cây (5 lần bake) | frame tối đa 65.4 ms, 5 frame > 33 ms | 16.6 ms, 0 frame > 33 ms |
+| Dựng + thu lều | 67.7 ms, 2 frame > 33 ms | 17.2 ms, 0 |
+| Dựng + gỡ lửa trại | 60.4 ms, 2 frame > 33 ms | 16.1 ms, 0 |
+| Vào map (frame đầu gồm nạp scene) | 109 ms (bake 69 ms trên luồng chính) | 29 ms (phần luồng chính của bake 3.2 ms; bake 80 ms trên thread) |
+
+**Kiểm thử** — `tests/farming/test_farming.gd` (85 ca, qua input thật: E, C + click, I + rê chuột + F, F6 + trỏ chuột, F11): vòng lặp đầy đủ chế cuốc → cày → gieo → múc nước → tưới mỗi ngày → ngủ (giường, E) → thu → đặt cối đá trong nhà → xay bột → nướng bánh → ăn; không tưới không lớn, khô 3 ngày chết; mọng ra quả lại đúng chu kỳ; bỏ trống 3 ngày về cỏ; không cày ngoài vùng; túi đầy rơi đất; menu chọn hạt + nhớ lựa chọn; quái không phá cây; ngất tính như qua đêm; thời gian trôi ở map khác (save có đồng hồ muộn hơn) → bù đủ ngày; save / load mọi giai đoạn (3 cây × 4 giai đoạn, ướt / khô, ngày khô, bỏ trống, nước trong bình, độ bền cuốc); save v5 + migration v4 → v5 + tải v1–v4; hiệu năng. `tests/navigation/test_nav_bake.gd` (16 ca): spike frame (số liệu trên), navmesh cũ dùng được trong lúc bake, tải save giữa đêm → quái đứng chờ tới khi có navmesh rồi mới đuổi.
+
+**Hiệu năng** (máy dev, `tools/perf/measure_farm_fps.gd`, cửa sổ 1152×648, zoom 2×, tắt vsync): ngày 230–253 FPS, đêm 249–264 FPS, đêm + 24 ô đầy cây 213–231 FPS, **đêm + 24 ô đầy cây + 15 quái đang đuổi: 186–198 FPS** (M4.1: đêm + 15 quái + 3 lửa trại + đuốc 184 FPS). Headless (không render): 7.5 ms / frame trung bình.
+
+**Giới hạn:** chưa có mùa vụ, thời tiết / mưa (chỉ hook), phân bón, chất lượng nông sản, quái phá cây, động vật nuôi; một vùng ruộng (chỉ Glade); ô ruộng nhỏ (nửa ô lưới iso) vì khoảng trống cạnh nhà tạm chỉ đủ 3 × 2 ô lưới; nhà vẫn là "nhà tạm" (giường + bàn), "trong nhà" = bán kính quanh giường; chưa có map khác có đồng hồ (test_map không có GameClock) nên "lớn khi ở map khác" kiểm bằng save có đồng hồ muộn hơn; chưa có cách xới lại / xóa cây; cây chín không héo; hình cây / đất / cối đá là polygon placeholder; chưa có animation cày / tưới.
 
 ## 3. Quy ước đặt tên [Đã quyết định]
 
@@ -996,7 +1087,7 @@ Resource dùng chung giữa nhiều instance **không được** bị sửa tron
 - Chỉ thêm Autoload khi có nhu cầu thực sự mang tính toàn cục (vd. dịch vụ save, điều phối chuyển scene) và phải được người dùng đồng ý.
 - Không dùng Autoload làm "manager" chứa logic gameplay hoặc làm kho trạng thái tùy tiện.
 
-## 10. Save / Load [Đã triển khai — TASK M1, chi tiết 2l; schema 2 ở 2m, schema 3 ở 2n, schema 4 (enemy, buff) ở 2o]
+## 10. Save / Load [Đã triển khai — TASK M1, chi tiết 2l; schema 2 ở 2m, schema 3 ở 2n, schema 4 (enemy, buff) ở 2o, schema 5 (ruộng) ở 2p]
 
 lưu **runtime state** ra file JSON trong `user://`, logic nằm ở `save/`. File save chỉ chứa dữ liệu thuần (số, chuỗi, ID), tham chiếu dữ liệu thiết kế bằng ID/đường dẫn, không serialize trực tiếp Resource hay node. Định dạng có trường phiên bản (`schema_version`) để hỗ trợ migrate. Hệ thống mới muốn được lưu: thêm node vào group `saveable` + 3 hàm `get_save_id` / `save_state` / `load_state` (ID ổn định), không sửa SaveService.
 

@@ -129,7 +129,7 @@ func craft(recipe_id: StringName) -> String:
 	var reason: String = Crafting.craft(recipe, _bag, _stations)
 	if reason.is_empty():
 		var item: ItemDefinition = _database.get_item(recipe.result_id)
-		message.emit("Đã %s %s ×%d." % ["nấu" if recipe.station == RecipeDefinition.Station.CAMPFIRE else "chế tạo",
+		message.emit("Đã %s %s ×%d." % [_verb(recipe).to_lower(),
 			item.display_name if item != null else String(recipe.result_id), recipe.result_count])
 		crafted.emit(recipe)
 	else:
@@ -262,7 +262,7 @@ func _add_row(recipe: RecipeDefinition) -> void:
 	ingredients.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	text_box.add_child(ingredients)
 	var button: Button = Button.new()
-	button.text = "Nấu" if recipe.station == RecipeDefinition.Station.CAMPFIRE else "Chế tạo"
+	button.text = _verb(recipe)
 	button.custom_minimum_size = Vector2(84, 30)
 	button.focus_mode = Control.FOCUS_NONE
 	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -358,3 +358,13 @@ func _build() -> void:
 	hint.add_theme_font_size_override(&"font_size", 11)
 	hint.add_theme_color_override(&"font_color", Color(0.7, 0.7, 0.8))
 	box.add_child(hint)
+
+
+## Động từ trên nút / thông báo: Nấu (lửa trại), Xay (cối đá — TASK M5), Chế tạo.
+static func _verb(recipe: RecipeDefinition) -> String:
+	match recipe.station:
+		RecipeDefinition.Station.CAMPFIRE:
+			return "Nấu"
+		RecipeDefinition.Station.MILL:
+			return "Xay"
+	return "Chế tạo"

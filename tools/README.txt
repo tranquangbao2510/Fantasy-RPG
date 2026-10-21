@@ -12,7 +12,7 @@ Chạy từ thư mục gốc project (Godot 4.7.2 console):
      Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tools/glade/build_glade_prototype.gd
    CẢNH BÁO: ghi đè world/environment_prototype/environment_prototype.tscn, các scene prop trong
    world/environment/props/, tileset logic và material .tres. Chỉnh sửa tay trên các file đó sẽ mất — commit trước.
-   Bố cục (toạ độ lưới i, j) nằm ở đầu script (node tài nguyên M3: RESOURCE_NODES). Cần chạy bước 1 + import trước nếu art chưa có.
+   Bố cục (toạ độ lưới i, j) nằm ở đầu script (node tài nguyên M3: RESOURCE_NODES; ruộng M5: FARM_FIELDS, WATER_SOURCES). Cần chạy bước 1 + import trước nếu art chưa có.
 
 3. Kiểm tra sau khi dựng lại:
      Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/environment/test_environment_prototype.gd
@@ -28,3 +28,8 @@ Chạy từ thư mục gốc project (Godot 4.7.2 console):
      Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tools/item_icons/generate_item_icons.gd
    Ghi đè features/items/icons/<id>.png (chỉ một số item: biến môi trường ICON_ONLY=wood,stone). Sau đó --import,
    bật mipmaps/generate trong .import của icon mới và gán `icon` cho item. Icon thật: thay PNG cùng tên, đừng chạy lại tool.
+
+6. Đo FPS có render của ruộng trồng trọt (TASK M5): ngày / đêm / đêm + 24 ô đầy cây / đêm + 24 ô đầy cây + 15 quái.
+   Chạy CÓ CỬA SỔ (không --headless), tắt vsync trong script:
+     Godot_v4.7.2-stable_win64_console.exe --path . --script res://tools/perf/measure_farm_fps.gd --resolution 1152x648
+   Spike frame khi bake navmesh: tests/navigation/test_nav_bake.gd (dòng MEASURE; NAV_SYNC=1 = bake đồng bộ như M4.1).

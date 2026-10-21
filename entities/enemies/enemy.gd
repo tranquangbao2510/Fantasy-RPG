@@ -355,6 +355,10 @@ func _steer_to(point: Vector2, speed_ratio: float = 1.0) -> Vector2:
 			_nav_goal = point
 			_nav.target_position = point
 		var next: Vector2 = _nav.get_next_path_position()
+		# Đường rỗng = navmesh tầng mình chưa có (vừa vào map / vừa tải save, bake chưa xong — TASK M5; có navmesh thì
+		# đường luôn có ít nhất điểm gần nhất): đứng chờ thay vì đi thẳng vào vật cản.
+		if _nav.get_current_navigation_path().is_empty():
+			return Vector2.ZERO
 		if not _nav.get_current_navigation_path().is_empty() and next.distance_to(global_position) > 0.5:
 			direction = GroundSpace.direction(next - global_position, _ground_squash)
 	var separation: Vector2 = _separation()

@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CropDefinition" format=3]
+
+[ext_resource type="Script" path="res://features/farming/crop_definition.gd" id="1_crop"]
+
+[resource]
+script = ExtResource("1_crop")
+id = &"wheat"
+display_name = "Lúa mì"
+seed_item_id = &"wheat_seed"
+stages = 4
+days_per_stage = 1
+yield_item_id = &"wheat"
+yield_min = 2
+yield_max = 3
+seed_return_min = 1
+seed_return_max = 2
+multi_harvest = false
+regrow_days = 1
+stage_colors = Array[Color]([Color(0.45, 0.78, 0.36, 1), Color(0.4, 0.72, 0.3, 1), Color(0.6, 0.72, 0.3, 1), Color(0.86, 0.73, 0.36, 1)])
+fruit_color = Color(0.96, 0.84, 0.42, 1)
+mature_height = 20.0

@@ -11,9 +11,16 @@ min_count = 2
 max_count = 3
 chance = 1.0
 
+[sub_resource type="Resource" id="Entry_2"]
+script = ExtResource("2_entry")
+item_id = &"seed_potato"
+min_count = 1
+max_count = 1
+chance = 0.15
+
 [sub_resource type="Resource" id="Table_yield"]
 script = ExtResource("3_table")
-entries = Array[ExtResource("2_entry")]([SubResource("Entry_1")])
+entries = Array[ExtResource("2_entry")]([SubResource("Entry_1"), SubResource("Entry_2")])
 
 [resource]
 script = ExtResource("1_def")

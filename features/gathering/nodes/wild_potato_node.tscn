@@ -1,0 +1,47 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://features/gathering/resource_node.gd" id="1_node"]
+[ext_resource type="Resource" path="res://features/gathering/data/wild_potato.tres" id="2_def"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_point"]
+radius = 12.0
+
+[node name="WildPotatoNode" type="Area2D"]
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("1_node")
+definition = ExtResource("2_def")
+
+[node name="Available" type="Node2D" parent="."]
+
+[node name="Shadow" type="Polygon2D" parent="Available"]
+color = Color(0, 0, 0, 0.25)
+polygon = PackedVector2Array(-12, 0, -8, -4, 0, -5, 8, -4, 12, 0, 8, 4, 0, 5, -8, 4)
+
+[node name="LeafL" type="Polygon2D" parent="Available"]
+color = Color(0.3, 0.55, 0.25, 1)
+polygon = PackedVector2Array(-2, 0, -12, -8, -9, -12, 0, -3)
+
+[node name="LeafR" type="Polygon2D" parent="Available"]
+color = Color(0.34, 0.6, 0.27, 1)
+polygon = PackedVector2Array(2, 0, 12, -9, 9, -13, 0, -3)
+
+[node name="LeafC" type="Polygon2D" parent="Available"]
+color = Color(0.38, 0.66, 0.3, 1)
+polygon = PackedVector2Array(-2, 0, -3, -14, 0, -18, 3, -14, 2, 0)
+
+[node name="Flower" type="Polygon2D" parent="Available"]
+position = Vector2(0, -18)
+color = Color(0.92, 0.88, 0.95, 1)
+polygon = PackedVector2Array(-2, 0, 0, -2, 2, 0, 0, 2)
+
+[node name="Depleted" type="Node2D" parent="."]
+visible = false
+
+[node name="Hole" type="Polygon2D" parent="Depleted"]
+color = Color(0.36, 0.26, 0.17, 1)
+polygon = PackedVector2Array(-8, 0, -5, -3, 0, -4, 5, -3, 8, 0, 5, 3, 0, 4, -5, 3)
+
+[node name="InteractionShape" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_point")

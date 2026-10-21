@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="ItemDefinition" format=3]
+
+[ext_resource type="Script" path="res://features/items/item_definition.gd" id="1_item"]
+[ext_resource type="Texture2D" uid="uid://b5kpjywwy0n2" path="res://features/items/icons/roasted_potato.png" id="9_icon"]
+[ext_resource type="Script" path="res://features/items/consumable_effect.gd" id="2_consumable"]
+
+[sub_resource type="Resource" id="Resource_food"]
+script = ExtResource("2_consumable")
+hunger = 28.0
+health = 4
+
+[resource]
+script = ExtResource("1_item")
+id = &"roasted_potato"
+display_name = "Khoai nướng"
+description = "Khoai nướng vùi tro: bùi, no lâu."
+icon = ExtResource("9_icon")
+category = 1
+max_stack = 20
+sell_price = 4
+tags = Array[StringName]([&"cooked"])
+consumable = SubResource("Resource_food")

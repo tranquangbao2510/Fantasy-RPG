@@ -310,7 +310,7 @@ func _test_full_loop() -> void:
 	check("campfire_prompt", _prompt().contains("Nấu ăn / thêm củi"), _prompt())
 	await _press_e()
 	check("campfire_opens_cook_window", _window.is_open() and _window.get_campfire() == fire
-		and _window.get_recipe_ids() == [&"grilled_meat", &"roasted_berry"], str(_window.get_recipe_ids()))
+		and _window.get_recipe_ids() == [&"grilled_meat", &"roasted_berry", &"bread", &"roasted_potato"], str(_window.get_recipe_ids()))
 	var cook: Button = _window.get_craft_button(&"grilled_meat")
 	check("cook_button_enabled", cook != null and not cook.disabled and cook.text == "Nấu")
 	await _click(cook)
@@ -700,7 +700,7 @@ func _test_load_old_saves() -> void:
 	file.store_string(JSON.stringify(v1))
 	file.close()
 	await _reload(6)
-	check("load_v1_ok", _bag().count_of(&"wood") == 5 and _clock.get_day() == 1 and _resources.get_nodes().size() == 15
+	check("load_v1_ok", _bag().count_of(&"wood") == 5 and _clock.get_day() == 1 and _resources.get_nodes().size() == 17
 		and _player.get_health().current_health == 90)
 
 

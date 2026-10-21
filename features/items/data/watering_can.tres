@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ItemDefinition" format=3]
+
+[ext_resource type="Script" path="res://features/items/item_definition.gd" id="1_item"]
+[ext_resource type="Texture2D" uid="uid://d4nmkwh0lm27d" path="res://features/items/icons/watering_can.png" id="9_icon"]
+[ext_resource type="Resource" path="res://features/combat/weapons/data/watering_can.tres" id="2_weapon"]
+
+[resource]
+script = ExtResource("1_item")
+id = &"watering_can"
+display_name = "Bình tưới"
+description = "Bình gỗ đựng nước. Cầm ở tay chính: E ở mép suối để múc đầy, E lên ô đã gieo để tưới."
+icon = ExtResource("9_icon")
+category = 2
+max_stack = 1
+sell_price = 10
+tags = Array[StringName]([&"tool", &"farming"])
+equip_slot = &"weapon"
+weapon = ExtResource("2_weapon")
+tool_type = &"watering_can"
+water_capacity = 10

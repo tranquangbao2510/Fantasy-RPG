@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="ResourceNodeDefinition" format=3]
+
+[ext_resource type="Script" path="res://features/gathering/resource_node_definition.gd" id="1_def"]
+[ext_resource type="Script" path="res://features/items/loot/loot_entry.gd" id="2_entry"]
+[ext_resource type="Script" path="res://features/items/loot/loot_table.gd" id="3_table"]
+
+[sub_resource type="Resource" id="Entry_1"]
+script = ExtResource("2_entry")
+item_id = &"seed_potato"
+min_count = 1
+max_count = 2
+chance = 1.0
+
+[sub_resource type="Resource" id="Table_yield"]
+script = ExtResource("3_table")
+entries = Array[ExtResource("2_entry")]([SubResource("Entry_1")])
+
+[resource]
+script = ExtResource("1_def")
+id = &"wild_potato"
+display_name = "Bụi khoai dại"
+required_tool = &""
+harvest_verb = "Đào củ"
+missing_tool_text = ""
+toughness = 1
+yield_table = SubResource("Table_yield")
+depletes = true
+regrow_days = 3

@@ -49,6 +49,8 @@ extends Node2D
 @export var threat_indicator: ThreatIndicator
 ## Tùy chọn (TASK M4.1): navmesh theo tầng cho quái tìm đường — bake lại khi vật dựng / node tài nguyên đổi.
 @export var tier_navigation: TierNavigation
+## Tùy chọn (TASK M5): lớp ruộng (vùng ruộng, cây trồng, đếm ngày, save).
+@export var farm_layer: FarmLayer
 
 @onready var _environment: Node2D = $Environment
 @onready var _map_container: Node2D = $MapContainer
@@ -70,6 +72,7 @@ func _ready() -> void:
 	_setup_survival()
 	_setup_crafting()
 	_setup_night()
+	_setup_farming()
 	_setup_sandbox()
 
 
@@ -424,6 +427,11 @@ func _deploy_item(item: ItemDefinition) -> String:
 	if item.deploy_offset > 0.0:
 		var ahead: Vector2 = GroundSpace.direction(player.get_facing(), squash)
 		at += GroundSpace.to_screen(ahead * item.deploy_offset, squash)
+	if item.deploy_home_radius > 0.0:
+		# TASK M5: vật đặt trong nhà (cối đá) — gần giường nhà (Bed.home) gần nhất.
+		var home: RestSpot = sleep_controller.get_home_spot() if sleep_controller != null else null
+		if home == null or GroundSpace.length(at - home.global_position, squash) > item.deploy_home_radius:
+			return "%s phải đặt trong nhà (gần giường)." % item.display_name
 	var exclude: Array[RID] = []
 	for node: Node in [player] + player.find_children("*", "CollisionObject2D", true, false):
 		exclude.append((node as CollisionObject2D).get_rid())
@@ -504,3 +512,50 @@ func _setup_night() -> void:
 				if node.depleted:
 					tier_navigation.request_rebake())
 			resource_layer.regrown.connect(func(_node: ResourceNode) -> void: tier_navigation.request_rebake())
+
+
+# --- Trồng trọt (TASK M5) -------------------------------------------------------------------------
+
+var _seed_menu: PopupMenu
+var _seed_menu_plot: FarmPlot
+var _seed_menu_options: Array[StringName] = []
+
+
+func _setup_farming() -> void:
+	if farm_layer == null or player == null:
+		return
+	var database: ItemDatabase = player.get_inventory().database
+	farm_layer.seed_choice_requested.connect(open_seed_menu)
+	if pickup_toast != null:
+		farm_layer.crop_harvested.connect(func(_plot: FarmPlot, _crop: CropDefinition, stacks: Array[ItemStack]) -> void:
+			for stack: ItemStack in stacks:
+				var item: ItemDefinition = database.get_item(stack.item_id)
+				pickup_toast.show_pickup(stack.item_id, item.display_name if item != null else String(stack.item_id), stack.count))
+
+
+## Menu chọn hạt khi trong túi có nhiều loại hạt (E trên đất cày trống). Trả về menu đang mở.
+func open_seed_menu(plot: FarmPlot, seed_ids: Array[StringName]) -> PopupMenu:
+	if _seed_menu == null:
+		_seed_menu = PopupMenu.new()
+		_seed_menu.id_pressed.connect(func(id: int) -> void:
+			if id >= 0 and id < _seed_menu_options.size():
+				choose_seed_action(_seed_menu_plot, _seed_menu_options[id]))
+		(get_node(^"UILayer") if has_node(^"UILayer") else self).add_child(_seed_menu)
+	var bag: Inventory = player.get_inventory()
+	_seed_menu.clear()
+	for i: int in seed_ids.size():
+		var item: ItemDefinition = bag.database.get_item(seed_ids[i])
+		_seed_menu.add_item("Gieo %s (%d)" % [item.display_name if item != null else String(seed_ids[i]), bag.count_of(seed_ids[i])], i)
+	_seed_menu_plot = plot
+	_seed_menu_options = seed_ids.duplicate()
+	_seed_menu.reset_size()
+	_seed_menu.position = Vector2i(get_viewport().get_mouse_position()) + get_window().position
+	_seed_menu.popup()
+	return _seed_menu
+
+
+## Gieo loại hạt đã chọn từ menu (và nhớ lựa chọn cho các ô sau).
+func choose_seed_action(plot: FarmPlot, seed_id: StringName) -> void:
+	if farm_layer == null or plot == null or not is_instance_valid(plot):
+		return
+	_show_feedback(farm_layer.choose_seed(plot, player, seed_id))

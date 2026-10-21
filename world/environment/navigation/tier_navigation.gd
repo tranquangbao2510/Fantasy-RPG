@@ -12,6 +12,10 @@ extends Node2D
 ## - Vật dựng / node tài nguyên đổi trạng thái (lửa trại dựng/thu, cây bị chặt/mọc lại) → `request_rebake()` (gộp các yêu
 ##   cầu trong `rebake_delay` giây rồi bake lại) — chọn bake lại thay vì NavigationObstacle2D vì obstacle chỉ ảnh hưởng
 ##   avoidance, không ảnh hưởng đường tìm được; việc dựng / chặt hiếm nên chi phí bake chấp nhận được.
+## - TASK M5: bake chạy TRÊN THREAD (`bake_from_source_geometry_data_async`, `threaded` = true): luồng chính chỉ gom hình
+##   học nguồn (vài ms), phần bake (~50–60 ms ở M4.1, gây giật một frame) chạy nền. Region giữ navmesh cũ tới khi bản mới
+##   của mọi tầng xong rồi mới đổi cùng lúc. Có yêu cầu bake mới trong lúc đang bake → bake thêm một lượt sau khi xong.
+##   Navmesh tầng chưa có lần nào (vừa vào map / vừa tải save) → quái tìm đường đứng chờ (Enemy._steer_to), không đi thẳng.
 
 signal baked
 
@@ -19,11 +23,22 @@ signal baked
 @export var ground_outline: CollisionPolygon2D
 @export var agent_radius: float = 8.0
 @export var rebake_delay: float = 0.4
+## false = bake đồng bộ trên luồng chính (như M4.1; để so sánh / debug).
+@export var threaded: bool = true
 
 var _regions: Dictionary[int, NavigationRegion2D] = {}
 var _rebake_left: float = -1.0
-## Thời gian bake gần nhất (ms, cả các tầng) — debug / báo cáo hiệu năng.
+## Bake đang chạy trên thread: tầng → NavigationPolygon đang bake (đổi vào region khi mọi tầng xong).
+var _in_flight: Dictionary[int, NavigationPolygon] = {}
+var _in_flight_left: int = 0
+var _bake_started_us: int = 0
+## Có yêu cầu bake trong lúc đang bake → bake lại khi lượt hiện tại xong.
+var _rebake_after: bool = false
+## Thời gian bake gần nhất (ms, cả các tầng, từ lúc bắt đầu tới lúc navmesh mới được gán) — debug / báo cáo hiệu năng.
 var last_bake_ms: float = 0.0
+## Phần chạy trên luồng chính của lần bake gần nhất (gom hình học nguồn + gán region, ms).
+var last_main_thread_ms: float = 0.0
+var last_bake_threaded: bool = false
 
 
 func _ready() -> void:
@@ -47,6 +62,11 @@ func request_rebake() -> void:
 	set_process(true)
 
 
+## Đang chờ bake (đã có yêu cầu) hoặc đang bake trên thread.
+func is_baking() -> bool:
+	return is_processing() or _in_flight_left > 0 or _rebake_after
+
+
 func get_region(tier: int) -> NavigationRegion2D:
 	return _regions.get(tier)
 
@@ -56,15 +76,50 @@ static func layer_for_tier(tier: int) -> int:
 
 
 func bake() -> void:
-	var started: int = Time.get_ticks_usec()
+	if _in_flight_left > 0:
+		_rebake_after = true
+		return
+	_rebake_after = false
+	_bake_started_us = Time.get_ticks_usec()
+	last_bake_threaded = threaded
 	var tiers: int = ElevationMap.MAX_TIERS if elevation_map != null else 1
+	var sources: Dictionary[int, NavigationMeshSourceGeometryData2D] = {}
 	for tier: int in tiers:
 		var source: NavigationMeshSourceGeometryData2D = NavigationMeshSourceGeometryData2D.new()
 		_add_walkable(source, tier)
 		_add_obstructions(source, tier)
+		sources[tier] = source
+	_in_flight.clear()
+	_in_flight_left = tiers
+	for tier: int in tiers:
 		var polygon: NavigationPolygon = NavigationPolygon.new()
 		polygon.agent_radius = agent_radius
-		NavigationServer2D.bake_from_source_geometry_data(polygon, source)
+		_in_flight[tier] = polygon
+		if threaded:
+			NavigationServer2D.bake_from_source_geometry_data_async(polygon, sources[tier],
+				TierNavigation._deliver_baked.bind(weakref(self), tier))
+		else:
+			NavigationServer2D.bake_from_source_geometry_data(polygon, sources[tier])
+			_on_tier_baked(tier)
+	if threaded:
+		last_main_thread_ms = (Time.get_ticks_usec() - _bake_started_us) / 1000.0
+
+
+## Callback của bake async — có thể chạy trên thread của WorkerThreadPool: chuyển về luồng chính; node đã bị giải phóng
+## (đổi scene trong lúc bake) thì bỏ qua.
+static func _deliver_baked(ref: WeakRef, tier: int) -> void:
+	var navigation: TierNavigation = ref.get_ref() as TierNavigation
+	if navigation != null:
+		navigation._on_tier_baked.call_deferred(tier)
+
+
+## Một tầng bake xong; khi mọi tầng xong thì gán navmesh mới vào các region cùng lúc (tới lúc đó region giữ bản cũ).
+func _on_tier_baked(_tier: int) -> void:
+	_in_flight_left -= 1
+	if _in_flight_left > 0 or not is_inside_tree():
+		return
+	var assign_started: int = Time.get_ticks_usec()
+	for tier: int in _in_flight:
 		var region: NavigationRegion2D = _regions.get(tier)
 		if region == null:
 			region = NavigationRegion2D.new()
@@ -75,9 +130,16 @@ func bake() -> void:
 			add_child(region)
 			region.global_transform = Transform2D.IDENTITY
 			_regions[tier] = region
-		region.navigation_polygon = polygon
-	last_bake_ms = (Time.get_ticks_usec() - started) / 1000.0
+		region.navigation_polygon = _in_flight[tier]
+	_in_flight.clear()
+	last_bake_ms = (Time.get_ticks_usec() - _bake_started_us) / 1000.0
+	if threaded:
+		last_main_thread_ms += (Time.get_ticks_usec() - assign_started) / 1000.0
+	else:
+		last_main_thread_ms = last_bake_ms
 	baked.emit()
+	if _rebake_after:
+		bake()
 
 
 func _add_walkable(source: NavigationMeshSourceGeometryData2D, tier: int) -> void:

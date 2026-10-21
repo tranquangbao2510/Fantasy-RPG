@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemDefinition" format=3]
+
+[ext_resource type="Script" path="res://features/items/item_definition.gd" id="1_item"]
+[ext_resource type="Texture2D" uid="uid://c51ctqx834thh" path="res://features/items/icons/flour.png" id="9_icon"]
+
+[resource]
+script = ExtResource("1_item")
+id = &"flour"
+display_name = "Bột mì"
+description = "Bột xay từ lúa mì. Nướng ở lửa trại thành bánh mì."
+icon = ExtResource("9_icon")
+category = 0
+max_stack = 50
+sell_price = 3
+tags = Array[StringName]([&"farming"])
+

@@ -1018,6 +1018,8 @@ const RESOURCE_NODES: Array = [
 	["Rock1", "rock", 16, 30], ["Rock2", "rock", 14, 34], ["Rock3", "rock", 17, 28],
 	["BerryBush1", "berry_bush", 19, 31], ["BerryBush2", "berry_bush", 16, 36], ["BerryBush3", "berry_bush", 30, 30],
 	["Grass1", "grass", 28, 29], ["Grass2", "grass", 27, 28], ["Grass3", "grass", 25, 29], ["Grass4", "grass", 24, 28], ["Grass5", "grass", 29, 31],
+	# TASK M5: bụi khoai dại (củ giống).
+	["WildPotato1", "wild_potato", 24.5, 33.5], ["WildPotato2", "wild_potato", 34.0, 34.25],
 ]
 
 
@@ -1162,3 +1164,40 @@ func _survival(world: Node, ui: CanvasLayer, player: Node, entities: Node2D) -> 
 	nav.set("elevation_map", entities.get_node("Elevation"))
 	nav.set("ground_outline", sroot.get_node("MapContainer/GladeMap/LandEdge/Loop"))
 	world.set("tier_navigation", nav)
+	_farming(world, clock, entities)
+
+
+## TASK M5: vùng ruộng cạnh nhà (6 × 4 ô, mỗi ô nửa ô lưới iso) + chỗ múc nước ở mép suối.
+const FARM_FIELDS: Array = [["HomeField", "glade_home", 28.5, 33.0]]
+const WATER_SOURCES: Array = [["WaterSource1", 26.5, 26.8], ["WaterSource2", 30.25, 27.7]]
+
+
+func _farming(world: Node, clock: Node, entities: Node2D) -> void:
+	var farms: Node2D = Node2D.new()
+	farms.set_script(load("res://features/farming/farm_layer.gd"))
+	farms.y_sort_enabled = true
+	add(entities, farms, "Farms")
+	farms.add_to_group(&"saveable", true)
+	farms.set("clock", clock)
+	farms.set("crop_book", load("res://features/farming/data/crop_book.tres"))
+	farms.set("pickup_layer", entities.get_node("Items"))
+	for f: Array in FARM_FIELDS:
+		var field: Node2D = Node2D.new()
+		field.set_script(load("res://features/farming/farm_field.gd"))
+		field.position = iso(f[2], f[3])
+		add(farms, field, f[0])
+		field.set("field_id", f[1])
+	var shape: CircleShape2D = CircleShape2D.new()
+	shape.radius = 8.0
+	for w: Array in WATER_SOURCES:
+		var source: Area2D = Area2D.new()
+		source.position = iso(w[1], w[2])
+		source.collision_layer = 4
+		source.collision_mask = 0
+		source.monitoring = false
+		source.set_script(load("res://features/farming/water_source.gd"))
+		add(entities, source, w[0])
+		var collision: CollisionShape2D = CollisionShape2D.new()
+		collision.shape = shape
+		add(source, collision, "Shape")
+	world.set("farm_layer", farms)

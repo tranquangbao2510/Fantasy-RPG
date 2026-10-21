@@ -102,6 +102,11 @@
 [ext_resource type="Resource" path="res://features/spawning/data/glade_spawn_table.tres" id="m4_spawn_table"]
 [ext_resource type="Script" uid="uid://dl3xhhcl0d3aw" path="res://ui/combat/threat_indicator.gd" id="m4_threat"]
 [ext_resource type="Script" uid="uid://84vc7thngwxt" path="res://ui/combat/hit_vignette.gd" id="m4_vignette"]
+[ext_resource type="Resource" path="res://features/farming/data/crop_book.tres" id="m5_crops"]
+[ext_resource type="Script" uid="uid://dr56l3hb46wuy" path="res://features/farming/farm_field.gd" id="m5_farm_field"]
+[ext_resource type="Script" uid="uid://15fxj6uin1kc" path="res://features/farming/farm_layer.gd" id="m5_farm_layer"]
+[ext_resource type="Script" uid="uid://bhpth47p8p877" path="res://features/farming/water_source.gd" id="m5_water"]
+[ext_resource type="PackedScene" path="res://features/gathering/nodes/wild_potato_node.tscn" id="m5_wild_potato"]
 [ext_resource type="Script" uid="uid://chlpnotbqshwu" path="res://world/environment/navigation/tier_navigation.gd" id="m41_nav"]
 
 [sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_0h8ps"]
@@ -136,6 +141,9 @@ fill_to = Vector2(0, 1)
 [sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_b2xhr"]
 blend_mode = 1
 
+[sub_resource type="CircleShape2D" id="CircleShape2D_water"]
+radius = 8.0
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
 content_margin_left = 10.0
 content_margin_top = 8.0
@@ -148,7 +156,7 @@ border_width_right = 1
 border_width_bottom = 1
 border_color = Color(0.45, 0.45, 0.6, 1)
 
-[node name="EnvironmentPrototype" type="Node2D" unique_id=1465201579 node_paths=PackedStringArray("camera", "camera_target", "map_bounds", "interaction_detector", "interaction_prompt", "interaction_feedback", "player_health", "combat_hud", "player_weapon", "player_attack", "player_skills", "player_caster", "skill_bar", "player", "player_classes", "player_level", "progression_panel", "inventory_window", "pickup_layer", "pickup_toast", "clock", "day_night", "sleep_controller", "death_controller", "death_marker", "crafting_window", "resource_layer", "enemy_spawner", "night_banner", "hit_vignette", "threat_indicator", "tier_navigation")]
+[node name="EnvironmentPrototype" type="Node2D" unique_id=1465201579 node_paths=PackedStringArray("camera", "camera_target", "map_bounds", "interaction_detector", "interaction_prompt", "interaction_feedback", "player_health", "combat_hud", "player_weapon", "player_attack", "player_skills", "player_caster", "skill_bar", "player", "player_classes", "player_level", "progression_panel", "inventory_window", "pickup_layer", "pickup_toast", "clock", "day_night", "sleep_controller", "death_controller", "death_marker", "crafting_window", "resource_layer", "enemy_spawner", "night_banner", "hit_vignette", "threat_indicator", "tier_navigation", "farm_layer")]
 texture_filter = 4
 script = ExtResource("1_y3y0j")
 camera = NodePath("CameraContainer/GameCamera")
@@ -185,6 +193,7 @@ night_banner = NodePath("UILayer/NightBanner")
 hit_vignette = NodePath("UILayer/HitVignette")
 threat_indicator = NodePath("UILayer/ThreatIndicator")
 tier_navigation = NodePath("TierNavigation")
+farm_layer = NodePath("EntityContainer/Farms")
 
 [node name="Environment" type="Node2D" parent="." unique_id=978478]
 
@@ -1408,6 +1417,46 @@ node_id = "glade_grass_4"
 [node name="Grass5" parent="EntityContainer/Resources" unique_id=1638519028 instance=ExtResource("m3_grass")]
 position = Vector2(-64, 960)
 node_id = "glade_grass_5"
+
+[node name="WildPotato1" parent="EntityContainer/Resources" unique_id=193610945 instance=ExtResource("m5_wild_potato")]
+position = Vector2(-288, 928)
+node_id = "glade_wild_potato_1"
+
+[node name="WildPotato2" parent="EntityContainer/Resources" unique_id=1982030177 instance=ExtResource("m5_wild_potato")]
+position = Vector2(-8, 1092)
+node_id = "glade_wild_potato_2"
+
+[node name="Farms" type="Node2D" parent="EntityContainer" unique_id=629178588 node_paths=PackedStringArray("clock", "pickup_layer") groups=["saveable"]]
+y_sort_enabled = true
+script = ExtResource("m5_farm_layer")
+clock = NodePath("../../GameClock")
+crop_book = ExtResource("m5_crops")
+pickup_layer = NodePath("../Items")
+
+[node name="HomeField" type="Node2D" parent="EntityContainer/Farms" unique_id=1157077353]
+position = Vector2(-144, 984)
+script = ExtResource("m5_farm_field")
+field_id = "glade_home"
+
+[node name="WaterSource1" type="Area2D" parent="EntityContainer" unique_id=234659769]
+position = Vector2(-9.6, 852.8)
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("m5_water")
+
+[node name="Shape" type="CollisionShape2D" parent="EntityContainer/WaterSource1" unique_id=1530535258]
+shape = SubResource("CircleShape2D_water")
+
+[node name="WaterSource2" type="Area2D" parent="EntityContainer" unique_id=1160464934]
+position = Vector2(81.6, 927.2)
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("m5_water")
+
+[node name="Shape" type="CollisionShape2D" parent="EntityContainer/WaterSource2" unique_id=663732403]
+shape = SubResource("CircleShape2D_water")
 
 [node name="EffectContainer" type="Node2D" parent="." unique_id=88998114]
 

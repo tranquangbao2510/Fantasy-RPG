@@ -8,6 +8,8 @@ enum Category { MATERIAL, FOOD, TOOL, WEAPON, ARMOR, SEED, QUEST, MISC }
 const CATEGORY_NAMES: Array[String] = ["Nguyên liệu", "Thức ăn", "Công cụ", "Vũ khí", "Trang phục", "Hạt giống", "Nhiệm vụ", "Khác"]
 ## Ô trang bị hợp lệ (EquipmentSlots). &"" = không trang bị được.
 const EQUIP_SLOTS: Array[StringName] = [&"weapon", &"head", &"offhand", &"body"]
+## Khóa trong ItemStack.data: lượng nước của bình tưới (TASK M5).
+const WATER_KEY: String = "water"
 
 ## ID ổn định, không phụ thuộc tên hiển thị (vd. &"wood"). Lưu trong save.
 @export var id: StringName = &""
@@ -28,7 +30,8 @@ const EQUIP_SLOTS: Array[StringName] = [&"weapon", &"head", &"offhand", &"body"]
 @export var deploy_scene: PackedScene
 
 @export_group("Công cụ, độ bền, vật dựng (TASK M3)")
-## Loại công cụ khi cầm ở tay chính: &"axe" (rìu), &"pickaxe" (cuốc chim); &"" = không phải công cụ khai thác.
+## Loại công cụ khi cầm ở tay chính: &"axe" (rìu), &"pickaxe" (cuốc chim); TASK M5: &"hoe" (cuốc đất),
+## &"watering_can" (bình tưới); &"" = không phải công cụ.
 @export var tool_type: StringName = &""
 ## Sức khai thác mỗi lần (trừ vào độ bền khai thác của node tài nguyên). Tay không = ResourceNode.HAND_POWER.
 @export_range(1, 10) var harvest_power: int = 1
@@ -41,6 +44,12 @@ const EQUIP_SLOTS: Array[StringName] = [&"weapon", &"head", &"offhand", &"body"]
 ## Vật dựng: đặt cách chân người chơi bao nhiêu px mặt đất theo hướng nhìn (vật có thân va chạm như lửa trại đặt trước
 ## mặt để không kẹt người chơi); 0 = ngay chỗ đứng (lều).
 @export var deploy_offset: float = 0.0
+
+@export_group("Trồng trọt (TASK M5)")
+## Bình tưới: dung tích (số ô tưới được mỗi lần múc). Lượng nước hiện tại: ItemStack.data["water"] (thiếu = rỗng).
+@export var water_capacity: int = 0
+## Vật dựng phải đặt "trong nhà": cách giường nhà (Bed.home) gần nhất ≤ bán kính này (px mặt đất); 0 = đặt đâu cũng được.
+@export var deploy_home_radius: float = 0.0
 
 @export_group("Giáp (TASK M4)")
 ## Giáp khi đang mặc: sát thương nhận vào × 100 / (100 + tổng giáp) (DamageInfo.mitigate). 0 = không giảm.
@@ -76,9 +85,15 @@ func is_tool() -> bool:
 	return tool_type != &""
 
 
-## Có hao mòn (độ bền) hoặc cháy hết (đuốc) — hiện thanh + số trên ô đồ / tooltip.
+## Có hao mòn (độ bền), cháy hết (đuốc) hoặc chứa nước (bình tưới) — hiện thanh + số trên ô đồ / tooltip.
 func has_wear() -> bool:
-	return max_durability > 0 or burn_minutes > 0.0
+	return max_durability > 0 or burn_minutes > 0.0 or water_capacity > 0
+
+
+## Lượng nước còn trong bình tưới (thiếu field = rỗng).
+func water_of(stack: ItemStack) -> int:
+	var value: Variant = stack.data.get(WATER_KEY) if stack != null else null
+	return clampi(int(value), 0, water_capacity) if (value is int or value is float) else 0
 
 
 ## Độ bền hiện tại của stack (thiếu field = mới, đầy).
@@ -99,6 +114,8 @@ func wear_ratio(stack: ItemStack) -> float:
 		return float(durability_of(stack)) / max_durability
 	if burn_minutes > 0.0:
 		return fuel_of(stack) / burn_minutes
+	if water_capacity > 0:
+		return float(water_of(stack)) / water_capacity
 	return 1.0
 
 
@@ -109,6 +126,8 @@ func describe_wear(stack: ItemStack) -> String:
 	if burn_minutes > 0.0:
 		var minutes: int = ceili(fuel_of(stack))
 		return "Còn cháy %d giờ %02d phút" % [minutes / 60, minutes % 60]
+	if water_capacity > 0:
+		return "Nước %d/%d" % [water_of(stack), water_capacity]
 	return ""
 
 
@@ -145,8 +164,10 @@ func get_validation_errors() -> Array[String]:
 		errors.append("item có độ bền / thời gian cháy phải có max_stack = 1")
 	if tool_type != &"" and equip_slot != &"weapon":
 		errors.append("công cụ phải trang bị ở ô weapon (tay chính)")
-	if max_durability < 0 or burn_minutes < 0.0 or max_per_map < 0:
-		errors.append("max_durability / burn_minutes / max_per_map < 0")
+	if max_durability < 0 or burn_minutes < 0.0 or max_per_map < 0 or water_capacity < 0 or deploy_home_radius < 0.0:
+		errors.append("max_durability / burn_minutes / max_per_map / water_capacity / deploy_home_radius < 0")
+	if water_capacity > 0 and tool_type != &"watering_can":
+		errors.append("có water_capacity nhưng tool_type không phải watering_can")
 	return errors
 
 

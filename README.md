@@ -56,6 +56,8 @@ Quy ước commit: [docs/git_conventions.md](docs/git_conventions.md).
   Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/crafting/test_crafting.gd
   Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/gathering/test_gathering.gd
   Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/night/test_night.gd
+  Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/navigation/test_nav_bake.gd
+  Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/farming/test_farming.gd
   ```
 
 ## Trạng thái hiện tại
@@ -99,5 +101,7 @@ Quy ước commit: [docs/git_conventions.md](docs/git_conventions.md).
 - TASK M4 — Đêm nguy hiểm (`features/spawning/`, `entities/enemies/night/`): từ hoàng hôn, quái đêm sinh ngoài màn hình theo bảng spawn — **Bóng ma** (sợ sáng, hút mana), **Sói đêm** (đi bầy 2–3, vây rồi lần lượt lao vào, máu thấp bỏ chạy), **Thây ma rừng** (chậm, trâu, đòn báo trước); không sinh trong vùng sáng của lửa trại / đá rune / đèn giường; bình minh thì tan biến. Cầm đuốc/đèn lồng bị phát hiện từ xa hơn; chạy dễ lộ hơn đi bộ. Rơi da / xương / tinh chất bóng → **giáo xương**, **áo da** (ô Áo mới, giảm sát thương), **đuốc tinh chất**. HUD "Trời sắp tối…" / "Màn đêm buông xuống", viền đỏ khi trúng đòn, mũi tên chỉ quái đang đuổi ngoài màn hình; không ngủ được khi quái gần. Ánh sáng đêm vẽ lại bằng một lớp phủ (hết cháy trắng khi nhiều nguồn sáng chồng nhau). Phím debug: **F1** Bóng ma, **F2** bầy sói, **F4** Thây ma, **F10** vẽ bán kính phát hiện. Save v4. Chi tiết: [architecture.md](docs/architecture.md) mục 2o.
 
 - TASK M4.1 — Gộp M3 từ origin, quái **tìm đường** (navmesh theo tầng, đi vòng vật cản, mất dấu khi người chơi ở tầng khác), cảnh báo "Trời sắp tối…" lúc **17:00**, quái đêm sinh từ **18:00**; Bóng ma lượn quanh vùng đuốc thì **đuốc cháy nhanh gấp 4**. Chi tiết: [architecture.md](docs/architecture.md) mục 2o.
+
+- TASK M5 — Trồng trọt (`features/farming/`): **ruộng 6×4 ô** định sẵn cạnh nhà tạm trong Glade (chỉ cày được trong vùng này). Chế ở bàn chế tạo: **cuốc đất** (cày ô cỏ, có độ bền), **bình tưới** (10 nước, **E** ở mép suối để múc), **cối đá** (đặt trong nhà, cạnh giường). Hạt: **lúa mì** (đôi khi rơi khi nhổ bụi cỏ), **củ giống** khoai (đào ở bụi khoai dại, đôi khi rơi từ bụi mọng), **quả mọng** (trồng thành bụi thu nhiều lần). **E** trên ô: cày → gieo (nhiều loại hạt thì chọn) → tưới → thu. Cây chỉ lớn khi được tưới hôm trước (tính lúc 6:00, kể cả khi ngủ / ngất / ở map khác), khô 3 ngày liên tục thì héo; đất cày bỏ trống 3 ngày về cỏ; đất ướt màu sẫm hơn. Lúa mì → **bột** (cối đá) → **bánh mì** (lửa trại); khoai ăn sống hoặc **nướng**. Debug: **F6** cây ở ô dưới con trỏ +1 giai đoạn, **F11** tưới hết ruộng. Navmesh của quái giờ bake trên thread (hết giật khi chặt cây / dựng lều). Save v5. Chi tiết + bảng cây trồng / công thức / cân bằng: [architecture.md](docs/architecture.md) mục 2p, báo cáo [docs/reports/M5.md](docs/reports/M5.md).
 
 Chưa có ultimate, animation enemy, boss, âm thanh, hotbar, hội thoại hay quest. Mọi chỉ số combat, vũ khí, kỹ năng, class và EXP là placeholder.

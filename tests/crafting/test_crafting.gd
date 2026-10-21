@@ -42,7 +42,8 @@ func _test_data() -> void:
 		and BOOK.get_recipe(&"grilled_meat").station == RecipeDefinition.Station.CAMPFIRE
 		and BOOK.get_recipe(&"stone_axe").station == RecipeDefinition.Station.NONE)
 	check("recipes_for_hand_only", BOOK.recipes_for([]).size() == 6)  # + đuốc tinh chất (TASK M4)
-	check("recipes_for_campfire_mode", BOOK.recipes_for([RecipeDefinition.Station.CAMPFIRE], RecipeDefinition.Station.CAMPFIRE).size() == 2)
+	# + bánh mì, khoai nướng (TASK M5).
+	check("recipes_for_campfire_mode", BOOK.recipes_for([RecipeDefinition.Station.CAMPFIRE], RecipeDefinition.Station.CAMPFIRE).size() == 4)
 	for def_name: String in NODE_DEFS:
 		var def: ResourceNodeDefinition = load("res://features/gathering/data/%s.tres" % def_name) as ResourceNodeDefinition
 		check("node_def_valid_%s" % def_name, def != null and def.get_validation_errors(DATABASE).is_empty(),

@@ -972,7 +972,7 @@ func _test_save_mid_night() -> void:
 	var data: Dictionary = _saves.read_save(2)
 	var saved: Array = data["maps"]["glade"]["enemies"]["enemies"]
 	var saved_buffs: Array = data["global"]["player"]["survival"]["buffs"]
-	check("save_v4_structure", int(data["schema_version"]) == 4 and saved.size() == 4 and not saved_buffs.is_empty()
+	check("save_v4_structure", int(data["schema_version"]) == SaveServiceScript.SCHEMA_VERSION and saved.size() == 4 and not saved_buffs.is_empty()
 		and data["maps"]["glade"].has("enemy:glade_simple_enemy"), JSON.stringify(saved))
 	var expect: Dictionary = {}
 	for state: Dictionary in saved:
@@ -1038,8 +1038,8 @@ func _test_load_old_saves() -> void:
 	check("load_v3_ok", _clock.get_day() == 2 and _bag().count_of(&"fiber") == 3 and _player.get_health().current_health == 70
 		and _layer.get_deployed().size() == 1 and _spawner.get_enemies().is_empty() and _player.get_buffs().to_list().is_empty())
 	check("migration_v3_v4", migrated["maps"]["glade"]["enemies"] == {"version": 1, "enemies": []}
-		and migrated["global"]["player"]["survival"]["buffs"] == [] and int(migrated["schema_version"]) == 4)
-	check("load_v3_resave_v4", _saves.save_game(4) and int(_saves.read_save(4)["schema_version"]) == 4)
+		and migrated["global"]["player"]["survival"]["buffs"] == [] and int(migrated["schema_version"]) == SaveServiceScript.SCHEMA_VERSION)
+	check("load_v3_resave_v4", _saves.save_game(4) and int(_saves.read_save(4)["schema_version"]) == SaveServiceScript.SCHEMA_VERSION)
 	# Save v2 (M2).
 	var v2: Dictionary = {"schema_version": 2, "saved_at": "2026-10-20 17:00:00", "playtime": 300.0, "map_id": "glade",
 		"global": {"clock": {"version": 1, "day": 3, "minute": 600.0},

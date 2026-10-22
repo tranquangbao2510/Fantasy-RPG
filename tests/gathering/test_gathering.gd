@@ -29,7 +29,6 @@ var _window: CraftingWindow
 func _run_tests() -> void:
 	_saves = root.get_node("SaveService") as SaveServiceScript
 	_saves.save_dir = TEST_DIR
-	_saves.autosave_on_quit = false
 	_clear_dir()
 	await _open_world()
 	await _test_hud_and_keys()
@@ -49,10 +48,7 @@ func _run_tests() -> void:
 # ---------------------------------------------------------------- helpers
 
 func _clear_dir() -> void:
-	var dir: DirAccess = DirAccess.open(TEST_DIR)
-	if dir != null:
-		for file: String in dir.get_files():
-			dir.remove(file)
+	clear_dir(TEST_DIR)
 
 
 func _open_world() -> void:
@@ -679,6 +675,7 @@ func _test_load_old_saves() -> void:
 				"survival": {"mana": 50.0, "stamina": 60.0, "hunger": 70.0, "respawn": {}}}},
 		"maps": {"glade": {"world_items": {"version": 2, "collected": [], "dropped": [], "death_bags": [],
 			"deployed": [{"item_id": "tent", "id": "tent_old", "position": [tent_at.x, tent_at.y], "tier": 0}]}}}}
+	DirAccess.make_dir_recursive_absolute(_saves.get_slot_path(5).get_base_dir())
 	var file: FileAccess = FileAccess.open(_saves.get_slot_path(5), FileAccess.WRITE)
 	file.store_string(JSON.stringify(v2))
 	file.close()
@@ -696,6 +693,7 @@ func _test_load_old_saves() -> void:
 		"global": {"player": {"position": [tent_at.x, tent_at.y], "tier": 0, "health": 90,
 			"inventory": {"version": 1, "size": 24, "slots": [{"slot": 0, "id": "wood", "count": 5}]}}},
 		"maps": {"glade": {"world_items": {"version": 1, "collected": ["glade_wood_1"], "dropped": []}}}}
+	DirAccess.make_dir_recursive_absolute(_saves.get_slot_path(6).get_base_dir())
 	file = FileAccess.open(_saves.get_slot_path(6), FileAccess.WRITE)
 	file.store_string(JSON.stringify(v1))
 	file.close()

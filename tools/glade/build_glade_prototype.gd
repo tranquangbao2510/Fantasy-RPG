@@ -941,12 +941,12 @@ func _props(entities: Node2D) -> void:
 	_place(props, "rock_small", Vector2(21.6, 16.4))
 	_place(props, "bush_b", Vector2(22.4, 6.0))
 	# Tầng 0 — rừng đông nam.
-	for e: Array in [["tree_oak_a", 31.0, 30.0], ["tree_pine", 34.5, 30.0], ["tree_oak_b", 37.5, 31.5], ["tree_oak_a", 33.0, 34.0], ["tree_pine", 36.0, 36.5], ["tree_oak_b", 31.0, 37.5], ["tree_oak_a", 37.5, 22.0], ["tree_pine", 34.0, 20.5], ["tree_oak_b", 30.0, 21.0], ["tree_oak_a", 26.5, 20.0], ["tree_pine", 36.5, 25.0]]:
+	for e: Array in [["tree_oak_a", 31.0, 30.0], ["tree_pine", 34.5, 30.0], ["tree_oak_b", 37.5, 31.5], ["tree_oak_a", 35.0, 34.8], ["tree_pine", 36.0, 36.5], ["tree_oak_b", 37.0, 34.0], ["tree_oak_a", 37.5, 22.0], ["tree_pine", 34.0, 20.5], ["tree_oak_b", 30.0, 21.0], ["tree_oak_a", 26.5, 20.0], ["tree_pine", 36.5, 25.0]]:
 		_place(props, e[0], Vector2(e[1], e[2]), 0, int(e[1]) % 2 == 0)
 	for gp: Vector2 in [Vector2(32.5, 32.0), Vector2(35.5, 33.5), Vector2(29.5, 23.5), Vector2(33.0, 23.0), Vector2(25.0, 23.0)]:
 		_place(props, "bush_a" if int(gp.x) % 2 == 0 else "bush_b", gp)
 	_place(props, "rock_large", Vector2(28.0, 23.6))
-	_place(props, "ruin_wall", Vector2(25.5, 36.5))
+	_place(props, "ruin_wall", Vector2(22.0, 38.6))
 	_place(props, "ruin_pillar", Vector2(24.0, 37.4))
 
 
@@ -971,17 +971,17 @@ func _entities(entities: Node2D) -> Node:
 ## TASK M1: rương + vật phẩm đặt sẵn (pickup_id ổn định cho save). [tên, item, số lượng, pickup_id, i, j, tầng]
 const PICKUPS: Array = [
 	["WoodPickup", &"wood", 5, "glade_wood_1", 25.2, 30.2, 0],
-	["StonePickup", &"stone", 3, "glade_stone_1", 27.4, 34.8, 0],
+	["StonePickup", &"stone", 3, "glade_stone_1", 25.6, 36.6, 0],
 	["HerbPickup", &"herb", 2, "glade_herb_1", 23.0, 33.0, 0],
-	["BerryPickup", &"berry", 4, "glade_berry_1", 29.6, 34.0, 0],
+	["BerryPickup", &"berry", 4, "glade_berry_1", 30.2, 32.2, 0],
 	["MeatPickup", &"raw_meat", 1, "glade_meat_1", 21.5, 36.5, 0],
 	["HelmetPickup", &"test_helmet", 1, "glade_helmet_1", 24.0, 36.0, 0],
 	["RelicPickup", &"ancient_relic", 1, "glade_relic_1", 12.0, 9.0, 1],
 	# TASK M2: đồ ăn, đèn lồng, lều.
 	["BerryPickup2", &"berry", 3, "glade_berry_2", 23.6, 31.4, 0],
-	["BreadPickup", &"bread", 2, "glade_bread_1", 30.6, 33.4, 0],
+	["BreadPickup", &"bread", 2, "glade_bread_1", 31.4, 32.4, 0],
 	["LanternPickup", &"lantern", 1, "glade_lantern_1", 24.6, 32.0, 0],
-	["TentPickup", &"tent", 1, "glade_tent_1", 27.8, 35.8, 0],
+	["TentPickup", &"tent", 1, "glade_tent_1", 24.6, 37.0, 0],
 ]
 
 
@@ -992,11 +992,11 @@ func _items(entities: Node2D) -> void:
 	var loot: Dictionary[StringName, int] = {&"berry": 3, &"grilled_meat": 2, &"test_dagger": 1, &"wood": 10}
 	chest.set("starting_items", loot)
 	# TASK M2: giường "nhà" tạm (điểm hồi sinh mặc định).
-	var bed: Node = instance(entities, "res://features/survival/rest/bed.tscn", iso(30.4, 36.2), "Bed")
+	var bed: Node = instance(entities, "res://features/survival/rest/bed.tscn", iso(28.4, 38.2), "Bed")
 	bed.set("interaction_name", "Giường (nhà tạm)")
 	bed.set("spot_id", "glade_home_bed")
 	# TASK M3: bàn chế tạo trong nhà tạm.
-	var bench: Node = instance(entities, "res://features/crafting/stations/workbench.tscn", iso(32, 36), "Workbench")
+	var bench: Node = instance(entities, "res://features/crafting/stations/workbench.tscn", iso(26, 38), "Workbench")
 	bench.set("interaction_name", "Bàn chế tạo (nhà tạm)")
 	_resources(entities)
 	var layer: Node2D = Node2D.new()
@@ -1167,8 +1167,8 @@ func _survival(world: Node, ui: CanvasLayer, player: Node, entities: Node2D) -> 
 	_farming(world, clock, entities)
 
 
-## TASK M5: vùng ruộng cạnh nhà (6 × 4 ô, mỗi ô nửa ô lưới iso) + chỗ múc nước ở mép suối.
-const FARM_FIELDS: Array = [["HomeField", "glade_home", 28.5, 33.0]]
+## TASK M5: vùng ruộng cạnh nhà (TASK M6: 6 × 4 ô, mỗi ô đúng 1 ô lưới iso; nhà tạm dời xuống phía nam ruộng) + chỗ múc nước ở mép suối.
+const FARM_FIELDS: Array = [["HomeField", "glade_home", 26.0, 33.0]]
 const WATER_SOURCES: Array = [["WaterSource1", 26.5, 26.8], ["WaterSource2", 30.25, 27.7]]
 
 

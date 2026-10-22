@@ -32,7 +32,6 @@ var _window: CraftingWindow
 func _run_tests() -> void:
 	_saves = root.get_node("SaveService") as SaveServiceScript
 	_saves.save_dir = TEST_DIR
-	_saves.autosave_on_quit = false
 	_clear_dir()
 	await _open_world()
 	await _test_data()
@@ -52,10 +51,7 @@ func _run_tests() -> void:
 # ---------------------------------------------------------------- helpers
 
 func _clear_dir() -> void:
-	var dir: DirAccess = DirAccess.open(TEST_DIR)
-	if dir != null:
-		for file: String in dir.get_files():
-			dir.remove(file)
+	clear_dir(TEST_DIR)
 
 
 func _open_world() -> void:
@@ -259,6 +255,7 @@ func _reload(slot: int) -> void:
 
 
 func _write(slot: int, data: Dictionary) -> void:
+	DirAccess.make_dir_recursive_absolute(_saves.get_slot_path(slot).get_base_dir())
 	var file: FileAccess = FileAccess.open(_saves.get_slot_path(slot), FileAccess.WRITE)
 	file.store_string(JSON.stringify(data))
 	file.close()
@@ -382,7 +379,7 @@ func _test_full_loop() -> void:
 	await _use_from_bag(&"stone_mill")
 	check("mill_outside_home_rejected", bag.has(&"stone_mill") and _feedback().contains("trong nhà"), _feedback())
 	var mill: StoneMill = null
-	for spot: Vector2 in [Vector2(28.0, 35.5), Vector2(29.0, 35.25), Vector2(31.5, 35.0), Vector2(27.5, 35.0)]:
+	for spot: Vector2 in [Vector2(30.0, 38.0), Vector2(29.5, 37.6), Vector2(31.0, 38.3), Vector2(27.0, 37.5)]:
 		await _place_at(IsoProjection.to_screen(spot.x, spot.y))
 		await _use_from_bag(&"stone_mill")
 		for node: Node in _layer.get_deployed():
@@ -393,7 +390,10 @@ func _test_full_loop() -> void:
 	check("mill_placed_in_home", mill != null and not bag.has(&"stone_mill"), _feedback())
 	if mill == null:
 		return
-	# Xay bột ở cối đá (E → cửa sổ chế tạo có công thức cối đá).
+	# Xay bột ở cối đá (E → cửa sổ chế tạo có công thức cối đá). TASK M6: 3 lúa → 1 bột; vụ một ô cho 2–3 lúa → bù cho đủ 3.
+	if wheat < 3:
+		bag.add(&"wheat", 3 - wheat)
+		wheat = 3
 	await _place_at(mill.global_position + Vector2(0, 20))
 	check("prompt_mill", _prompt().contains("Xay bột"), _prompt())
 	await _press_e()
@@ -402,7 +402,7 @@ func _test_full_loop() -> void:
 	if flour_button != null:
 		await _click(flour_button)
 	await tap_action(&"craft_toggle")
-	check("milled_flour", bag.count_of(&"flour") == 1 and bag.count_of(&"wheat") == wheat - 2, _feedback())
+	check("milled_flour", bag.count_of(&"flour") == 1 and bag.count_of(&"wheat") == wheat - 3, _feedback())
 	# Nướng bánh ở lửa trại.
 	await _place_at(IsoProjection.to_screen(ARENA.x, ARENA.y))
 	Input.action_press(&"move_down")
@@ -706,8 +706,8 @@ func _test_save_every_stage() -> void:
 	var raw: Dictionary = _read_raw(4)
 	var farms: Dictionary = raw["maps"]["glade"]["farms"]
 	var sample: Dictionary = farms["fields"]["glade_home"]["plots"]["1,0"]
-	check("save_v5_structure", int(raw["schema_version"]) == SaveServiceScript.SCHEMA_VERSION and SaveServiceScript.SCHEMA_VERSION == 5
-		and farms["version"] == 1 and farms.has("last_tick") and (farms["fields"]["glade_home"]["plots"] as Dictionary).size() == k + 3
+	check("save_farm_structure", int(raw["schema_version"]) == SaveServiceScript.SCHEMA_VERSION and SaveServiceScript.SCHEMA_VERSION == 6
+		and farms["version"] == 2 and farms.has("last_tick") and (farms["fields"]["glade_home"]["plots"] as Dictionary).size() == k + 3
 		and sample["state"] == "planted" and sample["crop"] == "wheat" and sample["stage"] == 1 and sample["age"] == 1
 		and sample.has("wet") and sample.has("dry_days") and sample.has("fallow_days") and sample.has("watered_day"), str(sample))
 	check("save_can_water", raw["global"]["player"]["equipment"]["slots"]["weapon"]["data"]["water"] == 7)
@@ -744,14 +744,15 @@ func _test_migrations_and_old_saves() -> void:
 			"resource_nodes": {"version": 1, "nodes": {}}, "enemies": {"version": 1, "enemies": []}}}}
 	_write(5, v4)
 	var migrated: Dictionary = _saves.read_save(5)
-	check("migration_v4_v5", int(migrated["schema_version"]) == 5 and migrated["maps"]["glade"]["farms"] == {"version": 1, "fields": {}})
+	check("migration_v4_to_current", int(migrated["schema_version"]) == SaveServiceScript.SCHEMA_VERSION
+		and migrated["maps"]["glade"]["farms"] == {"version": 2, "fields": {}, "refunds": []}, str(migrated["maps"]["glade"]["farms"]))
 	await _reload(5)
 	var all_grass: bool = true
 	for plot: FarmPlot in _farms.get_plots():
 		all_grass = all_grass and not plot.tilled
 	check("load_v4_ok", _clock.get_day() == 3 and _bag().count_of(&"hide") == 2 and _player.get_health().current_health == 75
 		and all_grass and _farms.last_tick == _farms._current_tick())
-	check("load_v4_resave_v5", _saves.save_game(5) and int(_saves.read_save(5)["schema_version"]) == 5)
+	check("load_v4_resave_current", _saves.save_game(5) and int(_saves.read_save(5)["schema_version"]) == SaveServiceScript.SCHEMA_VERSION)
 	# v3 (M3).
 	var v3: Dictionary = {"schema_version": 3, "saved_at": "2026-10-20 18:00:00", "playtime": 400.0, "map_id": "glade",
 		"global": {"clock": {"version": 1, "day": 2, "minute": 900.0},
@@ -782,7 +783,7 @@ func _test_migrations_and_old_saves() -> void:
 	await _reload(8)
 	check("load_v1_ok", _bag().count_of(&"wood") == 5 and _clock.get_day() == 1 and _player.get_health().current_health == 90)
 	var v1_migrated: Dictionary = _saves.read_save(8)
-	check("migration_chain_v1_v5", int(v1_migrated["schema_version"]) == 5 and v1_migrated["maps"]["glade"].has("farms")
+	check("migration_chain_v1_current", int(v1_migrated["schema_version"]) == SaveServiceScript.SCHEMA_VERSION and v1_migrated["maps"]["glade"].has("farms")
 		and v1_migrated["maps"]["glade"].has("enemies") and v1_migrated["maps"]["glade"].has("resource_nodes"))
 
 

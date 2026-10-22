@@ -29,7 +29,7 @@ Quy ước commit: [docs/git_conventions.md](docs/git_conventions.md).
 
 ## Chạy
 
-- **F5**: chạy project (Main Scene là `res://app/main.tscn`), nhấn **Vào game** để chuyển sang World Scene.
+- **F5**: chạy project — mở vào **màn hình tiêu đề** (`res://app/main.tscn`): Tiếp tục / Chơi mới / Tải game / Cài đặt / Thoát. Bản debug có thêm nút **[Debug] Combat Sandbox** / **[Debug] Bản đồ thử nghiệm**.
 - **F6**: chạy scene đang mở (vd. mở `world/world.tscn` để chạy World độc lập).
 - Dòng lệnh (headless, kiểm tra nhanh):
 
@@ -58,7 +58,29 @@ Quy ước commit: [docs/git_conventions.md](docs/git_conventions.md).
   Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/night/test_night.gd
   Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/navigation/test_nav_bake.gd
   Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/farming/test_farming.gd
+  Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/app/test_app_shell.gd
   ```
+
+- Chơi thử vòng lặp trồng trọt bằng game thật (có cửa sổ, bot gửi input thật, chụp ảnh vào `docs/reports/M6/`):
+
+  ```sh
+  Godot_v4.7.2-stable_win64_console.exe --path . --script res://tools/playtest/farming_playtest.gd --resolution 1152x648
+  ```
+
+## Export (Windows)
+
+Preset **Windows Desktop** (`export_presets.cfg`, release, x86_64) → `build/windows/FantasyRPG.exe` (`build/` không theo dõi trong Git). Cần **export template Godot 4.7.2** (máy dev chưa cài):
+
+1. Mở Godot 4.7.2 → **Editor → Manage Export Templates… → Download and Install** (hoặc tải `Godot_v4.7.2-stable_export_templates.tpz` từ trang tải chính thức của Godot rồi **Install from File**). Template nằm ở `%APPDATA%/Godot/export_templates/4.7.2.stable/`.
+2. Export bản release:
+
+   ```sh
+   Godot_v4.7.2-stable_win64_console.exe --headless --path . --export-release "Windows Desktop" build/windows/FantasyRPG.exe
+   ```
+
+3. Chạy `build/windows/FantasyRPG.exe` (kèm `FantasyRPG.pck` cùng thư mục). Bản release không có phím debug (F1–F12, R, 1/2/3, P) và không có nút [Debug] ở màn hình tiêu đề.
+
+Không có template vẫn đóng gói được dữ liệu game: `--export-pack "Windows Desktop" build/windows/FantasyRPG.pck`, chạy thử bằng `Godot_v4.7.2-stable_win64_console.exe --main-pack build/windows/FantasyRPG.pck` (binary editor là bản debug nên vẫn có phím debug).
 
 ## Trạng thái hiện tại
 
@@ -103,5 +125,7 @@ Quy ước commit: [docs/git_conventions.md](docs/git_conventions.md).
 - TASK M4.1 — Gộp M3 từ origin, quái **tìm đường** (navmesh theo tầng, đi vòng vật cản, mất dấu khi người chơi ở tầng khác), cảnh báo "Trời sắp tối…" lúc **17:00**, quái đêm sinh từ **18:00**; Bóng ma lượn quanh vùng đuốc thì **đuốc cháy nhanh gấp 4**. Chi tiết: [architecture.md](docs/architecture.md) mục 2o.
 
 - TASK M5 — Trồng trọt (`features/farming/`): **ruộng 6×4 ô** định sẵn cạnh nhà tạm trong Glade (chỉ cày được trong vùng này). Chế ở bàn chế tạo: **cuốc đất** (cày ô cỏ, có độ bền), **bình tưới** (10 nước, **E** ở mép suối để múc), **cối đá** (đặt trong nhà, cạnh giường). Hạt: **lúa mì** (đôi khi rơi khi nhổ bụi cỏ), **củ giống** khoai (đào ở bụi khoai dại, đôi khi rơi từ bụi mọng), **quả mọng** (trồng thành bụi thu nhiều lần). **E** trên ô: cày → gieo (nhiều loại hạt thì chọn) → tưới → thu. Cây chỉ lớn khi được tưới hôm trước (tính lúc 6:00, kể cả khi ngủ / ngất / ở map khác), khô 3 ngày liên tục thì héo; đất cày bỏ trống 3 ngày về cỏ; đất ướt màu sẫm hơn. Lúa mì → **bột** (cối đá) → **bánh mì** (lửa trại); khoai ăn sống hoặc **nướng**. Debug: **F6** cây ở ô dưới con trỏ +1 giai đoạn, **F11** tưới hết ruộng. Navmesh của quái giờ bake trên thread (hết giật khi chặt cây / dựng lều). Save v5. Chi tiết + bảng cây trồng / công thức / cân bằng: [architecture.md](docs/architecture.md) mục 2p, báo cáo [docs/reports/M5.md](docs/reports/M5.md).
+
+- TASK M6 — Khung game (`app/`, `core/`, `ui/menus/`): game mở vào **màn hình tiêu đề** (nền cảnh Glade trôi chậm). **3 ô save**, mỗi ô có bản thủ công và bản **tự lưu khi ngủ**; danh sách ô hiện ảnh nhỏ, ngày / giờ game, thời gian chơi, giờ lưu, map; xóa ô và ghi đè đều hỏi xác nhận. Save đơn cũ tự chuyển thành ô 1. **Esc** mở menu tạm dừng (dừng game thật; đang mở túi đồ / chế tạo / hộp thoại thì Esc đóng cái đó trước): Tiếp tục / Lưu / Tải / Cài đặt / Hướng dẫn phím / Về màn hình chính / Thoát game. Không lưu được khi đang bị quái đuổi. Cửa sổ mất focus thì tự tạm dừng. **Cài đặt** (`user://settings.cfg`, áp dụng ngay): âm lượng Master / Nhạc / Hiệu ứng, toàn màn hình, vsync, giới hạn FPS, hiện FPS, độ sáng ban đêm, tự tạm dừng, **đổi phím** mọi hành động (trùng phím thì hỏi hoán đổi, có Khôi phục mặc định; Esc cố định). Mọi tên phím trên HUD đọc từ InputMap. Fade đen khi chuyển cảnh. Phím debug chỉ có ở bản debug, gom vào bảng **F12**. Ruộng giờ là 6×4 ô **đúng lưới iso** (nhà tạm dời xuống phía nam); bột mì = **3** lúa mì. Đóng game không còn tự lưu mà cảnh báo tiến trình chưa lưu. Save v6. Chi tiết: [architecture.md](docs/architecture.md) mục 2q, báo cáo [docs/reports/M6.md](docs/reports/M6.md).
 
 Chưa có ultimate, animation enemy, boss, âm thanh, hotbar, hội thoại hay quest. Mọi chỉ số combat, vũ khí, kỹ năng, class và EXP là placeholder.

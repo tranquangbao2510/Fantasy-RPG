@@ -36,7 +36,6 @@ var _alerts: int = 0
 func _run_tests() -> void:
 	_saves = root.get_node("SaveService") as SaveServiceScript
 	_saves.save_dir = TEST_DIR
-	_saves.autosave_on_quit = false
 	_clear_dir()
 	await _open_world()
 	_test_data()
@@ -65,10 +64,7 @@ func _run_tests() -> void:
 # ---------------------------------------------------------------- helpers
 
 func _clear_dir() -> void:
-	var dir: DirAccess = DirAccess.open(TEST_DIR)
-	if dir != null:
-		for file: String in dir.get_files():
-			dir.remove(file)
+	clear_dir(TEST_DIR)
 
 
 func _open_world() -> void:
@@ -1063,6 +1059,7 @@ func _test_load_old_saves() -> void:
 
 
 func _write(slot: int, data: Dictionary) -> void:
+	DirAccess.make_dir_recursive_absolute(_saves.get_slot_path(slot).get_base_dir())
 	var file: FileAccess = FileAccess.open(_saves.get_slot_path(slot), FileAccess.WRITE)
 	file.store_string(JSON.stringify(data))
 	file.close()

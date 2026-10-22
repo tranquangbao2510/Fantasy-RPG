@@ -64,7 +64,7 @@ func _physics_process(delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not OS.is_debug_build():
+	if not DebugKeys.enabled():
 		return
 	for i: int in DEBUG_ACTIONS.size():
 		if event.is_action_pressed(DEBUG_ACTIONS[i]) and i < debug_spawn_ids.size():

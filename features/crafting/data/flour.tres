@@ -6,7 +6,7 @@
 script = ExtResource("1_recipe")
 id = &"flour"
 ingredients = Dictionary[StringName, int]({
-&"wheat": 2
+&"wheat": 3
 })
 result_id = &"flour"
 result_count = 1

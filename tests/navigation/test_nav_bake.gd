@@ -31,7 +31,6 @@ var _frame_count: int = 0
 func _run_tests() -> void:
 	_saves = root.get_node("SaveService") as SaveServiceScript
 	_saves.save_dir = TEST_DIR
-	_saves.autosave_on_quit = false
 	_clear_dir()
 	process_frame.connect(_on_frame)
 	await _test_map_entry()
@@ -81,10 +80,7 @@ func _settle(limit: int = 600) -> void:
 # ---------------------------------------------------------------- helpers
 
 func _clear_dir() -> void:
-	var dir: DirAccess = DirAccess.open(TEST_DIR)
-	if dir != null:
-		for file: String in dir.get_files():
-			dir.remove(file)
+	clear_dir(TEST_DIR)
 
 
 func _open_world() -> void:

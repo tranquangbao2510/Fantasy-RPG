@@ -36,21 +36,35 @@ var _blink_time: float = 0.0
 
 func _ready() -> void:
 	_death_panel.hide()
-	_hint_label.text = "%s: tấn công · %s/%s/%s: đổi vũ khí (debug) · %s: tương tác / khai thác · %s: chế tạo · %s: reset thử nghiệm" % [
-		InputHint.action_text(&"basic_attack"), InputHint.action_text(&"debug_weapon_1"), InputHint.action_text(&"debug_weapon_2"),
-		InputHint.action_text(&"debug_weapon_3"), InputHint.action_text(&"interact"), InputHint.action_text(&"craft_toggle"),
-		InputHint.action_text(&"debug_reset")]
-	_hint_label.text += "\n%s/%s/%s/%s: kỹ năng · %s: hủy ngắm/vận sức · %s: bảng class (debug)" % [
-		InputHint.action_text(&"skill_slot_1"), InputHint.action_text(&"skill_slot_2"), InputHint.action_text(&"skill_slot_3"),
-		InputHint.action_text(&"skill_slot_4"), InputHint.action_text(&"skill_cancel"), InputHint.action_text(&"debug_progression")]
-	_hint_label.text += "\n%s: chạy · %s: né · %s: túi đồ · %s/%s: lưu/tải nhanh · %s/%s: tua giờ ×10 / +1 giờ (debug)" % [
-		InputHint.action_text(&"sprint"), InputHint.action_text(&"dodge"), InputHint.action_text(&"inventory_toggle"),
-		InputHint.action_text(&"quick_save"), InputHint.action_text(&"quick_load"), InputHint.action_text(&"debug_time_fast"),
-		InputHint.action_text(&"debug_time_skip")]
 	_class_label.text = "Class: —"
 	_weapon_label.text = "Vũ khí: —"
 	_combo_label.text = "Combo: —"
-	_death_label.text = "Bạn đã bị hạ gục\nNhấn [%s] để reset thử nghiệm" % InputHint.action_text(&"debug_reset")
+	refresh_key_hints()
+	GameSettings.get_instance().changed.connect(_on_settings_changed)
+
+
+## Dòng gợi ý phím + bảng bị hạ gục: tên phím đọc từ InputMap (TASK M6 — đổi phím thì gọi lại). Phím debug không ở đây
+## (bảng debug F12).
+func refresh_key_hints() -> void:
+	_hint_label.text = "%s: tấn công · %s/%s/%s/%s: kỹ năng · %s: hủy ngắm/vận sức · %s: tương tác / khai thác" % [
+		InputHint.action_text(&"basic_attack"), InputHint.action_text(&"skill_slot_1"), InputHint.action_text(&"skill_slot_2"),
+		InputHint.action_text(&"skill_slot_3"), InputHint.action_text(&"skill_slot_4"), InputHint.action_text(&"skill_cancel"),
+		InputHint.action_text(&"interact")]
+	_hint_label.text += "\n%s: chạy · %s: né · %s: túi đồ · %s: chế tạo · %s: menu" % [
+		InputHint.action_text(&"sprint"), InputHint.action_text(&"dodge"), InputHint.action_text(&"inventory_toggle"),
+		InputHint.action_text(&"craft_toggle"), InputHint.action_text(InputActions.PAUSE_ACTION)]
+	if DebugKeys.enabled():
+		_hint_label.text += " · %s: bảng phím debug" % InputHint.action_text(DebugKeys.PANEL_ACTION)
+	_death_label.text = "Bạn đã bị hạ gục" + ("\nNhấn [%s] để reset thử nghiệm" % InputHint.action_text(&"debug_reset") if DebugKeys.enabled() else "")
+
+
+func get_hint_text() -> String:
+	return _hint_label.text
+
+
+func _on_settings_changed(key: StringName) -> void:
+	if key == &"controls":
+		refresh_key_hints()
 
 
 func bind_player_health(health: HealthComponent) -> void:

@@ -27,14 +27,16 @@ extends Resource
 @export_range(0, 1439) var dusk_warning_minute: int = 1020
 
 
-## Màu môi trường theo độ tối: ngày → hoàng hôn → đêm.
-func sun_color(darkness: float) -> Color:
+## Màu môi trường theo độ tối: ngày → hoàng hôn → đêm. `moon` < 0 = dùng `moonlight` (TASK M6: Cài đặt → độ sáng ban
+## đêm truyền giá trị riêng, không sửa Resource dùng chung).
+func sun_color(darkness: float, moon: float = -1.0) -> Color:
 	if darkness <= 0.5:
 		return day_color.lerp(twilight_color, darkness * 2.0)
-	return twilight_color.lerp(night_color(), (darkness - 0.5) * 2.0)
+	return twilight_color.lerp(night_color(moon), (darkness - 0.5) * 2.0)
 
 
-## Màu môi trường lúc tối hẳn: moon_tint chuẩn hóa (kênh lớn nhất = 1) × moonlight.
-func night_color() -> Color:
+## Màu môi trường lúc tối hẳn: moon_tint chuẩn hóa (kênh lớn nhất = 1) × moonlight (hoặc `moon` nếu ≥ 0).
+func night_color(moon: float = -1.0) -> Color:
+	var level: float = moon if moon >= 0.0 else moonlight
 	var peak: float = maxf(maxf(moon_tint.r, moon_tint.g), maxf(moon_tint.b, 0.001))
-	return Color(moon_tint.r / peak * moonlight, moon_tint.g / peak * moonlight, moon_tint.b / peak * moonlight)
+	return Color(moon_tint.r / peak * level, moon_tint.g / peak * level, moon_tint.b / peak * level)

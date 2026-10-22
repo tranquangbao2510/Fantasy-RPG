@@ -30,7 +30,6 @@ var _layer: ItemPickupLayer
 func _run_tests() -> void:
 	_saves = root.get_node("SaveService") as SaveServiceScript
 	_saves.save_dir = TEST_DIR
-	_saves.autosave_on_quit = false
 	_clear_dir()
 	await _open_world()
 	await _test_clock()
@@ -51,10 +50,7 @@ func _run_tests() -> void:
 # ---------------------------------------------------------------- helpers
 
 func _clear_dir() -> void:
-	var dir: DirAccess = DirAccess.open(TEST_DIR)
-	if dir != null:
-		for file: String in dir.get_files():
-			dir.remove(file)
+	clear_dir(TEST_DIR)
 
 
 func _open_world() -> void:
@@ -446,7 +442,7 @@ func _test_sleep() -> void:
 	var bed: Bed = _bed()
 	var health: HealthComponent = _player.get_health()
 	var hunger: HungerComponent = _player.get_hunger()
-	DirAccess.remove_absolute(_saves.get_slot_path(1))
+	DirAccess.remove_absolute(_saves.get_slot_path(1, &"autosave"))
 	_clock.set_time(1, 10 * 60)
 	await _walk_to_spot(bed)
 	await tap_action(&"interact")
@@ -469,7 +465,7 @@ func _test_sleep() -> void:
 	check("sleep_heals_bed_full", is_equal_approx(_world.sleep_controller.settings.heal_ratio_for("bed"), 1.0)
 		and health.current_health == health.max_health, "%d" % health.current_health)
 	check("sleep_hunger_by_sleep_rate", absf(hunger.value - (80.0 - 8.0 * hunger.settings.decay_per_hour_sleeping)) < 0.05, "%.2f" % hunger.value)
-	check("sleep_autosaves", FileAccess.file_exists(_saves.get_slot_path(1)))
+	check("sleep_autosaves", FileAccess.file_exists(_saves.get_slot_path(1, &"autosave")) and not FileAccess.file_exists(_saves.get_slot_path(1)))
 	check("sleep_sets_respawn_to_bed", _player.respawn_point.get("id") == bed.spot_id and _player.respawn_point.get("kind") == "bed")
 	check("sleep_day_title", (_world.get_node("UILayer/SleepOverlay") as SleepOverlay).last_title == "Ngày 2"
 		and not _player.is_control_locked())
@@ -477,7 +473,7 @@ func _test_sleep() -> void:
 	_place(ARENA)
 	var faint_at: Vector2 = _player.global_position
 	hunger.load_value(80.0)
-	DirAccess.remove_absolute(_saves.get_slot_path(1))
+	DirAccess.remove_absolute(_saves.get_slot_path(1, &"autosave"))
 	_clock.set_time(3, 1 * 60 + 59)
 	health.reset()
 	health.apply_damage(30)
@@ -492,7 +488,7 @@ func _test_sleep() -> void:
 	check("faint_wakes_in_place", _player.global_position.distance_to(faint_at) < 1.0)
 	var expected_hunger: float = 80.0 - 2.0 / 60.0 * hunger.settings.decay_per_hour_awake - 4.0 * hunger.settings.decay_per_hour_sleeping - 10.0
 	check("faint_hunger_penalty", absf(hunger.value - expected_hunger) < 0.05, "%.2f (mong đợi %.2f)" % [hunger.value, expected_hunger])
-	check("faint_no_autosave", not FileAccess.file_exists(_saves.get_slot_path(1)))
+	check("faint_no_autosave", not FileAccess.file_exists(_saves.get_slot_path(1, &"autosave")))
 	check("faint_no_heal", health.current_health == health.max_health - 30)
 	health.reset()
 
@@ -687,6 +683,7 @@ func _test_migration_v1() -> void:
 		"global": {"player": {"position": [position.x, position.y], "tier": 0, "health": 90,
 			"inventory": {"version": 1, "size": 24, "slots": [{"slot": 0, "id": "wood", "count": 5}]}}},
 		"maps": {"glade": {"world_items": {"version": 1, "collected": ["glade_wood_1"], "dropped": []}}}}
+	DirAccess.make_dir_recursive_absolute(_saves.get_slot_path(5).get_base_dir())
 	var file: FileAccess = FileAccess.open(_saves.get_slot_path(5), FileAccess.WRITE)
 	file.store_string(JSON.stringify(v1))
 	file.close()

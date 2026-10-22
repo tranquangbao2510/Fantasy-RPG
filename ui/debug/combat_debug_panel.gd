@@ -82,7 +82,7 @@ func get_status_text() -> String:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed(TOGGLE_ACTION):
+	if event.is_action_pressed(TOGGLE_ACTION) and DebugKeys.enabled():
 		if visible:
 			close()
 		else:

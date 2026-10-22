@@ -25,6 +25,7 @@ func _ready() -> void:
 		view.setup(slot, InputHint.action_text(SkillCastingController.SLOT_ACTIONS[slot]))
 		view.mode_button_pressed.connect(_on_mode_button_pressed)
 		_views.append(view)
+	GameSettings.get_instance().changed.connect(_on_settings_changed)
 
 
 func bind(loadout: SkillLoadout, caster: SkillCastingController) -> void:
@@ -78,3 +79,11 @@ func _on_mode_button_pressed(slot: int) -> void:
 func _on_cast_rejected(slot: int, reason: String) -> void:
 	_message_label.text = "[%s] %s" % [InputHint.action_text(SkillCastingController.SLOT_ACTIONS[slot]), reason]
 	_message_left = message_time
+
+
+## Đổi phím trong Cài đặt (TASK M6): cập nhật nhãn phím của các ô.
+func _on_settings_changed(key: StringName) -> void:
+	if key != &"controls":
+		return
+	for view: SkillSlotView in _views:
+		view.setup(view.slot, InputHint.action_text(SkillCastingController.SLOT_ACTIONS[view.slot]))

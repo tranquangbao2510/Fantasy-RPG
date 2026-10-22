@@ -3,15 +3,15 @@ extends Node2D
 ## Một vùng ruộng định sẵn (TASK M5): lưới `columns` × `rows` ô, chỉ cày / trồng được trong vùng này (không trồng tự do
 ## khắp map). Data-driven: thêm vùng khác = thêm một node FarmField (con của FarmLayer) và chỉnh export, không sửa code.
 ## - Origin của node = góc trên của ô (0, 0); ô (c, r) có tâm `(c + 0.5) × axis_i + (r + 0.5) × axis_j` (map isometric:
-##   mỗi ô nửa ô lưới iso → axis_i = (16, 8), axis_j = (−16, 8)).
+##   mỗi ô = đúng 1 ô lưới iso → axis_i = (32, 16), axis_j = (−32, 16); TASK M6 — M5 dùng nửa ô).
 ## - Tạo FarmPlot (Interactable) cho từng ô lúc _ready; luật / trạng thái từng ô nằm trong FarmPlot.
 ## - Vẽ đất (lớp `Soil`, z −1 — dưới người chơi / cây): viền vùng ruộng; ô đã cày màu đất khô / ướt khác nhau.
 
 @export var field_id: String = "field"
 @export_range(1, 32) var columns: int = 6
 @export_range(1, 32) var rows: int = 4
-@export var axis_i: Vector2 = Vector2(16, 8)
-@export var axis_j: Vector2 = Vector2(-16, 8)
+@export var axis_i: Vector2 = Vector2(32, 16)
+@export var axis_j: Vector2 = Vector2(-32, 16)
 
 @export_group("Màu đất (placeholder)")
 @export var dry_soil_color: Color = Color(0.7, 0.53, 0.33)
@@ -36,6 +36,7 @@ func _ready() -> void:
 			plot.name = "Plot_%d_%d" % [c, r]
 			plot.cell = Vector2i(c, r)
 			plot.position = cell_center(Vector2i(c, r))
+			plot.clump_offsets = _clump_offsets()
 			add_child(plot)
 			plot.changed.connect(func(_plot: FarmPlot) -> void: _soil.queue_redraw())
 			_plots[plot.cell] = plot
@@ -94,6 +95,17 @@ func _draw_soil() -> void:
 			var from: Vector2 = polygon[0].lerp(polygon[3], t)
 			var to: Vector2 = polygon[1].lerp(polygon[2], t)
 			_soil.draw_line(from.lerp(to, 0.1), to.lerp(from, 0.1), furrow_color, 1.0)
+
+
+## Khóm cây trong một ô: ô nhỏ (nửa ô lưới iso như M5) một khóm ở tâm; ô lớn hơn 4 khóm theo hai trục, sau → trước.
+func _clump_offsets() -> PackedVector2Array:
+	if axis_i.length() < 30.0:
+		return PackedVector2Array([Vector2.ZERO])
+	var a: Vector2 = axis_i * 0.22
+	var b: Vector2 = axis_j * 0.22
+	var offsets: Array[Vector2] = [-a - b, a - b, -a + b, a + b]
+	offsets.sort_custom(func(p: Vector2, q: Vector2) -> bool: return p.y < q.y)
+	return PackedVector2Array(offsets)
 
 
 ## Vẽ lại đất (vd. sang ngày mới: đất ướt hôm qua thành khô).

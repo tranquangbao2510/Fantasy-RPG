@@ -45,12 +45,25 @@ var _expected: Dictionary[String, int] = {}
 var _unexpected: Array[String] = []
 
 
+## TASK M6: cài đặt + save của test tách khỏi dữ liệu thật của người chơi (user://settings.cfg, user://saves/).
+const TEST_SETTINGS_PATH: String = "user://test_settings.cfg"
+const TEST_DEFAULT_SAVE_DIR: String = "user://test_saves_default/"
+
+
 func _init() -> void:
 	OS.add_logger(_catcher)
+	GameSettings.config_path = TEST_SETTINGS_PATH
+	DirAccess.remove_absolute(TEST_SETTINGS_PATH)
+	DebugKeys.simulate_release = false
+	AppOverlay.fade_time = 0.02
 	_start.call_deferred()
 
 
 func _start() -> void:
+	var saves: Node = root.get_node_or_null(^"SaveService")
+	if saves != null:
+		saves.set(&"save_dir", TEST_DEFAULT_SAVE_DIR)
+		saves.set(&"capture_thumbnails", false)
 	await _run_tests()
 	finish()
 
@@ -125,3 +138,15 @@ func _collect_errors() -> void:
 				break
 		if not allowed:
 			_unexpected.append(error)
+
+
+## Xóa mọi file + thư mục con trong `path` (giữ thư mục `path`). TASK M6: ô save là thư mục con.
+func clear_dir(path: String) -> void:
+	var dir: DirAccess = DirAccess.open(path)
+	if dir == null:
+		return
+	for sub: String in dir.get_directories():
+		clear_dir(path.path_join(sub))
+		dir.remove(sub)
+	for file: String in dir.get_files():
+		dir.remove(file)

@@ -33,6 +33,7 @@ var _rows: Dictionary[StringName, Dictionary] = {}
 var _refresh_left: float = 0.0
 
 var _title: Label
+var _hint: Label
 var _status: Label
 var _fuel_row: HBoxContainer
 var _list: VBoxContainer
@@ -191,6 +192,8 @@ func _show() -> void:
 		return
 	_update_stations()
 	_rebuild()
+	if _hint != null:
+		_hint.text = get_hint_text()
 	if not visible:
 		show()
 		opened.emit()
@@ -354,7 +357,8 @@ func _build() -> void:
 	_empty_label.add_theme_font_size_override(&"font_size", 12)
 	box.add_child(_empty_label)
 	var hint: Label = Label.new()
-	hint.text = "%s / Esc: đóng · Nguyên liệu đỏ = còn thiếu · Bàn chế tạo / lửa trại: đứng gần để dùng công thức của trạm" % InputHint.action_text(TOGGLE_ACTION)
+	_hint = hint
+	hint.text = get_hint_text()
 	hint.add_theme_font_size_override(&"font_size", 11)
 	hint.add_theme_color_override(&"font_color", Color(0.7, 0.7, 0.8))
 	box.add_child(hint)
@@ -368,3 +372,9 @@ static func _verb(recipe: RecipeDefinition) -> String:
 		RecipeDefinition.Station.MILL:
 			return "Xay"
 	return "Chế tạo"
+
+
+## Gợi ý cuối cửa sổ; tên phím đọc từ InputMap (TASK M6).
+func get_hint_text() -> String:
+	return "%s / %s: đóng · Nguyên liệu đỏ = còn thiếu · Bàn chế tạo / lửa trại: đứng gần để dùng công thức của trạm" % [
+		InputHint.action_text(TOGGLE_ACTION), InputHint.action_text(InputActions.PAUSE_ACTION)]

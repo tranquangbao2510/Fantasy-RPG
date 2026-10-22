@@ -1180,13 +1180,13 @@ position = Vector2(144, 1032)
 position = Vector2(192, 1104)
 
 [node name="TreeOakA10" parent="EntityContainer/Props" unique_id=1889106862 instance=ExtResource("58_6jhcb")]
-position = Vector2(-32, 1072)
+position = Vector2(6.4, 1116.8)
 
 [node name="TreePine14" parent="EntityContainer/Props" unique_id=1266697723 instance=ExtResource("51_4ft3x")]
 position = Vector2(-16, 1160)
 
 [node name="TreeOakB9" parent="EntityContainer/Props" unique_id=214848919 instance=ExtResource("52_ur702")]
-position = Vector2(-208, 1096)
+position = Vector2(96, 1136)
 
 [node name="TreeOakA11" parent="EntityContainer/Props" unique_id=1965340733 instance=ExtResource("58_6jhcb")]
 position = Vector2(-134, 679)
@@ -1222,7 +1222,7 @@ position = Vector2(64, 768)
 position = Vector2(140.79999, 825.6)
 
 [node name="RuinWall2" parent="EntityContainer/Props" unique_id=1547206085 instance=ExtResource("57_putcb")]
-position = Vector2(-352, 992)
+position = Vector2(-531.2, 969.6)
 
 [node name="RuinPillar3" parent="EntityContainer/Props" unique_id=263549957 instance=ExtResource("47_mna7s")]
 position = Vector2(-428.80005, 982.4)
@@ -1290,7 +1290,7 @@ count = 5
 pickup_id = "glade_wood_1"
 
 [node name="StonePickup" parent="EntityContainer/Items" unique_id=783940168 instance=ExtResource("m1_pickup")]
-position = Vector2(-236.8, 995.2)
+position = Vector2(-352, 995.2)
 item_id = &"stone"
 count = 3
 pickup_id = "glade_stone_1"
@@ -1302,7 +1302,7 @@ count = 2
 pickup_id = "glade_herb_1"
 
 [node name="BerryPickup" parent="EntityContainer/Items" unique_id=731340560 instance=ExtResource("m1_pickup")]
-position = Vector2(-140.8, 1017.6)
+position = Vector2(-64, 998.4)
 item_id = &"berry"
 count = 4
 pickup_id = "glade_berry_1"
@@ -1329,7 +1329,7 @@ count = 3
 pickup_id = "glade_berry_2"
 
 [node name="BreadPickup" parent="EntityContainer/Items" unique_id=26500215 instance=ExtResource("m1_pickup")]
-position = Vector2(-89.6, 1024)
+position = Vector2(-32, 1012.8)
 item_id = &"bread"
 count = 2
 pickup_id = "glade_bread_1"
@@ -1340,17 +1340,17 @@ item_id = &"lantern"
 pickup_id = "glade_lantern_1"
 
 [node name="TentPickup" parent="EntityContainer/Items" unique_id=1492455210 instance=ExtResource("m1_pickup")]
-position = Vector2(-256, 1017.6)
+position = Vector2(-396.8, 985.6)
 item_id = &"tent"
 pickup_id = "glade_tent_1"
 
 [node name="Bed" parent="EntityContainer" unique_id=1922632730 instance=ExtResource("m2_bed")]
-position = Vector2(-185.6, 1065.6)
+position = Vector2(-313.6, 1065.6)
 spot_id = "glade_home_bed"
 interaction_name = "Giường (nhà tạm)"
 
 [node name="Workbench" parent="EntityContainer" unique_id=1273199560 instance=ExtResource("m3_workbench")]
-position = Vector2(-128, 1088)
+position = Vector2(-384, 1024)
 interaction_name = "Bàn chế tạo (nhà tạm)"
 
 [node name="Resources" type="Node2D" parent="EntityContainer" unique_id=408791644 node_paths=PackedStringArray("clock") groups=["saveable"]]
@@ -1434,7 +1434,7 @@ crop_book = ExtResource("m5_crops")
 pickup_layer = NodePath("../Items")
 
 [node name="HomeField" type="Node2D" parent="EntityContainer/Farms" unique_id=1157077353]
-position = Vector2(-144, 984)
+position = Vector2(-224, 944)
 script = ExtResource("m5_farm_field")
 field_id = "glade_home"
 

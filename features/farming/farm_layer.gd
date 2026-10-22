@@ -9,18 +9,22 @@ extends Node2D
 ## - Thời tiết: chưa có. Hook `rain_hook: Callable(day: int) -> bool` (true = hôm đó mưa → coi như đã tưới).
 ## - Gieo hạt: nhiều loại hạt trong túi → phát `seed_choice_requested` (World mở menu chọn) và nhớ lựa chọn cho lần sau.
 ## - Thu hoạch: đồ vào túi người chơi, phần không vừa rơi xuống đất cạnh người chơi (`pickup_layer`).
-## - Debug (build debug): `debug_crop_grow` (F6) — cây ở ô dưới con trỏ chuột lớn thêm 1 giai đoạn; `debug_farm_water`
+## - Debug (build debug — DebugKeys): `debug_crop_grow` (F6) — cây ở ô dưới con trỏ chuột lớn thêm 1 giai đoạn; `debug_farm_water`
 ##   (F11) — tưới hết ruộng.
 ## - Save (group `saveable`, theo map, id `farms`): {version, last_tick, fields: {field_id: {plots: {"c,r": trạng thái}}}} —
-##   chỉ lưu ô khác cỏ (xem FarmPlot.save_plot_state).
+##   chỉ lưu ô khác cỏ (xem FarmPlot.save_plot_state). `refunds` (chỉ có trong save chuyển từ v5, TASK M6) = đồ trả về túi
+##   khi tải (refunds_delivered), không ghi lại.
 
 signal crop_harvested(plot: FarmPlot, crop: CropDefinition, stacks: Array[ItemStack])
 ## Nhiều loại hạt trong túi: World hỏi người chơi chọn rồi gọi choose_seed().
 signal seed_choice_requested(plot: FarmPlot, seed_ids: Array[StringName])
 ## Sau mỗi lần xử lý một ngày (6:00) — test / HUD.
 signal day_processed(day: int)
+## Đã trả đồ từ save cũ (TASK M6: ruộng nửa ô → lưới mới) về túi người chơi — World thông báo.
+signal refunds_delivered(message: String)
 
-const STATE_VERSION: int = 1
+## TASK M6: 2 = ô ruộng đúng 1 ô lưới iso (1 = nửa ô, M5 — SaveMigrations.migrate_5_to_6 chuyển).
+const STATE_VERSION: int = 2
 
 @export var clock: GameClock
 @export var crop_book: CropBook
@@ -63,7 +67,7 @@ func _input(event: InputEvent) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not OS.is_debug_build():
+	if not DebugKeys.enabled():
 		return
 	if event.is_action_pressed(&"debug_crop_grow"):
 		var plot: FarmPlot = plot_at(_mouse_world if _mouse_world != Vector2.INF else get_global_mouse_position())
@@ -254,5 +258,28 @@ func load_state(state: Dictionary) -> void:
 	# Save chưa có last_tick (migration v4 → v5): coi như đã xử lý tới hiện tại.
 	last_tick = int(saved_tick) if (saved_tick is int or saved_tick is float) else _current_tick()
 	_shown_day = 0
+	var refunds: Variant = state.get("refunds")
+	if refunds is Array and not (refunds as Array).is_empty():
+		# Hoãn: Player (túi đồ) có thể được nạp sau layer này.
+		_deliver_refunds.call_deferred((refunds as Array).duplicate(true))
 	# Đồng hồ có thể được nạp trước hoặc sau layer: bù ngày ngay với giờ hiện tại, đồng hồ đổi sau đó thì minute_changed bù tiếp.
 	catch_up()
+
+
+## Trả đồ của ô ruộng / vật dựng không giữ được khi chuyển save cũ (refunds: [{id, count}]) về túi người chơi.
+func _deliver_refunds(refunds: Array) -> void:
+	var actor: Node2D = pickup_layer.collector if pickup_layer != null else null
+	var database: ItemDatabase = pickup_layer.database if pickup_layer != null else null
+	var stacks: Array[ItemStack] = []
+	for entry: Variant in refunds:
+		if not entry is Dictionary:
+			continue
+		var item_id: StringName = StringName(str((entry as Dictionary).get("id", "")))
+		var count: int = int((entry as Dictionary).get("count", 0))
+		if count <= 0 or database == null or database.get_item(item_id) == null:
+			push_warning("[FarmLayer] Bỏ qua đồ trả lỗi trong save: %s" % [entry])
+			continue
+		stacks.append(ItemStack.new(item_id, count))
+	if stacks.is_empty() or actor == null:
+		return
+	refunds_delivered.emit("Ruộng đã chuyển sang lưới mới — trả về túi: %s" % give(actor, stacks))

@@ -74,3 +74,7 @@ func refresh(runtime: SkillRuntime, cast_progress: float, highlighted: bool, man
 		modulate = Color.WHITE
 	else:
 		modulate = Color(0.6, 0.6, 0.6)
+
+
+func get_key_text() -> String:
+	return _key_label.text

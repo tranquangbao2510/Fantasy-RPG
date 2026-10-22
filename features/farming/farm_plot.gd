@@ -31,6 +31,9 @@ var watered_day: int = 0
 var dry_days: int = 0
 ## Số lần qua 6:00 đất cày bỏ trống (chưa gieo).
 var fallow_days: int = 0
+## Vị trí các khóm cây trong ô (so với tâm ô), vẽ từ sau ra trước. FarmField đặt theo cỡ ô (TASK M6: ô = 1 ô lưới iso →
+## 4 khóm); mặc định một khóm ở tâm.
+var clump_offsets: PackedVector2Array = PackedVector2Array([Vector2.ZERO])
 
 var _actor: Node2D
 
@@ -301,20 +304,25 @@ func load_plot_state(state: Dictionary, book: CropBook) -> void:
 func _draw() -> void:
 	if crop == null:
 		return
+	for offset: Vector2 in clump_offsets:
+		_draw_clump(offset)
+
+
+## Một khóm cây. Mầm: vài lá nhỏ; lớn dần: thêm thân / lá; chín: thêm bông / quả / củ màu fruit_color.
+func _draw_clump(offset: Vector2) -> void:
 	var stage: int = get_stage()
 	var color: Color = crop.get_stage_color(stage)
 	var ratio: float = float(stage + 1) / crop.stages
 	var height: float = crop.mature_height * ratio
 	var spread: float = 3.0 + 5.0 * ratio
-	# Mầm: vài lá nhỏ; lớn dần: thêm thân / lá; chín: thêm bông / quả / củ màu fruit_color.
 	var blades: int = 2 + stage
 	for k: int in blades:
 		var x: float = lerpf(-spread, spread, float(k) / maxf(1.0, blades - 1))
-		var top: Vector2 = Vector2(x * 0.6, -height * (0.75 + 0.25 * float(k % 2)))
-		draw_colored_polygon(PackedVector2Array([Vector2(x - 1.2, 0), Vector2(x + 1.2, 0), top]), color)
+		var top: Vector2 = offset + Vector2(x * 0.6, -height * (0.75 + 0.25 * float(k % 2)))
+		draw_colored_polygon(PackedVector2Array([offset + Vector2(x - 1.2, 0), offset + Vector2(x + 1.2, 0), top]), color)
 	if is_mature():
 		for k: int in 3:
-			var at: Vector2 = Vector2(lerpf(-spread, spread, k / 2.0) * 0.6, -height * 0.8)
+			var at: Vector2 = offset + Vector2(lerpf(-spread, spread, k / 2.0) * 0.6, -height * 0.8)
 			draw_circle(at, 2.2, crop.fruit_color)
 
 

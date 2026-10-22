@@ -29,6 +29,9 @@ const DAYLIGHT_GROUP: StringName = &"daylight_fx"
 var darkness: float = 0.0
 var _last_emitted: float = -1.0
 var _daylight_alpha: Dictionary[CanvasItem, float] = {}
+## Mức ánh trăng dùng để VẼ (TASK M6: Cài đặt → độ sáng ban đêm, GameSettings `moonlight`; < 0 = theo DayNightSettings).
+## Chỉ đổi màu hiển thị — luật tầm nhìn (get_visibility) vẫn theo DayNightSettings.moonlight.
+var moonlight_override: float = -1.0
 var _overlay: NightOverlay
 
 
@@ -44,6 +47,9 @@ func _ready() -> void:
 	add_child(_overlay)
 	if clock != null:
 		clock.time_passed.connect(_on_time_passed)
+	var user_settings: GameSettings = GameSettings.get_instance()
+	user_settings.changed.connect(_on_settings_changed)
+	_on_settings_changed(&"moonlight")
 	update_lighting()
 
 
@@ -69,7 +75,7 @@ func get_vision_radius() -> float:
 
 ## Màu môi trường hiện tại (ngoài mọi vùng sáng).
 func get_ambient_color() -> Color:
-	return settings.sun_color(darkness)
+	return settings.sun_color(darkness, moonlight_override)
 
 
 func get_overlay() -> NightOverlay:
@@ -156,3 +162,8 @@ func _player_equipment() -> EquipmentSlots:
 func _equipment_light_radius() -> float:
 	var equipment: EquipmentSlots = _player_equipment()
 	return equipment.get_light_radius() if equipment != null else 0.0
+
+
+func _on_settings_changed(key: StringName) -> void:
+	if key == &"moonlight":
+		moonlight_override = float(GameSettings.get_instance().get_value(&"moonlight"))

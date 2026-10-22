@@ -4,7 +4,8 @@ extends Node
 ## - try_sleep(chỗ ngủ): chỉ từ `sleep_from_minute` tới trước `wake_minute`. TASK M4: không ngủ được khi có quái đang đuổi hoặc ở
 ##   gần (get_nearby_threat, "Có quái gần đây"). Màn hình mờ → thời gian nhảy tới
 ##   wake_minute (time_passed sleeping=true: đói giảm theo nhịp ngủ) → hồi HP (giường 100 %, lều 70 % — TASK M3) + mana
-##   theo SleepSettings → chỗ ngủ thành điểm tỉnh dậy / hồi sinh của Player → tự lưu game (SaveService) → "Ngày N" → sáng lại.
+##   theo SleepSettings → chỗ ngủ thành điểm tỉnh dậy / hồi sinh của Player → tự lưu game (SaveService.autosave — bản tự lưu
+##   của ô đang chơi, TASK M6) → "Ngày N" → sáng lại.
 ## - Còn thức lúc `faint_hour` (2:00) → ngất (TASK M3): tỉnh lại TẠI CHỖ lúc wake_minute, không hồi HP/mana, không tự lưu,
 ##   đói − `faint_hunger_penalty` (ngoài phần giảm theo nhịp ngủ). (M2: tỉnh ở điểm tỉnh dậy.)
 ## - Điểm tỉnh dậy: Player.respawn_point {map_id, kind, id} → chỗ ngủ đó nếu còn trong map; không thì giường "nhà"
@@ -122,6 +123,9 @@ func _sleep(spot: RestSpot, fainted_now: bool) -> void:
 	player.set_control_locked(true)
 	if clock != null:
 		clock.running = false
+	# TASK M6: ảnh nhỏ cho bản tự lưu chụp trước khi màn hình tối.
+	var saves: Node = get_node_or_null(^"/root/SaveService")
+	var snapshot: Image = saves.call(&"capture_thumbnail") if saves != null and not fainted_now and autosave else null
 	if overlay != null:
 		await overlay.fade_out(settings.fade_time)
 	if clock != null:
@@ -137,10 +141,8 @@ func _sleep(spot: RestSpot, fainted_now: bool) -> void:
 		if spot != null:
 			player.respawn_at(spot.get_wake_position(), spot.get_tier(), float(health.current_health) / health.max_health)
 	var day: int = clock.get_day() if clock != null else 1
-	if not fainted_now and autosave:
-		var saves: Node = get_node_or_null(^"/root/SaveService")
-		if saves != null:
-			saves.call(&"save_game")
+	if not fainted_now and autosave and saves != null:
+		saves.call(&"autosave", snapshot)
 	if overlay != null:
 		await overlay.show_title(("Ngày %d" % day) if not fainted_now else "Bạn ngất vì thức quá khuya — Ngày %d" % day, settings.title_time)
 		await overlay.fade_in(settings.fade_time)

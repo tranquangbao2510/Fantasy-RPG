@@ -116,6 +116,9 @@ func handle_input(event: InputEvent) -> bool:
 		return true
 	if event.is_action_pressed(CANCEL_ACTION):
 		return cancel_current()
+	# TASK M6: Esc (menu tạm dừng) hủy ngắm / vận sức trước; không có gì để hủy thì để World mở menu.
+	if event.is_action_pressed(InputActions.PAUSE_ACTION):
+		return cancel_current()
 	return false
 
 

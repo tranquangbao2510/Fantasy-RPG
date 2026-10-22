@@ -16,19 +16,19 @@ Mã nguồn được tổ chức theo **tính năng** (feature) thay vì theo lo
 
 | Thư mục | Vai trò | Trạng thái |
 |---|---|---|
-| `app/` | Main scene, khởi động và vòng đời ứng dụng | Đã triển khai (`main.tscn`, `main.gd` — màn hình tạm) |
+| `app/` | Main scene, khởi động và vòng đời ứng dụng | Đã triển khai (`main.tscn`, `main.gd` — màn hình tiêu đề, `art/title_background.jpg` — 2q) |
 | `docs/` | Tài liệu kỹ thuật | Đã triển khai |
-| `core/` | Thành phần kỹ thuật dùng chung, không phụ thuộc gameplay cụ thể | Chưa triển khai |
+| `core/` | Thành phần kỹ thuật dùng chung, không phụ thuộc gameplay cụ thể | Đã triển khai (`app/` — AppOverlay, `input/` — InputActions + DebugKeys, `settings/` — GameSettings; 2q) |
 | `features/` | Module gameplay (mỗi tính năng một thư mục con, vd. `features/combat/`) | Đã triển khai (`interaction/`, `combat/`, `character/`, `skills/`, `classes/`, `items/`, `inventory/` — 2l; `time/`, `survival/` — 2m; `gathering/`, `crafting/` — 2n; `spawning/` — 2o; `farming/` — 2p) |
 | `entities/` | Player, NPC, enemy (scene ghép từ component) | Đã triển khai (`player/`, `enemies/` — placeholder; `enemies/night/` — quái đêm, 2o) |
 | `world/` | Bản đồ, môi trường, camera | Đã triển khai (`world.tscn`, `world.gd`, `maps/test_map/`, `camera/`, `sandbox/`, `environment/` (gồm `iso/`), `environment_prototype/` — 2k, isometric; `environment/navigation/` — 2o) |
-| `ui/` | Thành phần giao diện | Đã triển khai (`interaction/`, `combat/`, `skills/`, `progression/`, `debug/`, `common/`, `inventory/` — 2l; `survival/` — 2m; `crafting/` — 2n) |
+| `ui/` | Thành phần giao diện | Đã triển khai (`interaction/`, `combat/`, `skills/`, `progression/`, `debug/`, `common/`, `inventory/` — 2l; `survival/` — 2m; `crafting/` — 2n; `menus/` — 2q) |
 | `data/` | Dữ liệu game dùng chung (`.tres` Resource) | Chưa triển khai |
 | `assets/` | Tài nguyên dùng chung (sprite, âm thanh, font) | Chưa triển khai |
 | `save/` | Logic lưu / tải game | Đã triển khai (`save_service.gd` — Autoload SaveService, 2l) |
-| `tests/` | Kiểm thử headless (SceneTree script) | Đã triển khai (`environment/`, 2k; `player/`, 2c; `inventory/`, `save/`, 2l; `survival/`, `smoke/`, 2m; `crafting/`, `gathering/`, 2n; `night/`, 2o; `farming/`, `navigation/`, 2p; `test_base.gd` + `run_all.gd`) |
+| `tests/` | Kiểm thử headless (SceneTree script) | Đã triển khai (`environment/`, 2k; `player/`, 2c; `inventory/`, `save/`, 2l; `survival/`, `smoke/`, 2m; `crafting/`, `gathering/`, 2n; `night/`, 2o; `farming/`, `navigation/`, 2p; `app/`, 2q; `test_base.gd` + `run_all.gd`) |
 | `addons/` | Plugin bên thứ ba (chỉ khi thật sự cần) | Chưa triển khai |
-| `tools/` | Công cụ phát triển chạy ngoài game (có `.gdignore`), vd. sinh placeholder art | Đã triển khai (`placeholder_art/`, 2k; `player_sprites/`, 2c; `item_icons/`, 2l; `perf/`, 2p) |
+| `tools/` | Công cụ phát triển chạy ngoài game (có `.gdignore`), vd. sinh placeholder art | Đã triển khai (`placeholder_art/`, 2k; `player_sprites/`, 2c; `item_icons/`, 2l; `perf/`, 2p; `title/`, `playtest/`, 2q) |
 
 Thư mục chỉ được tạo khi có nội dung thực tế. Không tạo thư mục, script hoặc class rỗng để "giữ chỗ".
 
@@ -36,16 +36,10 @@ Thư mục chỉ được tạo khi có nội dung thực tế. Không tạo th�
 
 ```
 app/main.tscn  (Main Scene, entry point)
-Main (Control) ── main.gd
-├── Background (ColorRect)
-└── Center (CenterContainer)
-    └── Layout (VBoxContainer)
-        ├── StatusLabel (Label)
-        ├── EnterButton (Button "Vào game")
-        └── SandboxButton (Button "Combat Sandbox (thử nghiệm)") → world/sandbox/combat_sandbox.tscn (2j)
-        ├── ContinueButton (Button "Tiếp tục") → SaveService.load_game(1) (2l; mờ nếu chưa có save)
-        └── EnvironmentButton (Button "Environment Prototype (Visual 01)") → world/environment_prototype/environment_prototype.tscn (2k)
-            └─ nhấn → SceneTree.change_scene_to_file("res://world/world.tscn")
+Main (Control) ── main.gd — màn hình tiêu đề (TASK M6, 2q): nền ảnh Glade trôi chậm + tên game placeholder
+└── (dựng bằng code) Tiếp tục (ẩn nếu chưa có save) · Chơi mới · Tải game · Cài đặt · Thoát
+    · bản debug thêm [Debug] Combat Sandbox (2j) / [Debug] Bản đồ thử nghiệm (world/world.tscn)
+    └─ Chơi mới → chọn ô → AppOverlay.change_scene(Glade — world/environment_prototype/environment_prototype.tscn)
 
 world/world.tscn  (World Scene, mở độc lập được)
 World (Node2D) ── world.gd
@@ -987,7 +981,7 @@ Tưới → đất ướt tới hết ngày đó (ướt = `watered_day` == ngà
 | Cuốc đất (độ bền 40) | 2 cành, 2 đá, 2 sợi | 1 | bàn chế tạo |
 | Bình tưới (10 nước) | 3 gỗ, 2 sợi | 1 | bàn chế tạo |
 | Cối đá | 6 đá, 2 gỗ | 1 | bàn chế tạo |
-| Bột mì | 2 lúa mì | 1 | cối đá |
+| Bột mì (TASK M6: 2 → 3 lúa mì) | 3 lúa mì | 1 | cối đá |
 | Bánh mì (+30 đói, +5 HP — giữ như M2) | 1 bột mì | 1 | lửa trại |
 | Khoai nướng (+28 đói, +4 HP) | 1 khoai | 1 | lửa trại |
 | (Khoai sống ăn được: +12 đói, +1 HP) | — | — | — |
@@ -996,9 +990,9 @@ Tưới → đất ướt tới hết ngày đó (ướt = `watered_day` == ngà
 
 | Vụ | Sản lượng TB | Đói | Nuôi được |
 |---|---|---|---|
-| 1 ô lúa mì (3 ngày) | 2.5 lúa → 1.25 bánh mì | 37.5 | 0.43 ngày |
-| **24 ô lúa mì (cả ruộng, 3 ngày)** | 60 lúa → 30 bột → 30 bánh mì | 900 | **≈ 10 ngày** |
-| Duy trì liên tục bằng lúa mì | 12.5 đói / ô / ngày | — | cần ~7 ô |
+| 1 ô lúa mì (3 ngày) | 2.5 lúa → 0.83 bánh mì | 25 | 0.28 ngày |
+| **24 ô lúa mì (cả ruộng, 3 ngày)** | 60 lúa → 20 bột → 20 bánh mì | 600 | **≈ 6.8 ngày** |
+| Duy trì liên tục bằng lúa mì | 8.3 đói / ô / ngày | — | cần ~11 ô |
 | 24 ô khoai nướng (6 ngày) | 72 khoai | 2016 | ≈ 23 ngày (ăn sống: 864 ≈ 10 ngày) |
 | 1 ô mọng (sau 6 ngày đầu, mỗi 2 ngày) | 2.5 quả (sống 8) | 20 / 2 ngày | cần ~9 ô để nuôi liên tục |
 
@@ -1030,7 +1024,80 @@ Lúa trả 1.5 hạt / ô (24 ô → ~36 hạt) đủ gieo lại cả ruộng; k
 
 **Hiệu năng** (máy dev, `tools/perf/measure_farm_fps.gd`, cửa sổ 1152×648, zoom 2×, tắt vsync): ngày 230–253 FPS, đêm 249–264 FPS, đêm + 24 ô đầy cây 213–231 FPS, **đêm + 24 ô đầy cây + 15 quái đang đuổi: 186–198 FPS** (M4.1: đêm + 15 quái + 3 lửa trại + đuốc 184 FPS). Headless (không render): 7.5 ms / frame trung bình.
 
-**Giới hạn:** chưa có mùa vụ, thời tiết / mưa (chỉ hook), phân bón, chất lượng nông sản, quái phá cây, động vật nuôi; một vùng ruộng (chỉ Glade); ô ruộng nhỏ (nửa ô lưới iso) vì khoảng trống cạnh nhà tạm chỉ đủ 3 × 2 ô lưới; nhà vẫn là "nhà tạm" (giường + bàn), "trong nhà" = bán kính quanh giường; chưa có map khác có đồng hồ (test_map không có GameClock) nên "lớn khi ở map khác" kiểm bằng save có đồng hồ muộn hơn; chưa có cách xới lại / xóa cây; cây chín không héo; hình cây / đất / cối đá là polygon placeholder; chưa có animation cày / tưới.
+**Giới hạn:** chưa có mùa vụ, thời tiết / mưa (chỉ hook), phân bón, chất lượng nông sản, quái phá cây, động vật nuôi; một vùng ruộng (chỉ Glade); (TASK M6: ô ruộng = đúng 1 ô lưới iso, nhà tạm dời xuống phía nam — 2q;) nhà vẫn là "nhà tạm" (giường + bàn), "trong nhà" = bán kính quanh giường; chưa có map khác có đồng hồ (test_map không có GameClock) nên "lớn khi ở map khác" kiểm bằng save có đồng hồ muộn hơn; chưa có cách xới lại / xóa cây; cây chín không héo; hình cây / đất / cối đá là polygon placeholder; chưa có animation cày / tưới.
+
+## 2q. Khung game: tiêu đề, ô save, tạm dừng, cài đặt, đổi phím, chuyển cảnh, export [Đã triển khai, prototype — TASK M6]
+
+**Luồng ứng dụng** — game mở vào `app/main.tscn` (màn hình tiêu đề, `main.gd`). Nền là ảnh tĩnh cảnh Glade (`app/art/title_background.jpg`, sinh bằng `tools/title/render_title_background.gd`) trôi chậm; tên game là chữ placeholder. Các nút: **Tiếp tục** (bản mới nhất trong mọi ô, thủ công hoặc tự lưu — `SaveService.latest_save()`; ẩn khi chưa có save) · **Chơi mới** (chọn ô; ô có dữ liệu → xác nhận ghi đè) · **Tải game** · **Cài đặt** · **Thoát**. Bản debug có thêm `[Debug] Combat Sandbox` / `[Debug] Bản đồ thử nghiệm`. Mọi menu dựng bằng code (`ui/menus/menu_ui.gd`, style tạm), điều khiển bằng chuột + bàn phím (mũi tên di chuyển focus — focus neighbor tự động của Godot, Enter = `ui_accept`, Esc = quay lại). Tay cầm: chỉ chừa chỗ — action `ui_*` của Godot đã có nút tay cầm mặc định, mỗi màn chỉ cần focus vào một nút; chuỗi lưu phím có tiền tố loại (`key:` / `mouse:`), sau này thêm `joy:` không phải đổi định dạng.
+
+**AppOverlay** (`core/app/app_overlay.gd`) — CanvasLayer con của `/root`, tạo lười bằng `AppOverlay.ensure(tree)` và sống qua mọi lần đổi scene. **Không phải Autoload** (mục 9). Nó lo: màn đen chuyển cảnh, nhãn FPS (Cài đặt → Hiện FPS), nút đóng cửa sổ (`auto_accept_quit` tắt → World cảnh báo tiến trình chưa lưu). `change_scene(path, on_loaded)` chạy lần lượt: chặn input người chơi + `SceneTree.paused` → mờ đen → đổi scene → chờ `_ready` + 1 frame → `on_loaded` (vd. áp save) → bỏ dừng → sáng lại. Dùng cho tiêu đề ↔ game, tải save, đổi map. Quái chỉ hoạt động khi navmesh đã sẵn sàng (luật M5, 2p).
+
+**Ô save** (`save/save_service.gd`, schema **6**):
+
+```
+user://saves/slot_<n>/          n = 1..3 (SLOT_COUNT)
+├── manual.json  (+ .bak)       bản thủ công — lưu từ menu tạm dừng (F5 lưu nhanh ở bản debug)
+├── autosave.json (+ .bak)      bản tự lưu — ghi khi ngủ, vào ô đang chơi (SaveService.current_slot)
+├── manual.png / autosave.png   ảnh chụp nhỏ 192 × 108 lúc lưu (bỏ qua khi headless)
+└── meta.json                   {version 1, manual: {day, minute, playtime, saved_at, saved_unix, map_id, map_name, schema_version, thumbnail}, autosave: {...}}
+```
+
+- Danh sách ô (`list_slots()`) chỉ đọc `meta.json`, không đọc cả save. Meta thiếu hoặc hỏng → dựng lại từ save (`_rebuild_meta`).
+- Save đơn cũ M1–M5 (`user://saves/slot_<n>.json`): lần đầu dùng thư mục save, `_ensure_layout` chuyển nó thành bản thủ công của ô n, kèm `.bak`. Chỉ đổi chỗ file, không sửa nội dung. Khi tải, chuỗi migration v1 → v6 chạy như cũ.
+- Migration **v5 → v6** (`SaveMigrations.migrate_5_to_6`) cho ruộng nửa ô cũ (góc trên lưới (28.5, 33), ô 0.5): mỗi ô cũ sang ô mới chứa tâm của nó. Nhiều ô cũ rơi vào cùng một ô mới thì giữ ô tiến xa nhất (có cây, nhiều ngày tuổi nhất; không có thì đất cày). Cây của các ô bị bỏ và của ô ngoài lưới được **trả về túi**: cây chưa chín trả 1 hạt / củ, cây chín trả sản lượng tối thiểu. Vật dựng nằm trong vùng ruộng mới bị gỡ khỏi map và trả 1 item. Đồ trả ghi ở `farms.refunds`, FarmLayer cho vào túi khi tải (túi đầy → rơi cạnh người chơi) rồi xóa. `farms.version` → 2.
+- **Không cho lưu** (`World.get_save_block_reason()`): có quái đang đuổi ("Không thể lưu khi đang bị truy đuổi"), đang đi giữa các tầng (ElevationAgent), đang chuyển cảnh, đang ngủ, đã chết, map không lưu được. Quick save F5 cũng theo luật này.
+- `has_unsaved_progress()`: có playtime chưa lưu từ lần lưu / tải gần nhất (> 1 giây) → "Về màn hình chính" / "Thoát game" / đóng cửa sổ / tải bản khác thì hỏi xác nhận.
+
+**Menu tạm dừng** (`ui/menus/pause_menu.gd`) — Esc (`pause_menu`, không đổi phím được) khi không có cửa sổ nào đang mở. Nếu đang mở túi đồ, cửa sổ chế tạo, hộp thoại, menu lều / hạt, hộp xác nhận thì Esc đóng cái đó trước (`World.close_open_panels`). Mở menu = `SceneTree.paused = true`: đồng hồ, quái, cây, buff, đói, lửa trại, đuốc, playtime đều đứng yên; menu, AppOverlay và hộp xác nhận chạy `PROCESS_MODE_ALWAYS`. Mở túi đồ vẫn KHÔNG dừng game. Nút: Tiếp tục · Lưu · Tải · Cài đặt · Hướng dẫn phím · Về màn hình chính · Thoát game. Ảnh chụp nhỏ cho bản lưu thủ công lấy lúc mở menu, nên ảnh không dính menu. Cửa sổ mất focus (`NOTIFICATION_APPLICATION_FOCUS_OUT`) → tự mở menu, có thể tắt trong Cài đặt → Gameplay. Lần đầu chơi mới hiện `StartHintsPanel` (phím cơ bản, game dừng, có ô "Không hiện lại").
+
+**Cài đặt** (`core/settings/game_settings.gd`, `ui/menus/settings_panel.gd`) — `user://settings.cfg`, tách khỏi save và không theo ô. Đổi giá trị nào là áp dụng ngay, ghi file và phát `changed`. Instance dùng chung, nạp lười, cũng không phải Autoload.
+
+| Khóa | Mặc định | Áp dụng |
+|---|---|---|
+| `master_volume` / `music_volume` / `sfx_volume` | 1.0 / 0.8 / 1.0 | bus Master / Music / SFX (`default_bus_layout.tres`, chưa có âm thanh thật) |
+| `fullscreen` | false | `DisplayServer.window_set_mode` |
+| `vsync` | true | `DisplayServer.window_set_vsync_mode` |
+| `fps_limit` | 0 (không giới hạn; chọn 30 / 60 / 120) | `Engine.max_fps` |
+| `show_fps` | false | nhãn FPS của AppOverlay |
+| `moonlight` | 0.16 (kẹp 0.10–0.30) | `DayNightLighting.moonlight_override`: chỉ đổi màu vẽ ban đêm, luật tầm nhìn giữ `DayNightSettings.moonlight` |
+| `pause_on_focus_loss` | true | World |
+| `show_start_hints` | true | bảng gợi ý lần đầu chơi mới |
+| `[controls]` | phím mặc định từ `project.godot` | InputMap (chỉ ghi action đã đổi; chuỗi `key:<physical keycode>` / `mouse:<button>`) |
+
+**Đổi phím** (`core/input/input_actions.gd`) — `InputActions.GROUPS` liệt kê mọi action người chơi theo nhóm Di chuyển / Chiến đấu / Kỹ năng / Đồ đạc / Tương tác. Mỗi action có tối đa 2 phím. Phím mặc định lấy từ `ProjectSettings` (`input/<action>`), không chép tay một bảng riêng. Bấm ô phím → "Nhấn phím…" → phím hoặc nút chuột kế tiếp được gán (Esc: hủy; Esc không gán được; chuột phải lên ô = bỏ phím đó). Phím đang dùng cho action khác → hộp xác nhận hỏi hoán đổi (`GameSettings.find_conflict` / `bind(swap)`). Có nút "Khôi phục mặc định". Màn **Hướng dẫn phím** (`ui/menus/key_guide_panel.gd`) và mọi tên phím trên HUD đọc InputMap lúc vẽ, qua `InputActions.action_keys_text(action)` và `InputHint`. Không còn chuỗi phím ghi cứng: prompt "[E] …", dòng gợi ý HUD, thanh kỹ năng, túi đồ ("F: dùng"), chế tạo ("C / Esc: đóng").
+
+**Phím debug** (`core/input/debug_keys.gd`) — chỉ hoạt động khi `OS.is_debug_build()` (chạy từ editor / bản export debug). Bản export release không phản hồi phím nào trong danh sách: các node xử lý phím debug đều kiểm tra `DebugKeys.enabled()`, HUD release không hiện gợi ý debug, màn tiêu đề release không có nút `[Debug]`. Test giả lập release bằng `DebugKeys.simulate_release = true`. F12 (`debug_panel`) bật / tắt `DebugKeysPanel`, liệt kê đủ các phím (bảng dưới), đồng thời hiện / ẩn các bảng thông tin debug của map (group `debug_hud`).
+
+| Phím | Action | Tác dụng |
+|---|---|---|
+| F1 / F2 / F4 | `debug_spawn_shade` / `debug_spawn_wolves` / `debug_spawn_ghoul` | sinh Bóng ma / bầy sói / Thây ma cạnh người chơi |
+| F3 | `debug_combat_panel` | bảng debug combat (Combat Sandbox) |
+| F5 / F9 | `quick_save` / `quick_load` | lưu nhanh vào ô đang chơi / tải nhanh bản mới nhất của ô |
+| F6 | `debug_crop_grow` | cây ở ô dưới con trỏ +1 giai đoạn |
+| F7 / F8 | `debug_time_fast` / `debug_time_skip` | tua giờ ×10 / +1 giờ game |
+| F10 | `debug_enemy_radius` | vẽ bán kính phát hiện của quái |
+| F11 | `debug_farm_water` | tưới hết ruộng |
+| F12 | `debug_panel` | bảng phím debug |
+| R · 1 / 2 / 3 · P | `debug_reset` · `debug_weapon_1..3` · `debug_progression` | reset thử nghiệm · vũ khí thử · bảng progression (Combat Sandbox / test_map) |
+
+**Ruộng đúng lưới** — `FarmField` của Glade: ô = đúng 1 ô lưới iso (`axis_i` (32, 16), `axis_j` (−32, 16)), 6 × 4 ô, góc trên tại lưới (26, 33). Để đủ chỗ, các prop sau được dời (cùng lúc sửa `tools/glade/build_glade_prototype.gd` và scene):
+
+| Node | Loại | Lưới cũ → mới |
+|---|---|---|
+| Bed (giường nhà tạm) | nhà tạm | (30.4, 36.2) → (28.4, 38.2) |
+| Workbench (bàn chế tạo) | nhà tạm | (32, 36) → (26, 38) |
+| TreeOakA10 | cây trang trí (không tài nguyên) | (33, 34) → (35, 34.8) |
+| TreeOakB9 | cây trang trí (tán che ruộng) | (31, 37.5) → (37, 34) |
+| RuinWall2 | prop trang trí | (25.5, 36.5) → (22, 38.6) |
+| StonePickup / BerryPickup / BreadPickup / TentPickup | vật phẩm đặt sẵn M1–M2 (nằm trong ô ruộng) | (27.4, 34.8) → (25.6, 36.6) · (29.6, 34) → (30.2, 32.2) · (30.6, 33.4) → (31.4, 32.4) · (27.8, 35.8) → (24.6, 37) |
+
+Rương và cối đá không phải dời: rương nằm ngoài vùng, cối đá là vật người chơi tự dựng. Save cũ có lửa trại / lều / cối đá nằm trong vùng ruộng mới thì migration v6 trả item về túi.
+
+**Bản export** — `export_presets.cfg`: preset "Windows Desktop" (x86_64, release, `build/windows/FantasyRPG.exe`, loại `tests/*`, `docs/*`, `tools/*`; `build/` đã có trong `.gitignore`). Export `.exe` cần export template 4.7.2 (xem README). `--export-pack` không cần template.
+
+**Kiểm thử** — `tests/app/test_app_shell.gd` (120 ca, đi qua input thật: Esc / E / I / C / F…, mũi tên + Enter, click chuột lên nút) gồm: tiêu đề (ẩn Tiếp tục, focus bàn phím); tạm dừng làm đứng yên đồng hồ / quái / đói / lửa trại / đuốc / buff / cây, tiếp tục thì chạy lại đúng; Esc đóng túi đồ / chế tạo / hộp xác nhận trước; mất focus; không lưu khi bị đuổi; 3 ô + tự lưu (lưu / tải / xóa / ghi đè / metadata / ảnh nhỏ / danh sách chỉ đọc meta); về tiêu đề rồi Tiếp tục; save đơn v1–v5 → ô 1; ruộng nửa ô → lưới mới (không mất đồ, cả khi túi đầy); đổi phím (dùng ngay, HUD đổi theo, trùng → hoán đổi, lưu qua lần mở sau, khôi phục mặc định, không gán Esc); cài đặt lưu / đọc lại / áp ngay; release giả lập không có phím debug; cảnh báo chưa lưu khi đóng cửa sổ; chuyển cảnh chặn input. Chơi thử bằng tay qua game thật có cửa sổ: `tools/playtest/farming_playtest.gd` (bot gửi input thật, chụp ảnh từng bước vào `docs/reports/M6/`).
+
+**Giới hạn:** chưa có âm thanh / nhạc thật (chỉ có bus), art thật, đa ngôn ngữ, cloud save, tay cầm (chỉ chừa chỗ). Chưa có map thứ hai đi tới được trong game, nên "đổi map" dùng chung `AppOverlay.change_scene` nhưng mới kiểm qua tải save / tiêu đề ↔ game. Style menu là tạm. Chưa đặt tên cho ô save.
 
 ## 3. Quy ước đặt tên [Đã quyết định]
 
@@ -1083,11 +1150,11 @@ Resource dùng chung giữa nhiều instance **không được** bị sửa tron
 
 ## 9. Autoload [Đã quyết định]
 
-- Có đúng **một** Autoload: `SaveService` (`save/save_service.gd`, TASK M1, người dùng đã đồng ý) — xem 2l. Không thêm Autoload khác khi chưa được đồng ý. Item database **không** phải Autoload.
+- Có đúng **một** Autoload: `SaveService` (`save/save_service.gd`, TASK M1, người dùng đã đồng ý) — xem 2l. TASK M6 giữ nguyên: AppOverlay (node con của `/root` tạo lười) và GameSettings (RefCounted dùng chung) không phải Autoload — 2q. Không thêm Autoload khác khi chưa được đồng ý. Item database **không** phải Autoload.
 - Chỉ thêm Autoload khi có nhu cầu thực sự mang tính toàn cục (vd. dịch vụ save, điều phối chuyển scene) và phải được người dùng đồng ý.
 - Không dùng Autoload làm "manager" chứa logic gameplay hoặc làm kho trạng thái tùy tiện.
 
-## 10. Save / Load [Đã triển khai — TASK M1, chi tiết 2l; schema 2 ở 2m, schema 3 ở 2n, schema 4 (enemy, buff) ở 2o, schema 5 (ruộng) ở 2p]
+## 10. Save / Load [Đã triển khai — TASK M1, chi tiết 2l; schema 2 ở 2m, schema 3 ở 2n, schema 4 (enemy, buff) ở 2o, schema 5 (ruộng) ở 2p, schema 6 (3 ô save + tự lưu + meta, ruộng đúng lưới) ở 2q]
 
 lưu **runtime state** ra file JSON trong `user://`, logic nằm ở `save/`. File save chỉ chứa dữ liệu thuần (số, chuỗi, ID), tham chiếu dữ liệu thiết kế bằng ID/đường dẫn, không serialize trực tiếp Resource hay node. Định dạng có trường phiên bản (`schema_version`) để hỗ trợ migrate. Hệ thống mới muốn được lưu: thêm node vào group `saveable` + 3 hàm `get_save_id` / `save_state` / `load_state` (ID ổn định), không sửa SaveService.
 
@@ -1097,6 +1164,5 @@ Các mục sau sẽ quyết định trong task riêng, không tự chọn trư�
 
 - Độ phân giải pixel-art gốc, viewport scale, chế độ stretch cuối cùng. (Môi trường mới theo hướng hand-painted độ phân giải cao — 2k. Đã có: cửa sổ mặc định 1920×1080, viewport gốc vẫn 1152×648 — mục 2k; độ phân giải thiết kế cuối cùng vẫn chưa chốt.)
 - Độ phân giải thiết kế / stretch mode cuối cùng (ảnh hưởng zoom và pixel-perfect).
-- Điều khiển nhân vật chính thức (gamepad, remapping). Input Map di chuyển, chạy, né đã có (2c, 2m).
-- Luồng chuyển scene / menu.
+- Tay cầm (gamepad). Đổi phím bàn phím / chuột đã có (2q).
 - Công cụ kiểm thử.

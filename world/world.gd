@@ -61,6 +61,7 @@ extends Node2D
 
 
 func _ready() -> void:
+	_setup_menus()
 	_setup_camera()
 	_setup_interaction_ui()
 	_setup_combat_hud()
@@ -77,17 +78,110 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed(&"debug_reset"):
+	if event.is_action_pressed(InputActions.PAUSE_ACTION):
+		# Cửa sổ / hộp thoại đang mở thường tự đóng bằng Esc (ui_cancel) trước khi tới đây; còn sót thì đóng ở đây,
+		# không mở menu tạm dừng.
+		get_viewport().set_input_as_handled()
+		if not close_open_panels() and pause_menu != null:
+			pause_menu.open()
+		return
+	if not DebugKeys.enabled():
+		return
+	if event.is_action_pressed(DebugKeys.PANEL_ACTION):
+		if _debug_keys_panel != null:
+			_debug_keys_panel.toggle()
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed(&"debug_reset"):
 		reset_test_state()
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed(&"quick_save"):
-		if SaveService.save_game():
-			_show_feedback("Đã lưu (slot %d)." % SaveService.DEFAULT_SLOT)
+		var reason: String = get_save_block_reason()
+		if reason.is_empty() and SaveService.save_game():
+			_show_feedback("Đã lưu (ô %d)." % SaveService.get_active_slot())
+		elif not reason.is_empty():
+			_show_feedback(reason)
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed(&"quick_load"):
-		# Đánh dấu đã xử lý TRƯỚC khi tải: load_game() gỡ scene hiện tại khỏi cây ngay, sau đó get_viewport() là null.
 		get_viewport().set_input_as_handled()
 		SaveService.load_game()
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT and pause_menu != null and is_inside_tree() and not get_tree().paused \
+			and not AppOverlay.is_transitioning() and bool(GameSettings.get_instance().get_value(&"pause_on_focus_loss")):
+		pause_menu.open()
+
+
+# --- Menu, lưu thủ công, thoát (TASK M6) -----------------------------------------------------------
+
+## Menu tạm dừng (tạo lúc _ready trong UILayer).
+var pause_menu: PauseMenu
+var _debug_keys_panel: DebugKeysPanel
+
+
+func _setup_menus() -> void:
+	AppOverlay.ensure(get_tree())
+	var ui: Node = get_node_or_null(^"UILayer")
+	if ui == null:
+		return
+	pause_menu = PauseMenu.create(self)
+	ui.add_child(pause_menu)
+	if DebugKeys.enabled():
+		_debug_keys_panel = DebugKeysPanel.new()
+		ui.add_child(_debug_keys_panel)
+	if SaveService.consume_new_game() and bool(GameSettings.get_instance().get_value(&"show_start_hints")):
+		_show_start_hints.call_deferred()
+
+
+func _show_start_hints() -> void:
+	if AppOverlay.is_transitioning():
+		await AppOverlay.get_instance().transition_finished
+	var ui: Node = get_node_or_null(^"UILayer")
+	if ui != null and is_inside_tree():
+		ui.add_child(StartHintsPanel.create())
+
+
+## Đóng cửa sổ / bảng đang mở (túi đồ, chế tạo, bảng class, menu chọn). true nếu đã đóng ít nhất một cái.
+func close_open_panels() -> bool:
+	var closed_any: bool = false
+	for panel: Node in [inventory_window, crafting_window, progression_panel, debug_panel]:
+		if panel != null and panel.has_method(&"is_open") and bool(panel.call(&"is_open")):
+			panel.call(&"close")
+			closed_any = true
+	for menu: PopupMenu in [_tent_menu, _seed_menu]:
+		if menu != null and menu.visible:
+			menu.hide()
+			closed_any = true
+	return closed_any
+
+
+## Lý do không lưu thủ công được lúc này ("" = được): map không lưu được, đang chuyển cảnh, chết / ngủ, đang đi giữa hai
+## tầng (cầu thang), có quái đang truy đuổi.
+func get_save_block_reason() -> String:
+	if map_id == &"" or not SaveService.can_save():
+		return "Không lưu được ở map này."
+	if AppOverlay.is_transitioning():
+		return "Đang chuyển cảnh."
+	if player == null or player.is_dead():
+		return "Không thể lưu lúc này."
+	if sleep_controller != null and sleep_controller.is_busy():
+		return "Không thể lưu khi đang ngủ."
+	var agent: ElevationAgent = ElevationAgent.find_for(player)
+	if agent != null and agent.is_transitioning():
+		return "Không thể lưu khi đang đi giữa các tầng."
+	for node: Node in get_tree().get_nodes_in_group(&"enemies"):
+		var enemy: Enemy = node as Enemy
+		if enemy != null and is_ancestor_of(enemy) and not enemy.is_dead() and not enemy.is_fading() and enemy.is_hunting():
+			return "Không thể lưu khi đang bị truy đuổi"
+	return ""
+
+
+## Nút đóng cửa sổ game (AppOverlay): cảnh báo tiến trình chưa lưu qua menu tạm dừng.
+func request_quit() -> void:
+	if pause_menu != null:
+		pause_menu.request_quit()
+	else:
+		get_tree().quit()
 
 
 func get_environment_container() -> Node2D:
@@ -295,7 +389,7 @@ func _setup_save() -> void:
 func _on_game_loaded(slot: int) -> void:
 	if camera != null:
 		camera.set_target(camera_target)
-	_show_feedback("Đã tải (slot %d)." % slot)
+	_show_feedback("Đã tải (ô %d)." % slot)
 
 
 func _show_feedback(message: String) -> void:
@@ -526,6 +620,7 @@ func _setup_farming() -> void:
 		return
 	var database: ItemDatabase = player.get_inventory().database
 	farm_layer.seed_choice_requested.connect(open_seed_menu)
+	farm_layer.refunds_delivered.connect(_show_feedback)
 	if pickup_toast != null:
 		farm_layer.crop_harvested.connect(func(_plot: FarmPlot, _crop: CropDefinition, stacks: Array[ItemStack]) -> void:
 			for stack: ItemStack in stacks:
@@ -549,7 +644,10 @@ func open_seed_menu(plot: FarmPlot, seed_ids: Array[StringName]) -> PopupMenu:
 	_seed_menu_plot = plot
 	_seed_menu_options = seed_ids.duplicate()
 	_seed_menu.reset_size()
-	_seed_menu.position = Vector2i(get_viewport().get_mouse_position()) + get_window().position
+	# Popup nhúng (mặc định) dùng tọa độ viewport; chỉ cửa sổ OS riêng mới cần cộng vị trí cửa sổ.
+	_seed_menu.position = Vector2i(get_viewport().get_mouse_position())
+	if not get_viewport().gui_embed_subwindows:
+		_seed_menu.position += get_window().position
 	_seed_menu.popup()
 	return _seed_menu
 

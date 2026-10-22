@@ -47,7 +47,7 @@ func _process(delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not OS.is_debug_build():
+	if not DebugKeys.enabled():
 		return
 	if event.is_action_pressed(&"debug_time_fast"):
 		time_scale = 1.0 if time_scale != 1.0 else settings.debug_fast_multiplier

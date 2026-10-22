@@ -4,7 +4,8 @@ extends PanelContainer
 ## CharacterLevel và làm mới khi `progression_changed`. Nút [Debug] gọi API debug (EXP, học/nâng/tiến hóa kỹ năng,
 ## mở khóa passive); đổi class / mở khóa class chỉ hiện khi đang có phiên tại trạm huấn luyện — luật vẫn nằm ở
 ## ClassManager / ClassTrainingStation, UI không tự cho phép.
-## Mở/đóng: action `debug_progression` (P); đóng thêm bằng `skill_cancel` (Esc / chuột phải) hoặc nút Đóng.
+## Mở/đóng: action `debug_progression` (P, chỉ bản debug — DebugKeys); đóng thêm bằng `skill_cancel` (chuột phải), Esc
+## (`ui_cancel`) hoặc nút Đóng.
 
 signal opened
 signal closed
@@ -76,13 +77,13 @@ func find_button(prefix: String) -> Button:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed(TOGGLE_ACTION):
+	if event.is_action_pressed(TOGGLE_ACTION) and DebugKeys.enabled():
 		if visible:
 			close()
 		else:
 			open()
 		get_viewport().set_input_as_handled()
-	elif visible and event.is_action_pressed(CLOSE_ACTION):
+	elif visible and (event.is_action_pressed(CLOSE_ACTION) or event.is_action_pressed(&"ui_cancel")):
 		close()
 		get_viewport().set_input_as_handled()
 

@@ -26,7 +26,6 @@ const COLUMNS: int = 6
 const CHEST_COLUMNS: int = 5
 ## Rời rương xa hơn khoảng này (px) thì bảng tự đóng.
 const CHEST_MAX_DISTANCE: float = 80.0
-const HINT: String = "Kéo thả: chuyển · Chuột phải: menu (dùng, tách, vứt...) · F / nhấp đúp: dùng hoặc trang bị · Shift+click: chuyển nhanh (rương) · Kéo ra ngoài: vứt · I / Tab / Esc: đóng"
 
 ## Cho phép vứt đồ xuống đất (World bật khi map có ItemPickupLayer).
 var can_drop_to_ground: bool = false
@@ -49,6 +48,7 @@ var _chest_grid: GridContainer
 var _menu: PopupMenu
 var _menu_view: ItemSlotView
 var _hovered: ItemSlotView
+var _hint_label: Label
 
 
 func _ready() -> void:
@@ -122,8 +122,16 @@ func open() -> void:
 	if visible or _bag == null:
 		return
 	show()
+	if _hint_label != null:
+		_hint_label.text = get_hint_text()
 	_refresh()
 	opened.emit()
+
+
+## Gợi ý thao tác; tên phím đọc từ InputMap (TASK M6).
+func get_hint_text() -> String:
+	return "Kéo thả: chuyển · Chuột phải: menu (dùng, tách, vứt...) · %s / nhấp đúp: dùng hoặc trang bị · Shift+click: chuyển nhanh (rương) · Kéo ra ngoài: vứt · %s / %s: đóng" % [
+		InputHint.action_text(USE_ACTION), InputHint.all_text(TOGGLE_ACTION), InputHint.action_text(InputActions.PAUSE_ACTION)]
 
 
 func close() -> void:
@@ -404,7 +412,8 @@ func _build() -> void:
 	_equipment_row.add_theme_constant_override(&"separation", 6)
 	bag_box.add_child(_equipment_row)
 	_bag_grid = _make_grid(bag_box, COLUMNS)
-	var hint: Label = _make_label(bag_box, HINT, 11)
+	var hint: Label = _make_label(bag_box, get_hint_text(), 11)
+	_hint_label = hint
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint.custom_minimum_size.x = COLUMNS * (ItemSlotView.SIZE.x + 4)
 	hint.add_theme_color_override(&"font_color", Color(0.7, 0.7, 0.8))

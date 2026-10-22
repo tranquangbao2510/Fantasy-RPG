@@ -20,6 +20,9 @@ var _speed_label: Label
 
 
 func _ready() -> void:
+	# TASK M6: chỉ hiện khi bật bảng debug (F12, bản debug) — DebugKeysPanel.
+	add_to_group(DebugKeysPanel.HUD_GROUP)
+	visible = false
 	_logic_button.toggled.connect(_on_logic_toggled)
 	_logic_button.focus_mode = Control.FOCUS_NONE
 	_build_speed_tuner()

@@ -10,7 +10,7 @@ const ACTIONS: Array[StringName] = [&"debug_weapon_1", &"debug_weapon_2", &"debu
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if equipment == null:
+	if equipment == null or not DebugKeys.enabled():
 		return
 	for i: int in ACTIONS.size():
 		if event.is_action_pressed(ACTIONS[i]):

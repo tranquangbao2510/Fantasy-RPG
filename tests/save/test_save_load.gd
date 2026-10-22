@@ -6,7 +6,7 @@ extends "res://tests/test_base.gd"
 ## 3. Save: lưu → đổi scene (reset) → tải ra đúng vị trí, tầng, HP, túi, trang bị, class/level/mastery/kỹ năng,
 ##    rương, pickup đã nhặt không quay lại, đồ vứt ra còn nguyên. Ghi an toàn (.bak, không còn .tmp).
 ## 4. File hỏng → rơi về .bak; cả hai hỏng → báo lỗi, không crash; field thiếu → mặc định; schema mới hơn → từ chối;
-##    migration được gọi cho schema cũ; HP 0 trong save → hồi đầy; tự lưu khi đóng cửa sổ; map không lưu được
+##    migration được gọi cho schema cũ; HP 0 trong save → hồi đầy; map không lưu được
 ##    (Combat Sandbox).
 ## Ghi save vào user://test_saves/ (xóa sạch đầu và cuối test).
 ## Chạy:  Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/save/test_save_load.gd
@@ -30,7 +30,6 @@ var _layer: ItemPickupLayer
 func _run_tests() -> void:
 	_saves = root.get_node("SaveService") as SaveServiceScript
 	_saves.save_dir = TEST_DIR
-	_saves.autosave_on_quit = false
 	_clear_dir()
 	await _open_world()
 	await _test_pickups()
@@ -40,17 +39,12 @@ func _run_tests() -> void:
 	await _test_corrupted_files()
 	await _test_missing_fields()
 	_test_schema_versions()
-	_test_autosave_on_quit()
 	await _test_not_saveable_map()
 	_clear_dir()
 
 
 func _clear_dir() -> void:
-	var dir: DirAccess = DirAccess.open(TEST_DIR)
-	if dir == null:
-		return
-	for file: String in dir.get_files():
-		dir.remove(file)
+	clear_dir(TEST_DIR)
 
 
 func _open_world() -> void:
@@ -336,13 +330,14 @@ func _test_quick_keys() -> void:
 # ---------------------------------------------------------------- 4. file hỏng / thiếu field / version
 
 func _write(path: String, text: String) -> void:
+	DirAccess.make_dir_recursive_absolute(path.get_base_dir())
 	var file: FileAccess = FileAccess.open(path, FileAccess.WRITE)
 	file.store_string(text)
 	file.close()
 
 
 func _test_corrupted_files() -> void:
-	expect_error("[SaveService] Không đọc được slot")
+	expect_error("[SaveService] Không đọc được ô")
 	var path: String = _saves.get_slot_path(1)
 	_write(path, "{ \"schema_version\": 1, \"map_id\": \"glade\", ")
 	var data: Dictionary = _saves.read_save(1)
@@ -395,16 +390,6 @@ func _test_schema_versions() -> void:
 		return old)
 	var migrated: Dictionary = _saves.read_save(4)
 	check("migration_applied", migrated.get("map_id") == "glade" and migrated.get("schema_version") == _saves.SCHEMA_VERSION, str(migrated))
-
-
-func _test_autosave_on_quit() -> void:
-	DirAccess.remove_absolute(_saves.get_slot_path(1))
-	DirAccess.remove_absolute(_saves.get_backup_path(1))
-	_saves.autosave_on_quit = true
-	_saves.notification(Node.NOTIFICATION_WM_CLOSE_REQUEST)
-	_saves.autosave_on_quit = false
-	var data: Dictionary = _saves.read_save(1)
-	check("autosave_on_quit", not data.is_empty() and data.get("map_id") == "glade")
 
 
 func _test_not_saveable_map() -> void:

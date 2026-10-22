@@ -8,3 +8,7 @@ scenes = Dictionary[StringName, String]({
 &"glade": "res://world/environment_prototype/environment_prototype.tscn",
 &"test_map": "res://world/world.tscn"
 })
+names = Dictionary[StringName, String]({
+&"glade": "Glade",
+&"test_map": "Bản đồ thử nghiệm"
+})

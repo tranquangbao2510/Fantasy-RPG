@@ -40,15 +40,4 @@ func _process(_delta: float) -> void:
 
 
 func _update_text() -> void:
-	_label.text = "[%s] %s — %s" % [_get_key_text(), _target.get_interaction_prompt(), _target.get_interaction_name()]
-
-
-func _get_key_text() -> String:
-	for event: InputEvent in InputMap.action_get_events(ACTION):
-		var key: InputEventKey = event as InputEventKey
-		if key == null:
-			continue
-		if key.physical_keycode != KEY_NONE:
-			return key.as_text_physical_keycode()
-		return key.as_text_keycode()
-	return "?"
+	_label.text = "[%s] %s — %s" % [InputHint.action_text(ACTION), _target.get_interaction_prompt(), _target.get_interaction_name()]

@@ -1,0 +1,35 @@
+[01_title.jpg] Màn hình tiêu đề (chưa có save → không có nút Tiếp tục)
+[02_new_game_slots.jpg] Chơi mới → chọn ô save
+[03_start_hints.jpg] Lần đầu chơi mới: bảng gợi ý phím (game tạm dừng)
+Cho sẵn: 2 cành, 8 đá, 4 sợi, 5 gỗ, 4 hạt lúa mì, 1 lửa trại, 4 thịt nướng (ăn mỗi sáng — tua giờ bằng F8 vẫn trừ đói).
+[04_glade_field.jpg] Ruộng mới 6 × 4 ô lưới thật cạnh nhà tạm (giường + bàn chế tạo dời xuống phía nam)
+[05_crafting.jpg] E ở bàn chế tạo → chế cuốc đất, bình tưới, cối đá
+[06_inventory_hoe.jpg] I: túi đồ → rê chuột lên stone_hoe → F (trang bị)
+[07_tilled.jpg] Cày 4 ô (E khi cầm cuốc, đứng trên ô)
+[08_planted.jpg] Gieo hạt lúa mì (E trên đất đã cày)
+Đã cày 4 / 4 ô, gieo 4 / 4 ô.
+Đêm 1: E lần 1 ở mép suối không múc nước (Bụi cỏ: +2 Sợi cỏ).
+[09_fill_water.jpg] Múc nước ở mép suối (E khi cầm bình tưới)
+Đêm 1: tưới 4 / 4 ô.
+[10_watered.jpg] Tưới: đất ướt sẫm màu tới hết ngày
+[11_morning_1.jpg] Sáng ngày 2: cây được tưới hôm trước lớn thêm 1 ngày
+Đêm 2: tưới 4 / 4 ô.
+[12_morning_2.jpg] Sáng ngày 3: cây được tưới hôm trước lớn thêm 1 ngày
+Đêm 3: tưới 4 / 4 ô.
+[13_morning_3.jpg] Sáng ngày 4: cây được tưới hôm trước lớn thêm 1 ngày
+Sau 3 đêm: tuổi cây [3, 3, 3, 3].
+[14_harvested.jpg] Thu hoạch (E): lúa mì + hạt vào túi
+Thu được 10 lúa mì, 7 hạt.
+[15_mill.jpg] Cối đá cạnh giường: xay 3 lúa → 1 bột
+[16_bread.jpg] Lửa trại: nướng bánh mì từ bột
+Đói sau khi ăn bánh: 80 / 100 (trước 50).
+[17_ate.jpg] Ăn bánh mì (+30 đói)
+[18_pause_menu.jpg] Esc: menu tạm dừng (game dừng thật)
+[19_save_slots.jpg] Lưu → chọn ô (ô 1 đang chơi, đã có bản tự lưu khi ngủ)
+[20_saved.jpg] Lưu xong → quay lại menu tạm dừng, báo "Đã lưu vào ô 1"
+[21_load_slots.jpg] Tải game: mỗi ô có bản thủ công + bản tự lưu, ảnh nhỏ, ngày / giờ game, thời gian chơi, giờ lưu, map
+[22_key_guide.jpg] Hướng dẫn phím (đọc InputMap, chia nhóm)
+[23_settings_audio.jpg] Cài đặt → Âm thanh
+[24_settings_display.jpg] Cài đặt → Hình ảnh
+[25_settings_controls.jpg] Cài đặt → Điều khiển (đổi phím)
+[26_night_field.jpg] Ruộng ban đêm (ánh trăng mặc định 16 %)

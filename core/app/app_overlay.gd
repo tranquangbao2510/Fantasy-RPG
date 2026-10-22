@@ -6,7 +6,7 @@ extends CanvasLayer
 ##   mờ đen → đổi scene → chờ scene mới _ready + 1 frame (setup hoãn chạy xong) → on_loaded (vd. SaveService áp save) →
 ##   bỏ dừng → sáng lại. Dùng cho: tiêu đề ↔ game, tải save, đổi map.
 ## - Nút đóng cửa sổ (NOTIFICATION_WM_CLOSE_REQUEST, auto_accept_quit tắt): scene hiện tại có request_quit() → gọi (World
-##   cảnh báo tiến trình chưa lưu); không có → thoát.
+##   tự lưu rồi thoát, TASK M6.1); không có → thoát.
 
 signal transition_finished
 

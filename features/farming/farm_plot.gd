@@ -93,6 +93,11 @@ func can_interact(actor: Node2D) -> bool:
 	return layer != null and not layer.get_seed_options(actor).is_empty()
 
 
+## Ô ruộng là việc của cuốc đất (cày) và bình tưới (tưới): cầm hai món này thì ô ruộng thắng vật khác ở gần.
+func uses_tool(tool_type: StringName) -> bool:
+	return tool_type == HOE or tool_type == WATERING_CAN
+
+
 func get_interaction_prompt() -> String:
 	if is_mature():
 		return "Thu hoạch"

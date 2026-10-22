@@ -51,6 +51,37 @@ static func button(text: String, on_pressed: Callable, min_width: float = BUTTON
 	return result
 
 
+## Ô tích (CheckBox) / công tắc (CheckButton) có viền rõ trên nền tối (TASK M6.1: icon mặc định của Godot gần như không thấy
+## viền khi tắt). Icon vẽ bằng code: viền BORDER_COLOR; bật = nền TITLE_COLOR (ô tích) / núm sang phải (công tắc).
+static func style_check(control: Button) -> void:
+	var is_switch: bool = control is CheckButton
+	var on: Texture2D = _switch_icon(true) if is_switch else _check_icon(true)
+	var off: Texture2D = _switch_icon(false) if is_switch else _check_icon(false)
+	for icon: StringName in [&"checked", &"checked_disabled", &"checked_mirrored", &"checked_disabled_mirrored"]:
+		control.add_theme_icon_override(icon, on)
+	for icon: StringName in [&"unchecked", &"unchecked_disabled", &"unchecked_mirrored", &"unchecked_disabled_mirrored"]:
+		control.add_theme_icon_override(icon, off)
+	control.add_theme_font_size_override(&"font_size", 15)
+	control.add_theme_color_override(&"font_color", TEXT_COLOR)
+
+
+static func _check_icon(on: bool) -> Texture2D:
+	var image: Image = Image.create_empty(20, 20, false, Image.FORMAT_RGBA8)
+	image.fill(BORDER_COLOR)
+	image.fill_rect(Rect2i(2, 2, 16, 16), PANEL_COLOR)
+	if on:
+		image.fill_rect(Rect2i(5, 5, 10, 10), TITLE_COLOR)
+	return ImageTexture.create_from_image(image)
+
+
+static func _switch_icon(on: bool) -> Texture2D:
+	var image: Image = Image.create_empty(40, 20, false, Image.FORMAT_RGBA8)
+	image.fill(BORDER_COLOR)
+	image.fill_rect(Rect2i(2, 2, 36, 16), BORDER_COLOR.darkened(0.45) if on else PANEL_COLOR)
+	image.fill_rect(Rect2i(22, 4, 14, 12) if on else Rect2i(4, 4, 14, 12), TITLE_COLOR if on else MUTED_COLOR)
+	return ImageTexture.create_from_image(image)
+
+
 ## Nền mờ phủ cả màn hình (chặn chuột xuống game) + CenterContainer; trả về CenterContainer để đặt khung vào.
 static func modal_root(parent: Control) -> CenterContainer:
 	parent.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)

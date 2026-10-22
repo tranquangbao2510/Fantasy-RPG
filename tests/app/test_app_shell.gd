@@ -2,7 +2,8 @@ extends "res://tests/test_base.gd"
 ## Kiểm thử TASK M6 — khung game: màn hình tiêu đề, menu tạm dừng (Esc), 3 ô save + tự lưu + metadata, chuyển save đơn cũ
 ## (v1–v5) thành ô 1, ruộng nửa ô → lưới mới (không mất đồ), Cài đặt (lưu / đọc lại), đổi phím (dùng ngay, HUD đổi theo,
 ## trùng phím → hoán đổi, lưu qua lần mở game sau, khôi phục mặc định), hướng dẫn phím, tự tạm dừng khi mất focus, cảnh báo
-## tiến trình chưa lưu, chuyển cảnh chặn input, bản release (giả lập) không có phím debug.
+## tiến trình chưa lưu, chuyển cảnh chặn input, bản release (giả lập) không có phím debug. TASK M6.1: thoát / về màn hình
+## chính tự ghi bản tự lưu (bị truy đuổi thì hỏi xác nhận kèm lý do).
 ## Đi qua input thật (phím Esc / E / F..., Input.parse_input_event; click chuột lên nút) khi có thể.
 ## Script test biên dịch trước Autoload: không dùng tên các lớp có dùng SaveService (World, PauseMenu, SaveSlotList,
 ## SettingsPanel, KeyGuidePanel, StartHintsPanel) làm kiểu — truy cập động.
@@ -36,7 +37,7 @@ func _run_tests() -> void:
 	await _test_rebinding()
 	await _test_settings_persist()
 	await _test_release_has_no_debug_keys()
-	await _test_quit_warning()
+	await _test_autosave_on_quit()
 	await _test_transition_blocks_input()
 	clear_dir(TEST_DIR)
 
@@ -292,13 +293,9 @@ func _test_esc_closes_panels_first() -> void:
 	await tap_action(&"craft_toggle")
 	await _tap_key(KEY_ESCAPE)
 	check("esc_closes_crafting_first", not crafting.is_open() and not _pause_menu().visible)
-	# Hộp xác nhận trong menu: Esc đóng hộp, menu vẫn mở; Esc nữa → tiếp tục chơi.
+	# Esc mở menu; Esc nữa → tiếp tục chơi. (Hộp xác nhận đóng trước menu: _test_save_blocked_when_chased.)
 	await _tap_key(KEY_ESCAPE)
-	await _click(_pause_menu().call(&"get_button", "Về màn hình chính") as Button)
-	var box: ConfirmBox = _confirm_box()
-	check("unsaved_warning_on_title", box != null and box.get_message().contains("chưa lưu"))
-	await _tap_key(KEY_ESCAPE)
-	check("esc_closes_confirm_first", _confirm_box() == null and _pause_menu().visible and paused)
+	check("esc_opens_menu", _pause_menu().visible and paused)
 	await _tap_key(KEY_ESCAPE)
 	check("esc_then_resumes", not _pause_menu().visible and not paused)
 
@@ -332,6 +329,27 @@ func _test_save_blocked_when_chased() -> void:
 	check("save_blocked_when_chased", hunting and str(menu.call(&"get_status_text")) == "Không thể lưu khi đang bị truy đuổi"
 		and menu.call(&"get_subpanel") == null and not _saves.has_save(1), "%s hunting=%s reason=%s wolves=%d" % [menu.call(&"get_status_text"), hunting, _world.call(&"get_save_block_reason"), wolves.size()])
 	check("quick_save_blocked_when_chased", str(_world.call(&"get_save_block_reason")) == "Không thể lưu khi đang bị truy đuổi")
+	# TASK M6.1: bị truy đuổi thì không tự lưu khi thoát / về màn hình chính → hỏi xác nhận, nói rõ lý do.
+	var quits: Array[int] = []
+	menu.set(&"quit_handler", func() -> void: quits.append(1))
+	await _click(menu.call(&"get_button", "Về màn hình chính") as Button)
+	var box: ConfirmBox = _confirm_box()
+	check("title_when_chased_confirms_with_reason", box != null and box.get_message().contains("truy đuổi")
+		and box.get_message().contains("chưa lưu") and current_scene == _world, box.get_message() if box != null else "không có hộp")
+	await _tap_key(KEY_ESCAPE)
+	check("esc_closes_confirm_first", _confirm_box() == null and menu.visible and paused)
+	await _click(menu.call(&"get_button", "Thoát game") as Button)
+	box = _confirm_box()
+	check("quit_when_chased_confirms_with_reason", box != null and box.get_message().contains("truy đuổi"))
+	await _answer("Hủy")
+	check("quit_when_chased_cancel_keeps_game", quits.is_empty() and _confirm_box() == null and menu.visible)
+	AppOverlay.get_instance().notification(Node.NOTIFICATION_WM_CLOSE_REQUEST)
+	await frames(2)
+	box = _confirm_box()
+	check("window_close_when_chased_confirms", box != null and box.get_message().contains("truy đuổi"))
+	await _answer("Thoát game")
+	check("chased_quit_without_autosave", quits == [1] and not _saves.has_save(1, &"autosave") and not _saves.has_save(1))
+	menu.set(&"quit_handler", Callable())
 	await _tap_key(KEY_ESCAPE)
 	await _clear_enemies()
 	_player.get_equipment().set_slot(&"offhand", null)
@@ -457,10 +475,18 @@ func _test_back_to_title_and_continue() -> void:
 	_player.get_inventory().clear()
 	_player.get_inventory().add(&"fiber", 9)
 	check("save_before_title", await _save_via_menu(1, true))
+	# TASK M6.1: chơi thêm sau bản thủ công → về màn hình chính tự ghi bản tự lưu (bản thủ công giữ nguyên), không hỏi.
+	_player.get_inventory().add(&"fiber", 3)
+	await _place(Vector2(23.5, 34.5))
+	await seconds(1.2)
+	_clock.set_time(6, 13 * 60)
 	var saved_at: Vector2 = _player.global_position
 	await _tap_key(KEY_ESCAPE)
 	await _click(_pause_menu().call(&"get_button", "Về màn hình chính") as Button)
-	check("no_warning_when_saved", _confirm_box() == null)
+	check("title_no_confirm_autosaves", _confirm_box() == null)
+	var auto: Dictionary = _saves.read_save(1, &"autosave")
+	var manual: Dictionary = _saves.read_save(1, &"manual")
+	check("autosave_on_title", _fiber_in(auto) == 12 and _fiber_in(manual) == 9, "tự lưu %d · thủ công %d" % [_fiber_in(auto), _fiber_in(manual)])
 	await _wait_transition()
 	check("back_on_title", current_scene.scene_file_path == TITLE_PATH and not paused)
 	var continue_button: Button = _button(current_scene.call(&"get_menu") as Node, "Tiếp tục")
@@ -473,7 +499,7 @@ func _test_back_to_title_and_continue() -> void:
 	_bind()
 	_prepare()
 	check("continue_restores_saved_state", done == [1] and _clock.get_day() == 6 and absf(_clock.get_minute_of_day() - 780.0) < 1.0
-		and _player.get_inventory().count_of(&"fiber") == 9 and _player.global_position.distance_to(saved_at) < 0.5,
+		and _player.get_inventory().count_of(&"fiber") == 12 and _player.global_position.distance_to(saved_at) < 0.5,
 		"%s ngày %d %s sợi %d lệch %.2f" % [done, _clock.get_day(), _clock.format_time(), _player.get_inventory().count_of(&"fiber"), _player.global_position.distance_to(saved_at)])
 
 
@@ -813,18 +839,51 @@ func _test_release_has_no_debug_keys() -> void:
 	check("debug_f8_works_in_debug", _clock.total_minutes - minutes >= 59.0)
 
 
-# ---------------------------------------------------------------- 13. thoát game: cảnh báo
+# ---------------------------------------------------------------- 13. thoát game: tự lưu (TASK M6.1)
 
-func _test_quit_warning() -> void:
+## Số sợi cỏ trong túi người chơi của một bản save (-1 nếu không đọc được).
+func _fiber_in(data: Dictionary) -> int:
+	var player: Variant = (data.get("global", {}) as Dictionary).get("player")
+	if not player is Dictionary:
+		return -1
+	var total: int = 0
+	for entry: Variant in ((player as Dictionary).get("inventory", {}) as Dictionary).get("slots", []):
+		if entry is Dictionary and str((entry as Dictionary).get("id")) == "fiber":
+			total += int((entry as Dictionary).get("count", 0))
+	return total
+
+
+## Bản thủ công của ô ({} nếu ô chưa có — không đọc file thiếu để khỏi báo lỗi).
+func _manual_of(slot: int) -> Dictionary:
+	return _saves.read_save(slot, &"manual") if _saves.has_save(slot, &"manual") else {}
+
+
+func _test_autosave_on_quit() -> void:
+	var slot: int = _saves.get_active_slot()
+	var manual_before: Dictionary = _manual_of(slot)
+	var quits: Array[int] = []
+	_pause_menu().set(&"quit_handler", func() -> void: quits.append(1))
+	# Nút đóng cửa sổ: không hỏi, ghi bản tự lưu của ô đang chơi rồi thoát; bản thủ công giữ nguyên.
 	await _place(ARENA)
+	_player.get_inventory().clear()
+	_player.get_inventory().add(&"fiber", 21)
 	await seconds(1.2)
 	check("has_unsaved_progress", _saves.has_unsaved_progress())
 	AppOverlay.get_instance().notification(Node.NOTIFICATION_WM_CLOSE_REQUEST)
 	await frames(2)
-	var box: ConfirmBox = _confirm_box()
-	check("window_close_warns_unsaved", box != null and box.get_message().contains("Thoát game") and _pause_menu().visible)
-	await _answer("Hủy")
-	check("quit_cancelled_keeps_game", _confirm_box() == null and _pause_menu().visible and current_scene == _world)
+	check("autosave_on_quit", quits == [1] and _confirm_box() == null and _fiber_in(_saves.read_save(slot, &"autosave")) == 21
+		and not _saves.has_unsaved_progress(), "thoát %s · tự lưu %d" % [quits, _fiber_in(_saves.read_save(slot, &"autosave"))])
+	check("autosave_on_quit_keeps_manual", _manual_of(slot) == manual_before)
+	check("autosave_on_quit_meta", _saves.newest_kind(slot) == &"autosave" and _meta(slot).has("autosave"), str(_meta(slot)))
+	await _close_menus()
+	# Nút "Thoát game" trong menu: cũng tự lưu rồi thoát.
+	_player.get_inventory().add(&"fiber", 1)
+	await seconds(1.2)
+	await _tap_key(KEY_ESCAPE)
+	await _click(_pause_menu().call(&"get_button", "Thoát game") as Button)
+	check("quit_button_autosaves", quits == [1, 1] and _confirm_box() == null and _fiber_in(_saves.read_save(slot, &"autosave")) == 22
+		and _manual_of(slot) == manual_before)
+	_pause_menu().set(&"quit_handler", Callable())
 	await _close_menus()
 
 

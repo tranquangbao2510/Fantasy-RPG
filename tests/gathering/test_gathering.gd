@@ -570,7 +570,7 @@ func _test_campfire() -> void:
 	_player.global_position = tree.global_position + Vector2(0, -18)
 	await frames(2)
 	var reason: String = _world.use_item(_find(bag, &"campfire"))
-	check("campfire_blocked_spot", reason == "Không đủ chỗ trống để dựng." and bag.has(&"campfire"), reason)
+	check("campfire_blocked_spot", reason.begins_with("Có vật cản") and bag.has(&"campfire"), reason)
 	var item: ItemDefinition = bag.database.get_item(&"campfire")
 	for i: int in item.max_per_map - 1:
 		_layer.spawn_deployed(item, IsoProjection.to_screen(16.0 + i, 31.5), 0)

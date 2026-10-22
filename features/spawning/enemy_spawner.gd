@@ -159,7 +159,8 @@ func get_spawn_block_reason(point: Vector2, tier: int, check_view: bool = true) 
 	if _terrain != null and _terrain.get_terrain_at(point) == &"":
 		return "ngoài lưới địa hình"
 	var radius: float = table.footprint_radius if table != null else 10.0
-	return PlacementCheck.get_block_reason(scene.get_viewport().world_2d.direct_space_state, scene, point, tier, radius, ground_squash)
+	return PlacementCheck.get_block_reason(scene.get_viewport().world_2d.direct_space_state, scene, point, tier, radius, ground_squash,
+		[], false)
 
 
 ## Vùng world camera đang thấy.

@@ -6,6 +6,9 @@ extends Node2D
 ##   mỗi ô = đúng 1 ô lưới iso → axis_i = (32, 16), axis_j = (−32, 16); TASK M6 — M5 dùng nửa ô).
 ## - Tạo FarmPlot (Interactable) cho từng ô lúc _ready; luật / trạng thái từng ô nằm trong FarmPlot.
 ## - Vẽ đất (lớp `Soil`, z −1 — dưới người chơi / cây): viền vùng ruộng; ô đã cày màu đất khô / ướt khác nhau.
+## - Group `farm_fields`: PlacementCheck không cho dựng lều / lửa trại chạm vùng ruộng ("Quá gần ruộng", TASK M6.1).
+
+const GROUP: StringName = &"farm_fields"
 
 @export var field_id: String = "field"
 @export_range(1, 32) var columns: int = 6
@@ -24,6 +27,7 @@ var _soil: Node2D
 
 
 func _ready() -> void:
+	add_to_group(GROUP)
 	y_sort_enabled = true
 	_soil = Node2D.new()
 	_soil.name = "Soil"

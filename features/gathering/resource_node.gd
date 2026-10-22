@@ -56,6 +56,11 @@ func can_interact(actor: Node2D) -> bool:
 	return interaction_enabled and definition != null and not depleted
 
 
+## Cây là việc của rìu, đá của cuốc chim (definition.required_tool); bụi cỏ / bụi mọng không cần công cụ nào.
+func uses_tool(tool_type: StringName) -> bool:
+	return definition != null and definition.needs_tool() and tool_type == definition.required_tool
+
+
 ## Lời nhắc theo công cụ người chơi đang cầm: "Chặt (Độ bền 38/40)", "Nhặt cành · Cần rìu", "Cần rìu".
 func get_interaction_prompt() -> String:
 	if definition == null:

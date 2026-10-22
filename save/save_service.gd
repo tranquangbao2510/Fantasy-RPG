@@ -206,6 +206,29 @@ func capture_thumbnail() -> Image:
 	return image
 
 
+## Ảnh chụp nhỏ chỉ có cảnh map (TASK M6.1, cho bản tự lưu khi ngủ): viewport phụ dùng chung world_2d + canvas transform
+## của màn hình, vẽ một lần. HUD, menu, màn tối khi ngủ nằm ở CanvasLayer riêng của màn hình nên không có trong ảnh.
+## Coroutine (chờ một lượt vẽ). null nếu không có màn hình / tắt chụp.
+func capture_world_thumbnail() -> Image:
+	if not capture_thumbnails or DisplayServer.get_name() == "headless":
+		return null
+	var screen: Viewport = get_viewport()
+	var view: SubViewport = SubViewport.new()
+	view.world_2d = screen.world_2d
+	view.size = Vector2i(screen.get_visible_rect().size)
+	view.render_target_update_mode = SubViewport.UPDATE_ONCE
+	add_child(view)
+	# Canvas của world_2d chỉ gắn vào viewport khi đã vào cây → đặt transform sau add_child.
+	view.canvas_transform = screen.canvas_transform
+	await RenderingServer.frame_post_draw
+	var image: Image = view.get_texture().get_image()
+	view.queue_free()
+	if image == null or image.is_empty():
+		return null
+	image.resize(THUMBNAIL_SIZE.x, THUMBNAIL_SIZE.y, Image.INTERPOLATE_BILINEAR)
+	return image
+
+
 ## Đọc bản `kind` của ô (rỗng = bản mới nhất), mở scene của map trong save qua AppOverlay rồi áp trạng thái.
 func load_game(slot: int = 0, kind: StringName = &"") -> bool:
 	if slot <= 0:

@@ -182,6 +182,7 @@ func _add_toggle(box: VBoxContainer, text: String, key: StringName) -> CheckButt
 	toggle.name = String(key)
 	toggle.button_pressed = bool(_settings.get_value(key))
 	toggle.toggled.connect(func(on: bool) -> void: _settings.set_value(key, on))
+	MenuUI.style_check(toggle)
 	row.add_child(toggle)
 	return toggle
 

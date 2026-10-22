@@ -504,7 +504,7 @@ func _test_tent() -> void:
 	_player.global_position = chest.global_position + Vector2(0, 6)
 	await frames(2)
 	var reason: String = _world.use_item(_find(bag, &"tent"))
-	check("tent_blocked_by_object", reason == "Không đủ chỗ trống để dựng." and bag.has(&"tent"), reason)
+	check("tent_blocked_by_object", reason.begins_with("Có vật cản") and bag.has(&"tent"), reason)
 	_place(Vector2(24.0, 25.8))
 	await frames(2)
 	reason = _world.use_item(_find(bag, &"tent"))

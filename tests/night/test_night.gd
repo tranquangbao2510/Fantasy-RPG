@@ -305,7 +305,7 @@ func _test_spawn_rules() -> void:
 	check("reason_too_close", _spawner.get_spawn_block_reason(near_off_screen, 0) == "quá gần người chơi",
 		_spawner.get_spawn_block_reason(near_off_screen, 0))
 	var plateau: Vector2 = IsoProjection.to_screen(12.0, 14.0, IsoProjection.TIER_HEIGHT)
-	check("reason_wrong_tier", _spawner.get_spawn_block_reason(plateau, 0, false).contains("bằng phẳng")
+	check("reason_wrong_tier", _spawner.get_spawn_block_reason(plateau, 0, false) == PlacementCheck.WRONG_TIER
 		and not _spawner.get_spawn_block_reason(plateau, 1, false).contains("bằng phẳng"), _spawner.get_spawn_block_reason(plateau, 0, false))
 	var water: Vector2 = IsoProjection.to_screen(13.0, 24.2)
 	check("reason_water", _spawner.get_spawn_block_reason(water, 0, false).contains("nước"), _spawner.get_spawn_block_reason(water, 0, false))

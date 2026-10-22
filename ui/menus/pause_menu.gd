@@ -4,7 +4,10 @@ extends Control
 ## (Cài đặt → Gameplay). Mở = dừng game thật (SceneTree.paused: đồng hồ, quái, cây, buff, đói, lửa trại, đuốc đứng yên);
 ## menu chạy cả khi dừng (process ALWAYS). Mở túi đồ KHÔNG dừng game (như cũ).
 ## Nút: Tiếp tục · Lưu (World.get_save_block_reason: không lưu khi bị truy đuổi / đang chuyển tầng...; chọn ô) · Tải ·
-## Cài đặt · Hướng dẫn phím · Về màn hình chính / Thoát game (cảnh báo nếu có tiến trình chưa lưu).
+## Cài đặt · Hướng dẫn phím · Về màn hình chính / Thoát game.
+## Về màn hình chính / Thoát game / nút đóng cửa sổ (TASK M6.1): tự ghi vào bản TỰ LƯU của ô đang chơi (không đụng bản thủ
+## công) rồi mới đi. Lúc không lưu được (World.get_save_block_reason: đang bị truy đuổi...) mà có tiến trình chưa lưu thì
+## hỏi xác nhận, nói rõ lý do.
 ## Esc: đóng lớp trên cùng (hộp xác nhận → màn con → menu = tiếp tục chơi).
 ## Ảnh chụp nhỏ cho bản lưu thủ công lấy lúc mở menu (khung hình game chưa có menu).
 
@@ -16,6 +19,8 @@ const TITLE_SCENE: String = "res://app/main.tscn"
 
 ## World (lý do không lưu được, map hiện tại). Duck-typing: get_save_block_reason() -> String.
 var world: Node
+## Thoát game thật (test thay bằng hàm ghi nhận để không tắt tiến trình test).
+var quit_handler: Callable
 
 var _frame: PanelContainer
 var _status: Label
@@ -94,7 +99,7 @@ func resume() -> void:
 	closed.emit()
 
 
-## Nút đóng cửa sổ game (AppOverlay → World.request_quit): cảnh báo như nút Thoát game.
+## Nút đóng cửa sổ game (AppOverlay → World.request_quit): như nút Thoát game (tự lưu rồi thoát).
 func request_quit() -> void:
 	open()
 	_on_button("Thoát game")
@@ -115,9 +120,9 @@ func _on_button(text: String) -> void:
 		"Hướng dẫn phím":
 			_open_subpanel(KeyGuidePanel.create())
 		"Về màn hình chính":
-			_confirm_if_unsaved("Về màn hình chính", _go_to_title)
+			_autosave_then("Về màn hình chính", _go_to_title)
 		"Thoát game":
-			_confirm_if_unsaved("Thoát game", func() -> void: get_tree().quit())
+			_autosave_then("Thoát game", _quit)
 
 
 func _open_save() -> void:
@@ -152,15 +157,30 @@ func _on_load_requested(slot: int, kind: StringName) -> void:
 		do_load.call()
 
 
-func _confirm_if_unsaved(action_text: String, action: Callable) -> void:
-	if not SaveService.has_unsaved_progress():
+## Tự lưu vào bản tự lưu của ô đang chơi rồi làm `action`. Không lưu được (bị truy đuổi, ghi lỗi...) mà có tiến trình
+## chưa lưu → hỏi xác nhận kèm lý do.
+func _autosave_then(action_text: String, action: Callable) -> void:
+	var reason: String = ""
+	if SaveService.can_save():
+		reason = str(world.call(&"get_save_block_reason")) if world != null and world.has_method(&"get_save_block_reason") else ""
+		if reason.is_empty() and not SaveService.autosave(_snapshot):
+			reason = SaveService.last_error
+	if reason.is_empty() or not SaveService.has_unsaved_progress():
 		action.call()
 		return
-	ConfirmBox.open(self, "Có tiến trình chưa lưu sẽ bị mất. %s?" % action_text, action_text).answered.connect(func(yes: bool) -> void:
+	var message: String = "%s — không tự lưu được, tiến trình chưa lưu sẽ bị mất.\n%s?" % [reason.trim_suffix("."), action_text]
+	ConfirmBox.open(self, message, action_text).answered.connect(func(yes: bool) -> void:
 		if yes:
 			action.call()
 		else:
 			MenuUI.focus_first(self))
+
+
+func _quit() -> void:
+	if quit_handler.is_valid():
+		quit_handler.call()
+	else:
+		get_tree().quit()
 
 
 func _go_to_title() -> void:

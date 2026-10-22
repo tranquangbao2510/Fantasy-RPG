@@ -29,6 +29,7 @@ polygon = PackedVector2Array(9, -2, 7.7942286, 0.25, 4.5, 1.8971143, 5.5107286e-
 collision_mask = 2
 script = ExtResource("4_li8ia")
 target = NodePath("../Visual")
+faded_alpha = 0.2
 
 [node name="Shape" type="CollisionPolygon2D" parent="OcclusionFader" unique_id=782736492]
 polygon = PackedVector2Array(-46.2, -224, 46.2, -224, 46.2, -2, -46.2, -2)

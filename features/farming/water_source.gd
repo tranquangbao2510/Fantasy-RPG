@@ -25,6 +25,10 @@ func can_interact(actor: Node2D) -> bool:
 	return interaction_enabled
 
 
+func uses_tool(tool_type: StringName) -> bool:
+	return tool_type == FarmPlot.WATERING_CAN
+
+
 func _perform_interaction(actor: Node2D) -> String:
 	var equipment: EquipmentSlots = _equipment_of(actor)
 	var tool: ItemDefinition = equipment.get_tool() if equipment != null else null

@@ -31,6 +31,7 @@ func _ready() -> void:
 	_dont_show = CheckBox.new()
 	_dont_show.name = "DontShowAgain"
 	_dont_show.text = "Không hiện lại"
+	MenuUI.style_check(_dont_show)
 	box.add_child(_dont_show)
 	var ok: Button = MenuUI.button("Đã hiểu", close, 200)
 	ok.size_flags_horizontal = Control.SIZE_SHRINK_CENTER

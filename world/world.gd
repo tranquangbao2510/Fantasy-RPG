@@ -176,7 +176,7 @@ func get_save_block_reason() -> String:
 	return ""
 
 
-## Nút đóng cửa sổ game (AppOverlay): cảnh báo tiến trình chưa lưu qua menu tạm dừng.
+## Nút đóng cửa sổ game (AppOverlay): qua menu tạm dừng — tự lưu rồi thoát (TASK M6.1), bị truy đuổi thì hỏi xác nhận.
 func request_quit() -> void:
 	if pause_menu != null:
 		pause_menu.request_quit()

@@ -309,7 +309,11 @@ func _collision(p: Node2D, polygon: PackedVector2Array) -> void:
 	add(body, cp, "Footprint%d" % body.get_child_count())
 
 
-func _fader(p: Node2D, polygon: PackedVector2Array) -> void:
+## TASK M6.1: tán cây mờ hẳn (0.2) khi người chơi đứng sau — 0.45 mặc định vẫn che gần hết nhân vật khi vài tán chồng nhau.
+const TREE_FADED_ALPHA: float = 0.2
+
+
+func _fader(p: Node2D, polygon: PackedVector2Array, faded_alpha: float = -1.0) -> void:
 	var f: Area2D = Area2D.new()
 	f.set_script(load(ENV + "props/occlusion_fader.gd"))
 	f.collision_mask = 2
@@ -318,6 +322,8 @@ func _fader(p: Node2D, polygon: PackedVector2Array) -> void:
 	cp.polygon = polygon
 	add(f, cp, "Shape")
 	f.set("target", p.get_node("Visual"))
+	if faded_alpha >= 0.0:
+		f.set("faded_alpha", faded_alpha)
 
 
 ## Footprint (local, quanh origin) từ hộp lưới [i0, i0 + a] × [j0, j0 + b] so với điểm gốc lưới (gi, gj).
@@ -360,10 +366,10 @@ func _build_props() -> void:
 		match spec[3]:
 			"tree":
 				_collision(p, ellipse(Vector2(0, -2), 11))
-				_fader(p, canopy)
+				_fader(p, canopy, TREE_FADED_ALPHA)
 			"pine":
 				_collision(p, ellipse(Vector2(0, -2), 9))
-				_fader(p, canopy)
+				_fader(p, canopy, TREE_FADED_ALPHA)
 			"bush":
 				_collision(p, ellipse(Vector2(0, -6), w * 0.34))
 			"rock_large":

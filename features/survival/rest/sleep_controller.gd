@@ -15,6 +15,9 @@ extends Node
 signal slept(day: int)
 signal fainted(day: int)
 
+## Số frame chờ sau khi nhảy giờ trước khi chụp ảnh nhỏ cho bản tự lưu.
+const SNAPSHOT_SETTLE_FRAMES: int = 3
+
 @export var clock: GameClock
 @export var player: Player
 @export var settings: SleepSettings
@@ -123,9 +126,7 @@ func _sleep(spot: RestSpot, fainted_now: bool) -> void:
 	player.set_control_locked(true)
 	if clock != null:
 		clock.running = false
-	# TASK M6: ảnh nhỏ cho bản tự lưu chụp trước khi màn hình tối.
 	var saves: Node = get_node_or_null(^"/root/SaveService")
-	var snapshot: Image = saves.call(&"capture_thumbnail") if saves != null and not fainted_now and autosave else null
 	if overlay != null:
 		await overlay.fade_out(settings.fade_time)
 	if clock != null:
@@ -142,6 +143,11 @@ func _sleep(spot: RestSpot, fainted_now: bool) -> void:
 			player.respawn_at(spot.get_wake_position(), spot.get_tier(), float(health.current_health) / health.max_health)
 	var day: int = clock.get_day() if clock != null else 1
 	if not fainted_now and autosave and saves != null:
+		# TASK M6.1: ảnh nhỏ chụp lúc màn còn tối nhưng giờ đã sang sáng, chỉ cảnh map (không HUD / chữ thông báo) — chờ
+		# vài frame cho ánh sáng và camera theo kịp chỗ tỉnh dậy.
+		for i: int in SNAPSHOT_SETTLE_FRAMES:
+			await get_tree().process_frame
+		var snapshot: Image = await saves.call(&"capture_world_thumbnail")
 		saves.call(&"autosave", snapshot)
 	if overlay != null:
 		await overlay.show_title(("Ngày %d" % day) if not fainted_now else "Bạn ngất vì thức quá khuya — Ngày %d" % day, settings.title_time)

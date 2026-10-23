@@ -1,8 +1,9 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene format=3]
 
 [ext_resource type="Script" path="res://features/gathering/resource_node.gd" id="1_node"]
 [ext_resource type="Resource" path="res://features/gathering/data/berry_bush.tres" id="2_def"]
 [ext_resource type="PackedScene" path="res://world/environment/props/bush_b.tscn" id="3_prop"]
+[ext_resource type="Script" path="res://core/object_art/object_sprite.gd" id="4_sprite"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_point"]
 radius = 14.0
@@ -16,32 +17,13 @@ definition = ExtResource("2_def")
 
 [node name="Bush" parent="." instance=ExtResource("3_prop")]
 
-[node name="Available" type="Node2D" parent="."]
+[node name="Visual" parent="Bush" index="1"]
+visible = false
 
-[node name="Berry1" type="Polygon2D" parent="Available"]
-position = Vector2(-16, -30)
-color = Color(0.82, 0.12, 0.2, 1)
-polygon = PackedVector2Array(-3, 0, -2, -2, 0, -3, 2, -2, 3, 0, 2, 2, 0, 3, -2, 2)
-
-[node name="Berry2" type="Polygon2D" parent="Available"]
-position = Vector2(-4, -40)
-color = Color(0.9, 0.18, 0.28, 1)
-polygon = PackedVector2Array(-3, 0, -2, -2, 0, -3, 2, -2, 3, 0, 2, 2, 0, 3, -2, 2)
-
-[node name="Berry3" type="Polygon2D" parent="Available"]
-position = Vector2(10, -27)
-color = Color(0.82, 0.12, 0.2, 1)
-polygon = PackedVector2Array(-3, 0, -2, -2, 0, -3, 2, -2, 3, 0, 2, 2, 0, 3, -2, 2)
-
-[node name="Berry4" type="Polygon2D" parent="Available"]
-position = Vector2(18, -38)
-color = Color(0.7, 0.1, 0.25, 1)
-polygon = PackedVector2Array(-3, 0, -2, -2, 0, -3, 2, -2, 3, 0, 2, 2, 0, 3, -2, 2)
-
-[node name="Berry5" type="Polygon2D" parent="Available"]
-position = Vector2(2, -22)
-color = Color(0.9, 0.18, 0.28, 1)
-polygon = PackedVector2Array(-3, 0, -2, -2, 0, -3, 2, -2, 3, 0, 2, 2, 0, 3, -2, 2)
+[node name="Sprite" type="Sprite2D" parent="."]
+script = ExtResource("4_sprite")
+asset = &"berry_bush"
+state = &"full"
 
 [node name="InteractionShape" type="CollisionShape2D" parent="."]
 shape = SubResource("CircleShape2D_point")

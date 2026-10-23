@@ -267,7 +267,7 @@ func _spawn_one(entry: SpawnEntry, point: Vector2, tier: int, pack: EnemyPack, s
 	if ground_squash < 1.0:
 		var adapter: IsoActorAdapter = IsoActorAdapter.new()
 		adapter.name = "IsoActorAdapter"
-		adapter.shadow = enemy.get_node_or_null(^"Visual/Shadow") as Polygon2D
+		adapter.shadow = enemy.get_node_or_null(^"Visual/Shadow") as Node2D
 		adapter.body_shape = enemy.get_node_or_null(^"CollisionShape2D") as CollisionShape2D
 		enemy.add_child(adapter)
 	var parent: Node2D = container if container != null else get_parent() as Node2D

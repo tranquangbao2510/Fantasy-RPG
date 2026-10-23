@@ -10,7 +10,8 @@ extends Node
 ## - Collision thân: ellipse dẹt 2:1.
 ## Hướng nhìn và đòn đánh vẫn theo con trỏ chuột trên màn hình.
 
-@export var shadow: Polygon2D
+## Bóng ellipse tại chân: Polygon2D (enemy placeholder) hoặc ObjectShadow (bù nhìn, TASK M7) — đều có `polygon`.
+@export var shadow: Node2D
 @export var facing_pivot: Node2D
 @export var body_shape: CollisionShape2D
 @export var shadow_radius: float = 11.0
@@ -41,7 +42,7 @@ func _ready() -> void:
 	if actor.has_method(&"set_ground_squash"):
 		actor.call(&"set_ground_squash", IsoProjection.GROUND_SQUASH)
 	if shadow != null:
-		shadow.polygon = IsoProjection.ground_ellipse(Vector2(2, 1), shadow_radius)
+		shadow.set(&"polygon", IsoProjection.ground_ellipse(Vector2(2, 1), shadow_radius))
 	if facing_pivot != null:
 		# Hoãn tới sau _ready của actor: actor lấy tham chiếu FacingPivot theo đường dẫn trong _ready của nó.
 		_move_marker_to_ground.call_deferred()

@@ -1,0 +1,478 @@
+{
+	"version": 1,
+	"generated_by": "tools/object_art/generate_object_art.gd",
+	"texel_scale": 0.5,
+	"margin": 4,
+	"assets": {
+		"workbench": {
+			"dir": "res://features/crafting/stations/art",
+			"size": [
+				120,
+				96
+			],
+			"anchor": [
+				60,
+				76
+			],
+			"footprint": {
+				"center": [
+					0.0,
+					-4.0
+				],
+				"width": 40.0
+			},
+			"height": 22.0,
+			"code_shadow": true,
+			"states": {
+				"default": "workbench.png"
+			}
+		},
+		"campfire": {
+			"dir": "res://features/crafting/stations/art",
+			"size": [
+				88,
+				64
+			],
+			"anchor": [
+				44,
+				36
+			],
+			"footprint": {
+				"center": [
+					0.0,
+					0.0
+				],
+				"width": 28.0
+			},
+			"height": 8.0,
+			"code_shadow": true,
+			"states": {
+				"default": "campfire.png"
+			}
+		},
+		"stone_mill": {
+			"dir": "res://features/crafting/stations/art",
+			"size": [
+				88,
+				92
+			],
+			"anchor": [
+				44,
+				72
+			],
+			"footprint": {
+				"center": [
+					0.0,
+					-3.0
+				],
+				"width": 24.0
+			},
+			"height": 22.0,
+			"code_shadow": true,
+			"states": {
+				"default": "stone_mill.png"
+			}
+		},
+		"chest": {
+			"dir": "res://features/inventory/chest/art",
+			"size": [
+				88,
+				92
+			],
+			"anchor": [
+				44,
+				76
+			],
+			"footprint": {
+				"center": [
+					0.0,
+					-4.0
+				],
+				"width": 30.0
+			},
+			"height": 24.0,
+			"code_shadow": true,
+			"states": {
+				"closed": "chest_closed.png",
+				"open": "chest_open.png"
+			}
+		},
+		"bed": {
+			"dir": "res://features/survival/rest/art",
+			"size": [
+				120,
+				76
+			],
+			"anchor": [
+				60,
+				60
+			],
+			"footprint": {
+				"center": [
+					0.0,
+					-4.0
+				],
+				"width": 40.0
+			},
+			"height": 17.0,
+			"code_shadow": true,
+			"states": {
+				"default": "bed.png"
+			}
+		},
+		"tent": {
+			"dir": "res://features/survival/rest/art",
+			"size": [
+				120,
+				116
+			],
+			"anchor": [
+				60,
+				100
+			],
+			"footprint": {
+				"center": [
+					0.0,
+					0.0
+				],
+				"width": 40.0
+			},
+			"height": 28.0,
+			"code_shadow": true,
+			"states": {
+				"default": "tent.png"
+			}
+		},
+		"notice_board": {
+			"dir": "res://features/interaction/examples/art",
+			"size": [
+				104,
+				108
+			],
+			"anchor": [
+				52,
+				96
+			],
+			"footprint": {
+				"center": [
+					0.0,
+					-2.0
+				],
+				"width": 28.0
+			},
+			"height": 38.0,
+			"code_shadow": true,
+			"states": {
+				"default": "notice_board.png"
+			}
+		},
+		"class_training_station": {
+			"dir": "res://features/classes/station/art",
+			"size": [
+				104,
+				104
+			],
+			"anchor": [
+				52,
+				92
+			],
+			"footprint": {
+				"center": [
+					0.0,
+					-3.0
+				],
+				"width": 22.0
+			},
+			"height": 34.0,
+			"code_shadow": true,
+			"states": {
+				"default": "class_training_station.png"
+			}
+		},
+		"death_bag": {
+			"dir": "res://features/survival/death/art",
+			"size": [
+				72,
+				64
+			],
+			"anchor": [
+				36,
+				52
+			],
+			"footprint": {
+				"center": [
+					0.0,
+					0.0
+				],
+				"width": 20.0
+			},
+			"height": 17.0,
+			"code_shadow": true,
+			"states": {
+				"default": "death_bag.png"
+			}
+		},
+		"training_dummy": {
+			"dir": "res://entities/enemies/training_dummy/art",
+			"size": [
+				96,
+				108
+			],
+			"anchor": [
+				48,
+				96
+			],
+			"footprint": {
+				"center": [
+					0.0,
+					-2.0
+				],
+				"width": 16.0
+			},
+			"height": 38.0,
+			"code_shadow": true,
+			"states": {
+				"default": "training_dummy.png"
+			}
+		},
+		"tree_stump": {
+			"dir": "res://features/gathering/nodes/art",
+			"size": [
+				80,
+				64
+			],
+			"anchor": [
+				40,
+				48
+			],
+			"footprint": {
+				"center": [
+					0.0,
+					0.0
+				],
+				"width": 20.0
+			},
+			"height": 12.0,
+			"code_shadow": true,
+			"states": {
+				"default": "tree_stump.png"
+			}
+		},
+		"rock_node": {
+			"dir": "res://features/gathering/nodes/art",
+			"size": [
+				128,
+				104
+			],
+			"anchor": [
+				64,
+				88
+			],
+			"footprint": {
+				"center": [
+					0.0,
+					-7.0
+				],
+				"width": 40.0
+			},
+			"height": 34.0,
+			"code_shadow": false,
+			"states": {
+				"full": "rock_node_full.png",
+				"depleted": "rock_node_depleted.png"
+			}
+		},
+		"berry_bush": {
+			"dir": "res://features/gathering/nodes/art",
+			"size": [
+				168,
+				136
+			],
+			"anchor": [
+				84,
+				120
+			],
+			"footprint": {
+				"center": [
+					0.0,
+					-6.0
+				],
+				"width": 51.0
+			},
+			"height": 50.0,
+			"code_shadow": false,
+			"states": {
+				"full": "berry_bush_full.png",
+				"depleted": "berry_bush_depleted.png"
+			}
+		},
+		"wild_potato": {
+			"dir": "res://features/gathering/nodes/art",
+			"size": [
+				80,
+				76
+			],
+			"anchor": [
+				40,
+				60
+			],
+			"footprint": {
+				"center": [
+					0.0,
+					0.0
+				],
+				"width": 24.0
+			},
+			"height": 20.0,
+			"code_shadow": true,
+			"states": {
+				"full": "wild_potato_full.png",
+				"depleted": "wild_potato_depleted.png"
+			}
+		},
+		"soil_tilled": {
+			"dir": "res://features/farming/art",
+			"size": [
+				144,
+				80
+			],
+			"anchor": [
+				72,
+				40
+			],
+			"footprint": {
+				"center": [
+					0.0,
+					0.0
+				],
+				"width": 64.0
+			},
+			"height": 0.0,
+			"code_shadow": false,
+			"states": {
+				"default": "soil_tilled.png"
+			}
+		},
+		"crop_wheat": {
+			"dir": "res://features/farming/art",
+			"size": [
+				144,
+				120
+			],
+			"anchor": [
+				72,
+				92
+			],
+			"footprint": {
+				"center": [
+					0.0,
+					0.0
+				],
+				"width": 64.0
+			},
+			"height": 20.0,
+			"code_shadow": false,
+			"states": {
+				"stage_0": "crop_wheat_stage_0.png",
+				"stage_1": "crop_wheat_stage_1.png",
+				"stage_2": "crop_wheat_stage_2.png",
+				"stage_3": "crop_wheat_stage_3.png"
+			}
+		},
+		"crop_potato": {
+			"dir": "res://features/farming/art",
+			"size": [
+				144,
+				120
+			],
+			"anchor": [
+				72,
+				92
+			],
+			"footprint": {
+				"center": [
+					0.0,
+					0.0
+				],
+				"width": 64.0
+			},
+			"height": 12.0,
+			"code_shadow": false,
+			"states": {
+				"stage_0": "crop_potato_stage_0.png",
+				"stage_1": "crop_potato_stage_1.png",
+				"stage_2": "crop_potato_stage_2.png",
+				"stage_3": "crop_potato_stage_3.png"
+			}
+		},
+		"crop_berry_bush": {
+			"dir": "res://features/farming/art",
+			"size": [
+				144,
+				120
+			],
+			"anchor": [
+				72,
+				92
+			],
+			"footprint": {
+				"center": [
+					0.0,
+					0.0
+				],
+				"width": 64.0
+			},
+			"height": 16.0,
+			"code_shadow": false,
+			"states": {
+				"stage_0": "crop_berry_bush_stage_0.png",
+				"stage_1": "crop_berry_bush_stage_1.png",
+				"stage_2": "crop_berry_bush_stage_2.png",
+				"stage_3": "crop_berry_bush_stage_3.png"
+			}
+		}
+	},
+	"icons": {
+		"dir": "res://features/items/icons",
+		"size": 128,
+		"items": [
+			"wood",
+			"stone",
+			"herb",
+			"berry",
+			"raw_meat",
+			"test_sword",
+			"test_dagger",
+			"test_heavy",
+			"test_helmet",
+			"ancient_relic",
+			"bread",
+			"grilled_meat",
+			"lantern",
+			"tent",
+			"branch",
+			"fiber",
+			"stone_axe",
+			"stone_pickaxe",
+			"torch",
+			"bandage",
+			"campfire",
+			"roasted_berry",
+			"hide",
+			"bone",
+			"shadow_essence",
+			"bone_spear",
+			"leather_armor",
+			"essence_torch",
+			"stone_hoe",
+			"watering_can",
+			"stone_mill",
+			"wheat_seed",
+			"wheat",
+			"flour",
+			"seed_potato",
+			"potato",
+			"roasted_potato"
+		]
+	}
+}

@@ -6,7 +6,8 @@ extends Interactable
 ## nhiều lần: không phải nhặt thêm từng món, không lạc đồ trong bóng tối, không thêm vật phẩm rơi vào save.
 ## Con của ResourceNodeLayer (đếm ngày mọc lại + lưu trạng thái). Cấu trúc scene:
 ## - `Available` (Node2D): hình khi còn tài nguyên (cây, quả mọng...) — có thể chứa thân va chạm (tắt khi bị phá);
-## - `Depleted` (Node2D, tùy chọn): hình khi đã bị phá (gốc cây, đá vụn).
+## - `Depleted` (Node2D, tùy chọn): hình khi đã bị phá (gốc cây, đá vụn);
+## - `Sprite` (ObjectSprite, tùy chọn — TASK M7): ảnh có hai trạng thái `full` / `depleted` (đá, bụi mọng, khoai dại).
 
 ## Một lần khai thác / nhặt xong — `stacks` là đồ đã nhận.
 signal harvested(node: ResourceNode, stacks: Array[ItemStack])
@@ -32,6 +33,7 @@ var _actor: Node2D
 
 @onready var _available: Node2D = get_node_or_null(^"Available") as Node2D
 @onready var _depleted: Node2D = get_node_or_null(^"Depleted") as Node2D
+@onready var _sprite: ObjectSprite = get_node_or_null(^"Sprite") as ObjectSprite
 
 
 func _ready() -> void:
@@ -182,6 +184,8 @@ func _apply_visual() -> void:
 				shape.set_deferred(&"disabled", depleted and definition != null and definition.depletes)
 	if _depleted != null:
 		_depleted.visible = depleted
+	if _sprite != null:
+		_sprite.set_state(&"depleted" if depleted else &"full")
 
 
 func _has_required_tool(actor: Node2D) -> bool:

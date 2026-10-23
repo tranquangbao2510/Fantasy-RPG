@@ -209,7 +209,7 @@ func _process_day(day: int) -> void:
 	var rained: bool = rain_hook.is_valid() and bool(rain_hook.call(day - 1))
 	for plot: FarmPlot in get_plots():
 		if plot.advance_day(day, dry_days_to_die, fallow_days_to_grass, rained):
-			plot.queue_redraw()
+			plot.refresh_visual()
 			plot.changed.emit(plot)
 	day_processed.emit(day)
 

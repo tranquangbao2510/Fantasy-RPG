@@ -24,10 +24,19 @@ Chạy từ thư mục gốc project (Godot 4.7.2 console):
    Ghi đè entities/player/art/hero_sprite_frames.tres. Kiểm tra:
      Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tests/player/test_player_sprite.gd
 
-5. Sinh icon placeholder cho item (M1; ô màu theo loại + chữ cái đầu) từ features/items/data/item_database.tres:
-     Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tools/item_icons/generate_item_icons.gd
-   Ghi đè features/items/icons/<id>.png (chỉ một số item: biến môi trường ICON_ONLY=wood,stone). Sau đó --import,
-   bật mipmaps/generate trong .import của icon mới và gán `icon` cho item. Icon thật: thay PNG cùng tên, đừng chạy lại tool.
+5. Sinh ảnh đồ vật gameplay + icon item (TASK M7, art đợt 2 — thay tools/item_icons/ của M1):
+     Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tools/object_art/generate_object_art.gd
+   KHÔNG ghi đè ảnh đã có (art thật): chỉ ghi ảnh game (art/ cạnh scene) và icon (features/items/icons/<id>.png, 128×128)
+   khi file CHƯA tồn tại. Ghi đè có chủ đích: thêm sau "--" cờ --force với tên cụ thể (tên file không đuôi; icon: icon:<id>):
+     ... generate_object_art.gd -- --force chest_closed,icon:wood
+   Chỉ xử lý vài asset: --only chest,crop_wheat,icon:wood · Ảnh lưới mọi khuôn: --sheet res://docs/reports/M7/templates_grid.png
+   Luôn sinh lại: khuôn hướng dẫn tools/object_art/templates/<file>.png (thoi footprint, khung chiều cao, chữ thập neo,
+   bóng code) và core/object_art/object_art.json (ObjectSprite đọc lúc chạy). Thêm cây trồng / giai đoạn trong
+   features/farming/data/*.tres → chạy lại tool để có ảnh + khuôn mới. Kích thước / quy trình: style guide mục 13.
+   Sau đó --import; file mới phải bật mipmaps/generate=true trong .import (rồi --import lại).
+   Nguồn hình placeholder: tools/object_art/object_shapes.gd (trích một lần từ Polygon2D cũ bằng extract_shapes.gd).
+   Ảnh so sánh trước / sau (CÓ CỬA SỔ; CAPTURE_TAG=before|after, COMPARE=1 để so):
+     Godot_v4.7.2-stable_win64_console.exe --path . --script res://tools/object_art/capture_gallery.gd --resolution 1152x648
 
 6. Đo FPS có render của ruộng trồng trọt (TASK M5): ngày / đêm / đêm + 24 ô đầy cây / đêm + 24 ô đầy cây + 15 quái.
    Chạy CÓ CỬA SỔ (không --headless), tắt vsync trong script:

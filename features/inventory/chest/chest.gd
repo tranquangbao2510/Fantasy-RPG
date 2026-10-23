@@ -14,8 +14,7 @@ signal open_requested(chest: Chest)
 var _is_open: bool = false
 
 @onready var _inventory: Inventory = $Inventory
-@onready var _closed_visual: Node2D = $Visual/Closed
-@onready var _open_visual: Node2D = $Visual/Open
+@onready var _sprite: ObjectSprite = $Visual/Sprite
 
 
 func _ready() -> void:
@@ -52,8 +51,7 @@ func _perform_interaction(_actor: Node2D) -> String:
 
 
 func _update_visual() -> void:
-	_closed_visual.visible = not _is_open
-	_open_visual.visible = _is_open
+	_sprite.set_state(&"open" if _is_open else &"closed")
 
 
 # --- Save ----------------------------------------------------------------------------------------

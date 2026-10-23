@@ -18,7 +18,7 @@ Mã nguồn được tổ chức theo **tính năng** (feature) thay vì theo lo
 |---|---|---|
 | `app/` | Main scene, khởi động và vòng đời ứng dụng | Đã triển khai (`main.tscn`, `main.gd` — màn hình tiêu đề, `art/title_background.jpg` — 2q) |
 | `docs/` | Tài liệu kỹ thuật | Đã triển khai |
-| `core/` | Thành phần kỹ thuật dùng chung, không phụ thuộc gameplay cụ thể | Đã triển khai (`app/` — AppOverlay, `input/` — InputActions + DebugKeys, `settings/` — GameSettings; 2q) |
+| `core/` | Thành phần kỹ thuật dùng chung, không phụ thuộc gameplay cụ thể | Đã triển khai (`app/` — AppOverlay, `input/` — InputActions + DebugKeys, `settings/` — GameSettings; 2q; `object_art/` — ObjectSprite, ObjectShadow, object_art.json; 2r) |
 | `features/` | Module gameplay (mỗi tính năng một thư mục con, vd. `features/combat/`) | Đã triển khai (`interaction/`, `combat/`, `character/`, `skills/`, `classes/`, `items/`, `inventory/` — 2l; `time/`, `survival/` — 2m; `gathering/`, `crafting/` — 2n; `spawning/` — 2o; `farming/` — 2p) |
 | `entities/` | Player, NPC, enemy (scene ghép từ component) | Đã triển khai (`player/`, `enemies/` — placeholder; `enemies/night/` — quái đêm, 2o) |
 | `world/` | Bản đồ, môi trường, camera | Đã triển khai (`world.tscn`, `world.gd`, `maps/test_map/`, `camera/`, `sandbox/`, `environment/` (gồm `iso/`), `environment_prototype/` — 2k, isometric; `environment/navigation/` — 2o) |
@@ -26,9 +26,9 @@ Mã nguồn được tổ chức theo **tính năng** (feature) thay vì theo lo
 | `data/` | Dữ liệu game dùng chung (`.tres` Resource) | Chưa triển khai |
 | `assets/` | Tài nguyên dùng chung (sprite, âm thanh, font) | Chưa triển khai |
 | `save/` | Logic lưu / tải game | Đã triển khai (`save_service.gd` — Autoload SaveService, 2l) |
-| `tests/` | Kiểm thử headless (SceneTree script) | Đã triển khai (`environment/`, 2k; `player/`, 2c; `inventory/`, `save/`, 2l; `survival/`, `smoke/`, 2m; `crafting/`, `gathering/`, 2n; `night/`, 2o; `farming/`, `navigation/`, 2p; `app/`, 2q; `test_base.gd` + `run_all.gd`) |
+| `tests/` | Kiểm thử headless (SceneTree script) | Đã triển khai (`environment/`, 2k; `player/`, 2c; `inventory/`, `save/`, 2l; `survival/`, `smoke/`, 2m; `crafting/`, `gathering/`, 2n; `night/`, 2o; `farming/`, `navigation/`, 2p; `app/`, 2q; `polish/`, M6.1; `art/`, 2r; `test_base.gd` + `run_all.gd`) |
 | `addons/` | Plugin bên thứ ba (chỉ khi thật sự cần) | Chưa triển khai |
-| `tools/` | Công cụ phát triển chạy ngoài game (có `.gdignore`), vd. sinh placeholder art | Đã triển khai (`placeholder_art/`, 2k; `player_sprites/`, 2c; `item_icons/`, 2l; `perf/`, 2p; `title/`, `playtest/`, 2q) |
+| `tools/` | Công cụ phát triển chạy ngoài game (có `.gdignore`), vd. sinh placeholder art | Đã triển khai (`placeholder_art/`, 2k; `player_sprites/`, 2c; `perf/`, 2p; `title/`, `playtest/`, 2q; `object_art/` — thay `item_icons/` của 2l, 2r) |
 
 Thư mục chỉ được tạo khi có nội dung thực tế. Không tạo thư mục, script hoặc class rỗng để "giữ chỗ".
 
@@ -169,7 +169,7 @@ Player (CharacterBody2D, motion_mode = Floating) ── player.gd
 - `HitFlash` vẫn đổi `modulate` của `Visual` (nháy đỏ, tô xám khi chết). `WeaponVisual`/`SwingVisual` của BasicAttackController (vạch vũ khí, vùng vung đòn placeholder) vẫn vẽ.
 - `BasicAttackController.get_step(index)` (mới, chỉ đọc) để visual đọc nhịp bước.
 - **Kiểm thử:** `tests/player/test_player_sprite.gd` — 53 ca: SpriteFrames đủ 72 animation khớp JSON, anchor chung, sheet có mipmaps, nhân vật cao 39 px world; 8 vector mặt đất → đúng hàng (iso + map cũ), làm tròn; idle/run/walk theo phím; attack_1/2/3 tua khớp từng bước của Sword/Dagger/Heavy và tới frame cuối đúng lúc hết recovery; cast tua theo cast time, hủy cast; hit không chặn di chuyển, không ngắt đòn; death giữ frame cuối, reset về idle_S; map cũ squash 1.
-- **Giới hạn:** kiếm chỉ có trong `attack_1/2/3` (vẽ liền trong sheet, chưa có lớp vũ khí tách riêng; đổi vũ khí không đổi hình); `run`/`walk` phát ở fps gốc, không khớp sải chân với tốc độ thật; Player chỉ có một tốc độ nên bình thường luôn `run`; enemy/bù nhìn vẫn là polygon.
+- **Giới hạn:** kiếm chỉ có trong `attack_1/2/3` (vẽ liền trong sheet, chưa có lớp vũ khí tách riêng; đổi vũ khí không đổi hình); `run`/`walk` phát ở fps gốc, không khớp sải chân với tốc độ thật; Player chỉ có một tốc độ nên bình thường luôn `run`; enemy vẫn là polygon (bù nhìn: ảnh PNG từ TASK M7 — 2r).
 
 ## 2d. Camera — GameCamera [Đã triển khai]
 
@@ -626,7 +626,7 @@ Mốc M1 của lộ trình ([design/game_design.md](design/game_design.md) mục
 
 ```
 features/items/      item_definition.gd (ItemDefinition), item_database.gd (ItemDatabase), item_stack.gd (ItemStack)
-                     data/ (10 item thử + item_database.tres), icons/ (placeholder sinh bằng tools/item_icons/)
+                     data/ (10 item thử + item_database.tres), icons/ (placeholder 128 × 128 sinh bằng tools/object_art/ — 2r; M1: 64 × 64, tools/item_icons/)
 features/inventory/  inventory.gd (Inventory), equipment_slots.gd (EquipmentSlots)
                      pickup/ item_pickup.gd/.tscn (ItemPickup), item_pickup_layer.gd (ItemPickupLayer)
                      chest/  chest.gd/.tscn (Chest)
@@ -635,7 +635,7 @@ save/                save_service.gd — Autoload `SaveService` (duy nhất tron
 world/maps/          map_catalog.gd/.tres (MapCatalog: map_id → scene)
 ```
 
-**Item data** — `ItemDefinition` (Resource): `id`, `display_name`, `description`, `icon`, `category` (MATERIAL, FOOD, TOOL, WEAPON, ARMOR, SEED, QUEST, MISC), `max_stack`, `sell_price`, `tags`, `equip_slot` (`&"weapon"` / `&"head"` / rỗng), `weapon` (WeaponDefinition có sẵn, cho item vũ khí). `get_validation_errors()`: id/tên rỗng, max_stack < 1, item vũ khí thiếu weapon, item trang bị phải max_stack 1. `ItemDatabase` (Resource, **không phải Autoload** — gán bằng export cho Inventory, EquipmentSlots, pickup layer, như ClassManager nhận danh sách class): `get_item(id)`, `get_max_stack(id)`, `find_by_weapon(weapon)`; index dựng ở lần tra đầu, lúc đó `push_error` mọi lỗi (item null, item lỗi, **id trùng**, **id thiếu**); item lỗi/trùng không vào index. Item thử: gỗ, đá, thảo dược, quả mọng, thịt sống, 3 vũ khí (item id = weapon_id: test_sword/dagger/heavy), mũ thử, mảnh cổ vật (quest). Icon placeholder: `tools/item_icons/generate_item_icons.gd` (ô màu theo loại + chữ cái đầu, font bitmap 5×7 trong code).
+**Item data** — `ItemDefinition` (Resource): `id`, `display_name`, `description`, `icon`, `category` (MATERIAL, FOOD, TOOL, WEAPON, ARMOR, SEED, QUEST, MISC), `max_stack`, `sell_price`, `tags`, `equip_slot` (`&"weapon"` / `&"head"` / rỗng), `weapon` (WeaponDefinition có sẵn, cho item vũ khí). `get_validation_errors()`: id/tên rỗng, max_stack < 1, item vũ khí thiếu weapon, item trang bị phải max_stack 1. `ItemDatabase` (Resource, **không phải Autoload** — gán bằng export cho Inventory, EquipmentSlots, pickup layer, như ClassManager nhận danh sách class): `get_item(id)`, `get_max_stack(id)`, `find_by_weapon(weapon)`; index dựng ở lần tra đầu, lúc đó `push_error` mọi lỗi (item null, item lỗi, **id trùng**, **id thiếu**); item lỗi/trùng không vào index. Item thử: gỗ, đá, thảo dược, quả mọng, thịt sống, 3 vũ khí (item id = weapon_id: test_sword/dagger/heavy), mũ thử, mảnh cổ vật (quest). Icon placeholder: ô màu theo loại + chữ cái đầu (font bitmap 5×7 trong code) — M1 sinh bằng `tools/item_icons/` (64 × 64), TASK M7 chuyển sang `tools/object_art/generate_object_art.gd` (128 × 128, không ghi đè icon thật — 2r).
 
 **Inventory** (Node component, logic thuần, không biết UI) — N ô (`size`), mỗi ô `ItemStack` (`item_id`, `count`, `data` dự phòng độ bền…; chỉ gộp khi cùng id + cùng data) hoặc trống. API: `add(id, n) -> số dư` (lấp stack cũ trước, rồi ô trống), `add_stack`, `add_to_slot`, `remove(id, n) -> số đã bớt`, `remove_at(slot, n)`, `replace_at`, `move` (trống → chuyển, cùng loại → gộp, khác → đổi chỗ), `swap`, `merge`, `split(slot, n)` / `split_half`, `transfer_to(slot, other, slot)` (rương ↔ túi), `quick_transfer(slot, other)`, `has`, `count_of`, `space_for`, `first_empty_slot`, `is_full`; signal `changed` (một lần mỗi thao tác). Getter trả bản sao. `to_dict()` / `load_dict()` (bỏ qua có cảnh báo: item không tồn tại, ô ngoài phạm vi/trùng; kẹp theo max_stack). Player: 24 ô; rương: 20 ô.
 
@@ -845,7 +845,7 @@ ui/crafting/         crafting_window.gd/.tscn (CraftingWindow — chế tạo + 
 **Kiểm thử** — `tests/crafting/test_crafting.gd` (40 ca, logic thuần: dữ liệu hợp lệ, trạm, thiếu nguyên liệu không trừ đồ, túi đầy chặn / nguyên liệu nhường ô, độ bền vỡ đúng lần 40, đuốc cháy hết, bảng rơi đồ, migration v2 → v3). `tests/gathering/test_gathering.gd` (92 ca, qua input thật: E, C, Esc, WASD, chuột trên cửa sổ): **vòng lặp đầy đủ** nhổ cỏ → nhặt cành → nhặt đá vụn → chế rìu (UI) → trang bị → chặt cây → chế + dựng lửa trại → giết enemy rơi thịt → nấu → ăn → đói tăng đúng; thiếu công cụ / sai công cụ không khai thác; rìu vỡ đúng lần cuối; thiếu nguyên liệu đỏ + nút khóa + không trừ; túi đầy chặn; bàn chế tạo; node mọc lại đúng ngày kể cả sau save/load; lửa trại hết giờ → ánh sáng tắt, nhóm lại, chặn đường, chỗ dựng sai, giới hạn/map; chồng sáng không cháy trắng (Mix); đuốc; 5 túi đồ + túi rỗng; CombatHUD không có thuộc tính offset/anchor ghi đè trong scene Glade + nằm trong màn hình; lời nhắc [E] không chạm dòng gợi ý phím; tải save v1, v2.
 **Hiệu năng** (đêm + 5 lửa trại + đuốc): máy dev (AMD Radeon tích hợp, vsync tắt, bản Add trước khi sửa) 79 FPS. Môi trường CI không có GPU (Mesa llvmpipe, render bằng CPU, 1152×648) chỉ để so tương đối: ngày 16.7, đêm 9.3, đêm + 5 lửa + đuốc 4.2 FPS; Add và Mix bằng nhau. Cần đo lại trên máy dev sau khi đổi Mix.
 
-**Giới hạn:** hình node tài nguyên, bàn chế tạo, lửa trại là polygon placeholder; chưa có animation khai thác (mỗi lần E là một nhát); chế tạo tức thì; công cụ chỉ có cấp đá, chưa có liềm; đổi vũ khí ↔ công cụ phải qua túi đồ (chưa có hotbar); bàn chế tạo di động **không làm** (theo task); lửa trại không lan cháy, không gây sát thương; vùng sáng vẫn là hình tròn trên mặt đất, không có bóng đổ; đuốc không thả xuống đất / cắm được; enemy rơi thịt theo bảng cố định, chưa có thú săn (M4); node tài nguyên chỉ đặt tay trong Glade (chưa sinh ngẫu nhiên, chưa có map phụ); FPS sau khi đổi Mix chưa đo trên máy có GPU (TASK M4 thay Mix bằng NightOverlay, đo lại: đêm + 5 lửa trại + đuốc 278 FPS — 2o).
+**Giới hạn:** hình node tài nguyên, bàn chế tạo, lửa trại là polygon placeholder (TASK M7: ảnh PNG placeholder — 2r); chưa có animation khai thác (mỗi lần E là một nhát); chế tạo tức thì; công cụ chỉ có cấp đá, chưa có liềm; đổi vũ khí ↔ công cụ phải qua túi đồ (chưa có hotbar); bàn chế tạo di động **không làm** (theo task); lửa trại không lan cháy, không gây sát thương; vùng sáng vẫn là hình tròn trên mặt đất, không có bóng đổ; đuốc không thả xuống đất / cắm được; enemy rơi thịt theo bảng cố định, chưa có thú săn (M4); node tài nguyên chỉ đặt tay trong Glade (chưa sinh ngẫu nhiên, chưa có map phụ); FPS sau khi đổi Mix chưa đo trên máy có GPU (TASK M4 thay Mix bằng NightOverlay, đo lại: đêm + 5 lửa trại + đuốc 278 FPS — 2o).
 
 ## 2o. Đêm nguy hiểm: quái đêm, spawn, giáp, save v4 [Đã triển khai, prototype — TASK M4]
 
@@ -964,7 +964,7 @@ Tưới → đất ướt tới hết ngày đó (ướt = `watered_day` == ngà
 
 **Cối đá** — item `stone_mill` (deploy như lửa trại: trước mặt 26 px, có thân va chạm, tối đa 2 / map) với `ItemDefinition.deploy_home_radius` 160 (mới): phải đặt cách giường nhà (`SleepController.get_home_spot()`) ≤ 160 px mặt đất — "Cối đá phải đặt trong nhà (gần giường)." Trạm `MILL` (dùng trong 64 px); E → cửa sổ chế tạo (nút "Xay").
 
-**Hình placeholder** — cây vẽ trong `FarmPlot._draw` (lá tam giác theo `stage_colors[giai đoạn]`, cao dần tới `mature_height`; chín thêm bông / củ / quả `fruit_color`), Y-sort cùng Player. Đất vẽ ở lớp `Soil` (z −1) của FarmField: viền vùng ruộng, ô cày **khô màu đất sáng / ướt màu sẫm**, 2 luống.
+**Hình placeholder** — (TASK M7: chuyển sang ảnh PNG, cùng hình — 2r.) Cây vẽ trong `FarmPlot._draw` (lá tam giác theo `stage_colors[giai đoạn]`, cao dần tới `mature_height`; chín thêm bông / củ / quả `fruit_color`), Y-sort cùng Player. Đất vẽ ở lớp `Soil` (z −1) của FarmField: viền vùng ruộng, ô cày **khô màu đất sáng / ướt màu sẫm**, 2 luống.
 
 **Bảng cây trồng** (`features/farming/data/`; ngày = số lần qua 6:00 được tưới hôm trước):
 
@@ -1106,6 +1106,50 @@ Rương và cối đá không phải dời: rương nằm ngoài vùng, cối đ
 - **Ảnh nhỏ bản tự lưu khi ngủ**: `SaveService.capture_world_thumbnail()` vẽ một lần vào SubViewport dùng chung `world_2d` + canvas transform của màn hình → chỉ có cảnh map (HUD, chữ thông báo, màn tối là CanvasLayer nên không vào ảnh). `SleepController` chụp sau khi đã nhảy giờ sang 6:00 (chờ 3 frame), lúc màn còn tối.
 - Tán cây (`tree_oak_a/b`, `tree_pine`) mờ còn `faded_alpha` 0.2 (trước 0.45) khi người chơi đứng sau. Ô tích / công tắc trong menu dùng icon vẽ bằng code có viền (`MenuUI.style_check`).
 - Kiểm thử: `tests/polish/test_m6_1_fixes.gd` (25 ca) + các ca thoát / truy đuổi trong `test_app_shell.gd`.
+
+## 2r. Art đợt 2: đồ vật gameplay + icon đọc từ PNG [Đã triển khai — TASK M7]
+
+Mọi đồ vật gameplay trước đây vẽ bằng Polygon2D (hoặc `_draw`) giờ là **Sprite2D đọc file PNG**. Ảnh hiện tại vẫn là placeholder: tool vẽ lại đúng hình polygon cũ ở 2 texel / px nên game nhìn như trước (so sánh ảnh chụp ở báo cáo M7). Thay art = ghi đè PNG cùng tên, cùng kích thước (quy trình như môi trường, style guide mục 11.1). Kích thước, anchor, footprint từng món: style guide **mục 13**; danh sách gen + prompt: `docs/visual/art_requests_batch2.md`.
+
+```
+core/object_art/     object_sprite.gd (ObjectSprite), object_shadow.gd (ObjectShadow), object_art.json (sinh bởi tool)
+<feature>/art/       PNG cạnh scene: crafting/stations/art (workbench, campfire, stone_mill), inventory/chest/art,
+                     survival/rest/art (bed, tent), survival/death/art, interaction/examples/art (notice_board),
+                     classes/station/art, entities/enemies/training_dummy/art, gathering/nodes/art (tree_stump,
+                     rock_node_*, berry_bush_*, wild_potato_*), farming/art (soil_tilled, crop_<id>_stage_<n>)
+features/items/icons/  icon 128 × 128 (M1: 64 × 64)
+tools/object_art/    generate_object_art.gd (+ canvas.gd, object_shapes.gd, extract_shapes.gd), templates/, capture_gallery.gd
+tests/art/test_object_art.gd
+```
+
+**ObjectSprite** (`@tool`, extends Sprite2D) — export `asset` + `state`; đọc `object_art.json` (nạp một lần, static): file PNG của trạng thái, `anchor` (texel) → `offset = −anchor`, `scale = texel_scale` (0.5), `centered = false`, lọc Linear Mipmap. Đổi trạng thái bằng tên: `set_state(&"open")`, `set_asset_state(asset, state)` (đổi loại cây trong ô ruộng); trạng thái không có → `push_error`, giữ ảnh cũ. JSON đọc bằng `load()` (Godot coi `.json` là resource → có trong bản export).
+
+**Bóng đổ: vẽ bằng code** — `ObjectShadow` (Node2D, `polygon` + `color`, `draw_colored_polygon`) giữ đúng hình / màu Polygon2D "Shadow" cũ. Chọn bóng code thay vì vẽ trong ảnh: mọi trạng thái của một món dùng chung một bóng (rương đóng / mở, node còn / hết); art gen AI không phải khớp hình bóng; prop môi trường cũng tách bóng thành lớp riêng; `IsoActorAdapter.shadow` (đổi kiểu `Polygon2D` → `Node2D`, đặt `polygon` qua `set`) vẫn đặt lại bóng ellipse cho bù nhìn ở Glade như với enemy.
+
+**Scene đã đổi** (collision, vùng tương tác, Y-sort, ElevationAgent giữ nguyên):
+
+| Scene | Visual mới | Ghi chú |
+|---|---|---|
+| workbench, stone_mill, bed, tent, notice_board, class_training_station, death_bag | `Visual/Shadow` (ObjectShadow) + `Visual/Sprite` (ObjectSprite) | |
+| campfire | như trên | ngọn lửa (`Flame`, AmbientDrift + 2 Polygon2D) **giữ hiệu ứng code**, dời ra khỏi Visual thành con trực tiếp của Campfire (thứ tự vẽ không đổi); `campfire.gd` lấy `$Flame` |
+| chest, test_chest (test_map) | Sprite `chest`, state `closed` / `open` | `Chest._update_visual()` → `set_state`. Trạng thái mở không lưu (như trước: chỉ mở khi đang xem rương) |
+| training_dummy | Sprite `training_dummy` | `training_dummy.gd`: `HealthComponent.damaged` → Sprite rung ngang (biên độ 2 px, 0.25 s, tween), bóng đứng yên; `is_shaking()` |
+| tree_node | `Depleted` = Shadow + Sprite `tree_stump` | cây còn nguyên vẫn là prop `tree_oak_a` (không đổi) |
+| rock_node, berry_bush_node | prop `rock_small` / `bush_b` giữ lại (collision + bóng mềm) nhưng ẩn `Visual` của prop; Sprite `rock_node` / `berry_bush` `full` / `depleted` | ảnh `full` / `depleted` hiện là bản sao ảnh prop (± quả mọng) → giống hệt, có thể gen riêng |
+| wild_potato_node | `Available` = bóng, Sprite `wild_potato` `full` / `depleted` | |
+| item_pickup | `Shadow` → ObjectShadow; icon thu theo `icon_size` (19.2 px world, thay `icon_scale` 0.3 của icon 64) | nảy như cũ |
+
+`ResourceNode._apply_visual()`: ngoài bật / tắt `Available` / `Depleted`, nếu có con `Sprite` (ObjectSprite) thì đặt `full` / `depleted`.
+
+**Trồng trọt** — `FarmPlot` bỏ `_draw` / `clump_offsets`: con `Crop` (ObjectSprite) asset `crop_<id>`, state `stage_<giai đoạn>`; ẩn khi không có cây; `refresh_visual()` (FarmLayer gọi sau `advance_day`, thay `queue_redraw`). Ảnh cây phủ cả ô (4 khóm như hình cũ), neo tại tâm ô → giả định ô = 1 ô lưới iso (Glade). `FarmField`: mỗi ô có một ObjectSprite `soil_tilled` trong lớp `Soil` (z −1), hiện khi đã cày, **ướt = `modulate = wet_soil_tint`** (mặc định = màu ướt / màu khô cũ → y như trước; bỏ export `dry_soil_color`, `wet_soil_color`, `furrow_color`); viền vùng ruộng vẫn vẽ code; `get_soil_sprite(cell)`.
+
+**Tool** `tools/object_art/generate_object_art.gd` (headless): bảng `ASSETS` (thư mục, vùng vẽ `box` px world, footprint, chiều cao, trạng thái → lớp vẽ) + cây trồng đọc `CropBook` (số giai đoạn từ data). Vẽ bằng `canvas.gd` (đa giác / tròn khử răng cưa 4 × 4 mẫu, dán ảnh prop). Nguồn hình: `object_shapes.gd` — trích một lần từ Polygon2D cũ (`extract_shapes.gd`). Kích thước ảnh = box × 2 + lề 4 texel; tool báo lỗi nếu nội dung tràn lề. Ghi: ảnh game + icon (**chỉ khi file chưa có, hoặc `--force <tên>`**), khuôn hướng dẫn `templates/` + JSON (luôn ghi), ảnh lưới (`--sheet`). `OBJECT_ART_ROOT` đổi thư mục ghi (test). Thay `tools/item_icons/` (icon 128, cùng kiểu ô màu + chữ cái). File PNG mới: `--import` rồi bật `mipmaps/generate` trong `.import` (mục 10).
+
+**UI** — icon 128 hiển thị qua TextureRect lọc Linear Mipmap: ô túi đồ (đã có), ảnh kéo thả của ô túi đồ và icon trong cửa sổ chế tạo (thêm). Ô túi đồ: 38 px viewport gốc ≈ 63 px ở cửa sổ 1920 × 1080 → icon thu nhỏ ~2 lần, nét.
+
+**Kiểm thử** — `tests/art/test_object_art.gd` (40 ca, input thật E / Esc / chuột trái): mọi asset đủ PNG mọi trạng thái, kích thước khớp JSON, lề ≥ 4 texel, `.import` có mipmaps + fix_alpha_border; mọi item có icon 128 (đủ nét ở ô 1080p); mọi giai đoạn cây có ảnh riêng; không còn Polygon2D trong các scene phạm vi (trừ ngọn lửa trại); Glade: rương E → `chest_open`, Esc → `chest_closed`; khoai dại / bụi mọng (tay), đá (cuốc chim), cây (rìu) đổi ảnh khi hết; cày → ảnh đất, gieo → `stage_0`, tưới → tint ướt, qua 6:00 → `stage_1` + đất khô lại, mọi giai đoạn của 3 cây; lưu / tải giữ ảnh node, cây, đất khô / ướt, rương đóng; bù nhìn trúng đòn thật → rung, bóng đứng yên, hết rung; pickup icon 19.2 px; tool chạy thật vào thư mục tạm: lần đầu ghi, "art thật" không bị đè khi chạy lại, `--force` chỉ đè đúng tên, tên lạ → lỗi.
+
+**Giới hạn:** ảnh vẫn là placeholder (khử răng cưa nên mép hơi mềm hơn polygon cũ — lệch chỉ ở mép, xem báo cáo); ảnh cây trồng giả định ô ruộng = 1 ô lưới iso; đá / bụi mọng khai thác vẫn lấy collision + bóng mềm từ prop môi trường; quái, nhân vật, HUD chưa đổi (đợt sau).
 
 ## 3. Quy ước đặt tên [Đã quyết định]
 

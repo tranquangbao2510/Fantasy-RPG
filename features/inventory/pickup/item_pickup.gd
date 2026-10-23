@@ -10,7 +10,8 @@ extends Node2D
 @export_range(1, 999) var count: int = 1
 ## ID ổn định cho pickup đặt sẵn; rỗng = pickup sinh lúc chạy (vứt ra).
 @export var pickup_id: String = ""
-@export var icon_scale: float = 0.3
+## Cỡ icon trên đất (px world, cạnh ảnh) — icon 128 × 128 (TASK M7) thu nhỏ còn 19.2 px như icon 64 × 0.3 cũ.
+@export var icon_size: float = 19.2
 @export var bob_height: float = 2.5
 @export var bob_speed: float = 3.0
 
@@ -52,4 +53,5 @@ func refresh_icon() -> void:
 	var layer: ItemPickupLayer = get_parent() as ItemPickupLayer
 	var item: ItemDefinition = layer.database.get_item(item_id) if layer != null and layer.database != null else null
 	_icon.texture = item.icon if item != null else null
-	_icon.scale = Vector2(icon_scale, icon_scale)
+	var side: float = _icon.texture.get_width() if _icon.texture != null else icon_size
+	_icon.scale = Vector2.ONE * (icon_size / side)

@@ -28,7 +28,7 @@ var lit: bool = false
 var _clock: GameClock
 
 @onready var _light: VisionLight = $VisionLight
-@onready var _flame: Node2D = $Visual/Flame
+@onready var _flame: Node2D = $Flame
 
 
 func _ready() -> void:

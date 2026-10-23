@@ -245,6 +245,8 @@ func _add_row(recipe: RecipeDefinition) -> void:
 	icon.custom_minimum_size = Vector2(32, 32)
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	# Icon 128 × 128 (TASK M7) thu nhỏ 4 lần → cần mipmap để không răng cưa.
+	icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	row.add_child(icon)
 	var text_box: VBoxContainer = VBoxContainer.new()
 	text_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL

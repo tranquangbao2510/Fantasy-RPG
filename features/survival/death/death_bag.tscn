@@ -1,9 +1,11 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene format=3]
 
 [ext_resource type="Script" path="res://features/survival/death/death_bag.gd" id="1_bag"]
 [ext_resource type="Script" path="res://features/inventory/inventory.gd" id="2_inventory"]
 [ext_resource type="Resource" path="res://features/items/data/item_database.tres" id="3_items"]
 [ext_resource type="Script" path="res://world/environment/elevation/elevation_agent.gd" id="4_agent"]
+[ext_resource type="Script" path="res://core/object_art/object_shadow.gd" id="m7_shadow"]
+[ext_resource type="Script" path="res://core/object_art/object_sprite.gd" id="m7_sprite"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_point"]
 radius = 10.0
@@ -18,17 +20,13 @@ interaction_prompt = "Nhặt lại túi"
 
 [node name="Visual" type="Node2D" parent="."]
 
-[node name="Shadow" type="Polygon2D" parent="Visual"]
-color = Color(0, 0, 0, 0.35)
+[node name="Shadow" type="Node2D" parent="Visual"]
+script = ExtResource("m7_shadow")
 polygon = PackedVector2Array(-11, 0, -7, -3, 7, -3, 11, 0, 7, 3, -7, 3)
 
-[node name="Sack" type="Polygon2D" parent="Visual"]
-color = Color(0.5, 0.36, 0.2, 1)
-polygon = PackedVector2Array(-9, -2, -10, -10, -5, -16, 5, -16, 10, -10, 9, -2, 0, 1)
-
-[node name="Tie" type="Polygon2D" parent="Visual"]
-color = Color(0.85, 0.2, 0.2, 1)
-polygon = PackedVector2Array(-5, -17, 5, -17, 4, -14, -4, -14)
+[node name="Sprite" type="Sprite2D" parent="Visual"]
+script = ExtResource("m7_sprite")
+asset = &"death_bag"
 
 [node name="InteractionShape" type="CollisionShape2D" parent="."]
 shape = SubResource("CircleShape2D_point")

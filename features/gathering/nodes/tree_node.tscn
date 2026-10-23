@@ -1,8 +1,10 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene format=3]
 
 [ext_resource type="Script" path="res://features/gathering/resource_node.gd" id="1_node"]
 [ext_resource type="Resource" path="res://features/gathering/data/tree.tres" id="2_def"]
 [ext_resource type="PackedScene" path="res://world/environment/props/tree_oak_a.tscn" id="3_prop"]
+[ext_resource type="Script" path="res://core/object_art/object_shadow.gd" id="4_shadow"]
+[ext_resource type="Script" path="res://core/object_art/object_sprite.gd" id="5_sprite"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_point"]
 radius = 14.0
@@ -19,17 +21,14 @@ definition = ExtResource("2_def")
 [node name="Depleted" type="Node2D" parent="."]
 visible = false
 
-[node name="Shadow" type="Polygon2D" parent="Depleted"]
-color = Color(0, 0, 0, 0.3)
+[node name="Shadow" type="Node2D" parent="Depleted"]
+script = ExtResource("4_shadow")
 polygon = PackedVector2Array(-14, 0, -10, -5, 0, -7, 10, -5, 14, 0, 10, 5, 0, 7, -10, 5)
+color = Color(0, 0, 0, 0.3)
 
-[node name="Bark" type="Polygon2D" parent="Depleted"]
-color = Color(0.36, 0.24, 0.14, 1)
-polygon = PackedVector2Array(-10, 0, -10, -9, 10, -9, 10, 0, 6, 3, -6, 3)
-
-[node name="Cut" type="Polygon2D" parent="Depleted"]
-color = Color(0.78, 0.62, 0.42, 1)
-polygon = PackedVector2Array(-10, -9, -6, -12, 6, -12, 10, -9, 6, -6, -6, -6)
+[node name="Sprite" type="Sprite2D" parent="Depleted"]
+script = ExtResource("5_sprite")
+asset = &"tree_stump"
 
 [node name="InteractionShape" type="CollisionShape2D" parent="."]
 shape = SubResource("CircleShape2D_point")

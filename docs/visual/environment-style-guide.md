@@ -1,4 +1,4 @@
-# Environment Style Guide (TASK VISUAL-01 → VISUAL-02 isometric, nhân vật: CHAR-01)
+# Environment Style Guide (TASK VISUAL-01 → VISUAL-02 isometric, nhân vật: CHAR-01, đồ vật gameplay: M7)
 
 Tài liệu cho đồ họa môi trường. Mục **[provisional]** là thông số chưa được xác nhận bằng asset thật.
 
@@ -164,7 +164,7 @@ Chạy lại `generate_environment_art.gd` **sẽ ghi đè art vẽ tay** — ch
 
 ## 12. Nhân vật — sprite 8 hướng (TASK CHAR-01)
 
-Hiện chỉ Player có sprite thật; enemy/bù nhìn vẫn là polygon placeholder.
+Hiện chỉ Player có sprite thật; enemy vẫn là polygon placeholder (bù nhìn: ảnh tĩnh, mục 13).
 
 | Thông số | Giá trị |
 |---|---|
@@ -186,3 +186,42 @@ Hiện chỉ Player có sprite thật; enemy/bù nhìn vẫn là polygon placeho
 Đổi `anchor`/`frame_size` chỉ cần sinh lại `.tres` — tool đệm mọi frame về một canvas chung để điểm chân trùng nhau, `PlayerSprite` lấy offset từ metadata.
 
 **Giới hạn hiện tại:** kiếm vẽ liền trong sheet, chỉ có ở `attack_1/2/3` (chưa có lớp vũ khí tách riêng → idle/walk/run/cast tay không; đổi vũ khí không đổi hình); vạch vũ khí/vùng vung đòn placeholder vẫn vẽ chồng lên để đọc hitbox.
+
+## 13. Đồ vật gameplay (TASK M7 — art đợt 2)
+
+Trạm, đồ dựng, node khai thác, ruộng, bù nhìn và icon item là **ảnh PNG** (trước M7: Polygon2D). Hiện mọi ảnh vẫn là placeholder — hình polygon cũ vẽ lại ở 2 texel / px nên game nhìn như trước. Thay art: **ghi đè PNG cùng tên, cùng kích thước, chân vật đúng anchor** (như 11.1), không sửa scene / code.
+
+| Thông số | Giá trị |
+|---|---|
+| Mật độ texel | `texel_scale = 0.5` (2 texel / 1 px world), như môi trường + nhân vật |
+| Lề | ≥ 4 texel trong suốt quanh nội dung (tool kiểm tra, test kiểm tra) |
+| Neo | `anchor` (texel, tính từ góc trên-trái ảnh) = **điểm chạm đất** = origin của scene (Y-sort theo chân) |
+| Component | `ObjectSprite` (`core/object_art/object_sprite.gd`, Sprite2D) đọc `core/object_art/object_art.json`: file của từng trạng thái, kích thước, anchor; đổi trạng thái bằng tên (`set_state(&"open")`). Lọc Linear Mipmap |
+| Bóng đổ | **Vẽ bằng code, KHÔNG vẽ trong ảnh** — `ObjectShadow` (đa giác / ellipse 2:1 tại chân, giữ đúng hình bóng polygon cũ). Lý do: mọi trạng thái (rương đóng / mở, node còn / hết) dùng chung một bóng; art gen AI không phải khớp hình bóng; giống prop môi trường (bóng là lớp riêng); bù nhìn ở map iso vẫn được `IsoActorAdapter` đặt lại bóng như enemy. Node khai thác dùng prop môi trường (đá, bụi mọng) giữ bóng mềm `shadow_soft` của prop |
+| Import | Như mục 10: `mipmaps/generate = true`, `fix_alpha_border = true`, Lossless |
+| Khuôn | `tools/object_art/templates/<file>.png`: ảnh game + bóng code (xám) + **thoi footprint** (xanh lơ) + **khung chiều cao** (lăng trụ vàng) + **chữ thập ở anchor** (đỏ) + viền lề 4 texel (xám). Đặt art gen lên khuôn ở 50 % opacity để căn chân / đỉnh thoi. Ảnh lưới mọi khuôn: `docs/reports/M7/templates_grid.png` |
+| Tool | `tools/object_art/generate_object_art.gd` — chỉ ghi ảnh game / icon khi **file chưa tồn tại**, hoặc `--force <tên>` (xem tools/README.txt). Khuôn hướng dẫn + JSON luôn được sinh lại |
+
+Kích thước (px world so với chân vật; nhân vật Player cao ~39 px, ô lưới 64 × 32). "Footprint" = thoi 2:1 trên mặt đất (bề rộng, tâm) — khớp collision hiện có, không đổi.
+
+| Asset | File (thư mục `art/` cạnh scene) | Ảnh xuất (texel) | Anchor (texel) | Footprint (rộng @ tâm) | Cao đề xuất | Trạng thái | Ghi chú tỉ lệ |
+|---|---|---|---|---|---|---|---|
+| Bàn chế tạo | `features/crafting/stations/art/workbench.png` | 120 × 96 | (60, 76) | 40 @ (0, −4) | 22 | default | ~0.56 nhân vật (ngang hông), dài ~1.1 nhân vật |
+| Lửa trại (đế đá + củi) | `…/stations/art/campfire.png` | 88 × 64 | (44, 36) | 28 @ (0, 0) | 8 | default | **ngọn lửa vẽ bằng code** (nhấp nháy, tắt khi hết củi) — không vẽ lửa vào ảnh |
+| Cối đá | `…/stations/art/stone_mill.png` | 88 × 92 | (44, 72) | 24 @ (0, −3) | 22 (cán 27) | default | |
+| Rương | `features/inventory/chest/art/chest_closed.png`, `chest_open.png` | 88 × 92 | (44, 76) | 30 @ (0, −4) | 24 (nắp mở 30) | closed / open | ~0.6 nhân vật; hai ảnh chung anchor, nắp mở cao hơn |
+| Giường | `features/survival/rest/art/bed.png` | 120 × 76 | (60, 60) | 40 @ (0, −4) | 17 | default | dài 40 ≈ 1.03 nhân vật; khung cho phép tới 52 (~1.3 nhân vật) nếu art cần |
+| Lều | `features/survival/rest/art/tent.png` | 120 × 116 | (60, 100) | 40 @ (0, 0) | 28 | default | khung cho phép tới 48 (~1.2 nhân vật — người chui vào được) |
+| Bảng thông báo | `features/interaction/examples/art/notice_board.png` | 104 × 108 | (52, 96) | 28 @ (0, −2) | 38 | default | ≈ cao nhân vật |
+| Trạm huấn luyện class | `features/classes/station/art/class_training_station.png` | 104 × 104 | (52, 92) | 22 @ (0, −3) | 34 | default | |
+| Túi đồ khi chết | `features/survival/death/art/death_bag.png` | 72 × 64 | (36, 52) | 20 @ (0, 0) | 17 | default | |
+| Bù nhìn | `entities/enemies/training_dummy/art/training_dummy.png` | 96 × 108 | (48, 96) | 16 @ (0, −2) | 38 | default | 1 ảnh tĩnh; **rung khi trúng đòn bằng code** |
+| Gốc cây (sau khi chặt) | `features/gathering/nodes/art/tree_stump.png` | 80 × 64 | (40, 48) | 20 @ (0, 0) | 12 | default | cây còn nguyên vẫn là `tree_oak_a` (môi trường) |
+| Đá khai thác | `…/nodes/art/rock_node_full.png`, `rock_node_depleted.png` | 128 × 104 | (64, 88) | 40 @ (0, −7) | 34 | full / depleted | `full` hiện là bản sao `rock_small.png`; collision + bóng mềm lấy từ prop `rock_small` |
+| Bụi mọng | `…/nodes/art/berry_bush_full.png`, `berry_bush_depleted.png` | 168 × 136 | (84, 120) | 51 @ (0, −6) | 50 | full / depleted | hiện là `bush_b.png` ± quả; collision + bóng mềm từ prop `bush_b` |
+| Khoai dại | `…/nodes/art/wild_potato_full.png`, `wild_potato_depleted.png` | 80 × 76 | (40, 60) | 24 @ (0, 0) | 20 | full / depleted | bóng code chỉ hiện khi còn |
+| Đất đã cày | `features/farming/art/soil_tilled.png` | 144 × 80 | (72, 40) | 1 ô lưới (64 × 32) @ tâm ô | 0 | default | ảnh **đất khô**; ướt = cùng ảnh × `FarmField.wet_soil_tint` (không có ảnh riêng) |
+| Cây trồng | `features/farming/art/crop_<id>_stage_<n>.png` | 144 × 120 | (72, 92) | 1 ô lưới @ tâm ô | `mature_height` (lúa 20, khoai 12, mọng 16) | `stage_0` … `stage_<stages−1>` (đọc `CropDefinition.stages`) | ảnh phủ cả ô (4 khóm trong ô); thêm cây / giai đoạn trong data → chạy tool sinh thêm khuôn |
+| Icon item | `features/items/icons/<id>.png` | 128 × 128 | — | — | — | — | ô túi đồ: 38 px viewport gốc = ~63 px ở cửa sổ 1920 × 1080 → icon 128 thu nhỏ (mipmap) nên nét; vật phẩm trên đất: icon thu còn 19.2 px world + bóng code |
+
+Danh sách gen + prompt: [art_requests_batch2.md](art_requests_batch2.md).

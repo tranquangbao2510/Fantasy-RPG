@@ -1,7 +1,9 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene format=3]
 
 [ext_resource type="Script" path="res://features/crafting/stations/workbench.gd" id="1_bench"]
 [ext_resource type="Script" path="res://world/environment/elevation/elevation_agent.gd" id="2_agent"]
+[ext_resource type="Script" path="res://core/object_art/object_shadow.gd" id="m7_shadow"]
+[ext_resource type="Script" path="res://core/object_art/object_sprite.gd" id="m7_sprite"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_point"]
 radius = 12.0
@@ -19,33 +21,13 @@ interaction_prompt = "Chế tạo"
 
 [node name="Visual" type="Node2D" parent="."]
 
-[node name="Shadow" type="Polygon2D" parent="Visual"]
-color = Color(0, 0, 0, 0.35)
+[node name="Shadow" type="Node2D" parent="Visual"]
+script = ExtResource("m7_shadow")
 polygon = PackedVector2Array(-24, 0, -14, -7, 14, -7, 24, 0, 14, 7, -14, 7)
 
-[node name="LegL" type="Polygon2D" parent="Visual"]
-color = Color(0.33, 0.21, 0.11, 1)
-polygon = PackedVector2Array(-18, 0, -15, 0, -15, -14, -18, -14)
-
-[node name="LegR" type="Polygon2D" parent="Visual"]
-color = Color(0.33, 0.21, 0.11, 1)
-polygon = PackedVector2Array(15, 0, 18, 0, 18, -14, 15, -14)
-
-[node name="Top" type="Polygon2D" parent="Visual"]
-color = Color(0.58, 0.39, 0.22, 1)
-polygon = PackedVector2Array(-22, -14, -12, -21, 22, -21, 12, -14)
-
-[node name="Front" type="Polygon2D" parent="Visual"]
-color = Color(0.44, 0.29, 0.16, 1)
-polygon = PackedVector2Array(-22, -14, 12, -14, 22, -21, 22, -18, 12, -11, -22, -11)
-
-[node name="Saw" type="Polygon2D" parent="Visual"]
-color = Color(0.78, 0.8, 0.84, 1)
-polygon = PackedVector2Array(-12, -18, -2, -18, -2, -16, -12, -16)
-
-[node name="Hammer" type="Polygon2D" parent="Visual"]
-color = Color(0.3, 0.3, 0.33, 1)
-polygon = PackedVector2Array(6, -20, 12, -20, 12, -17, 10, -17, 10, -15, 8, -15, 8, -17, 6, -17)
+[node name="Sprite" type="Sprite2D" parent="Visual"]
+script = ExtResource("m7_sprite")
+asset = &"workbench"
 
 [node name="InteractionShape" type="CollisionShape2D" parent="."]
 shape = SubResource("CircleShape2D_point")

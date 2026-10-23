@@ -108,6 +108,7 @@ func _get_drag_data(_at_position: Vector2) -> Variant:
 	preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	preview.size = SIZE * 0.8
 	preview.modulate = Color(1, 1, 1, 0.8)
+	preview.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	set_drag_preview(preview)
 	return {"slot_view": self}
 

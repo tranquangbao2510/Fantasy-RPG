@@ -11,7 +11,8 @@ extends Interactable
 ##   5. cây đang lớn, không cầm bình tưới → báo trạng thái (giai đoạn, ướt / khô).
 ##   Ô cỏ chỉ là mục tiêu tương tác khi cầm cuốc đất, đất trống chỉ khi có hạt (can_interact).
 ## Luật qua ngày (FarmLayer gọi advance_day lúc 6:00): xem advance_day().
-## Hình: cây vẽ ở đây (_draw, Y-sort cùng Player); đất (cày / ướt / khô) do FarmField vẽ ở lớp dưới.
+## Hình (TASK M7): cây là ObjectSprite `crop_<id>` trạng thái `stage_<giai đoạn>` (Y-sort cùng Player, ảnh phủ cả ô);
+## đất (cày / ướt / khô) do FarmField vẽ ở lớp dưới.
 
 ## Trạng thái đổi (vẽ lại đất, cập nhật lời nhắc).
 signal changed(plot: FarmPlot)
@@ -31,11 +32,9 @@ var watered_day: int = 0
 var dry_days: int = 0
 ## Số lần qua 6:00 đất cày bỏ trống (chưa gieo).
 var fallow_days: int = 0
-## Vị trí các khóm cây trong ô (so với tâm ô), vẽ từ sau ra trước. FarmField đặt theo cỡ ô (TASK M6: ô = 1 ô lưới iso →
-## 4 khóm); mặc định một khóm ở tâm.
-var clump_offsets: PackedVector2Array = PackedVector2Array([Vector2.ZERO])
 
 var _actor: Node2D
+var _crop_sprite: ObjectSprite
 
 
 func _init() -> void:
@@ -43,6 +42,10 @@ func _init() -> void:
 	collision_mask = 0
 	monitoring = false
 	interaction_name = "Ô ruộng"
+	_crop_sprite = ObjectSprite.new()
+	_crop_sprite.name = "Crop"
+	_crop_sprite.visible = false
+	add_child(_crop_sprite)
 
 
 func _ready() -> void:
@@ -306,33 +309,20 @@ func load_plot_state(state: Dictionary, book: CropBook) -> void:
 	_changed()
 
 
-func _draw() -> void:
-	if crop == null:
-		return
-	for offset: Vector2 in clump_offsets:
-		_draw_clump(offset)
+## Ảnh cây hiện tại (ẩn khi ô không có cây).
+func get_crop_sprite() -> ObjectSprite:
+	return _crop_sprite
 
 
-## Một khóm cây. Mầm: vài lá nhỏ; lớn dần: thêm thân / lá; chín: thêm bông / quả / củ màu fruit_color.
-func _draw_clump(offset: Vector2) -> void:
-	var stage: int = get_stage()
-	var color: Color = crop.get_stage_color(stage)
-	var ratio: float = float(stage + 1) / crop.stages
-	var height: float = crop.mature_height * ratio
-	var spread: float = 3.0 + 5.0 * ratio
-	var blades: int = 2 + stage
-	for k: int in blades:
-		var x: float = lerpf(-spread, spread, float(k) / maxf(1.0, blades - 1))
-		var top: Vector2 = offset + Vector2(x * 0.6, -height * (0.75 + 0.25 * float(k % 2)))
-		draw_colored_polygon(PackedVector2Array([offset + Vector2(x - 1.2, 0), offset + Vector2(x + 1.2, 0), top]), color)
-	if is_mature():
-		for k: int in 3:
-			var at: Vector2 = offset + Vector2(lerpf(-spread, spread, k / 2.0) * 0.6, -height * 0.8)
-			draw_circle(at, 2.2, crop.fruit_color)
+## Cập nhật ảnh cây theo trạng thái (FarmLayer gọi sau advance_day).
+func refresh_visual() -> void:
+	_crop_sprite.visible = crop != null
+	if crop != null:
+		_crop_sprite.set_asset_state(StringName("crop_%s" % crop.id), StringName("stage_%d" % get_stage()))
 
 
 func _changed() -> void:
-	queue_redraw()
+	refresh_visual()
 	changed.emit(self)
 
 

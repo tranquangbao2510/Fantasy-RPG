@@ -40,6 +40,10 @@ enum MovementMode {
 
 ## Nhìn trước bao nhiêu giây khi tránh vùng sáng.
 const LIGHT_LOOKAHEAD: float = 0.3
+## Ràng buộc cứng kéo quái sợ sáng ra ngoài mép vùng sáng thêm chừng này (px mặt đất) để contains() chắc chắn false.
+const LIGHT_EDGE_EPSILON: float = 0.05
+## Số hướng thử quanh vùng sáng khi điểm mép ngay bên ngoài không nằm trên navmesh.
+const LIGHT_EDGE_SAMPLES: int = 48
 
 @export var target: Node2D
 @export var movement_mode: MovementMode = MovementMode.CHASE
@@ -152,7 +156,12 @@ func _physics_process(delta: float) -> void:
 	_set_state(_think(delta))
 	# Knockback cộng vào velocity rồi đi qua move_and_slide() nên vật cản vẫn chặn.
 	velocity += _knockback.get_velocity()
+	# _avoid_light chỉ là nhìn trước; knockback / trượt theo va chạm / tách bầy vẫn có thể đẩy vào vùng sáng. Đang ở
+	# trong từ trước (lửa trại vừa nhóm đè lên) thì không kéo — AI tự đi ra (_light_escape), tránh dịch chuyển xa.
+	var was_outside: bool = light_averse and VisionLight.find_safe_light(_scene_root(), global_position) == null
 	move_and_slide()
+	if was_outside:
+		_keep_out_of_light()
 
 
 func get_state() -> State:
@@ -203,6 +212,13 @@ func get_detection_radius() -> float:
 
 func get_ground_squash() -> float:
 	return _ground_squash
+
+
+## Đặt seed cho bộ ngẫu nhiên (test tất định): tính lại các giá trị _ready đã bốc ngẫu nhiên.
+func set_rng_seed(rng_seed: int) -> void:
+	_rng.seed = rng_seed
+	_circle_angle = _rng.randf() * TAU
+	_hover_sign = 1.0 if _rng.randf() < 0.5 else -1.0
 
 
 ## Reset thử nghiệm: về vị trí spawn, hồi đầy HP, hủy đòn đang đánh.
@@ -432,6 +448,72 @@ func _avoid_light(ground_dir: Vector2) -> Vector2:
 	if tangent.length() < 0.2:
 		tangent = outward.orthogonal() * (1.0 if ground_dir.cross(outward) <= 0.0 else -1.0)
 	return tangent.normalized()
+
+
+## Ràng buộc cứng sau khi di chuyển (TASK M7-fix): vừa bước vào vùng sáng an toàn (margin 0) → kéo ra đúng mép theo
+## hướng ra ngoài trên mặt đất và bỏ thành phần vận tốc hướng vào trong. Điểm mép phải nằm trên navmesh tầng mình và
+## tới được theo gần như đường thẳng (không xuyên tường); không thì lấy điểm navmesh gần nhất ngoài vùng sáng.
+## Map chưa có navmesh → đi tới mép bằng move_and_collide (vật cản vẫn chặn).
+func _keep_out_of_light() -> void:
+	var light: VisionLight = VisionLight.find_safe_light(_scene_root(), global_position)
+	if light == null:
+		return
+	var squash: float = light.ground_squash
+	var rel: Vector2 = GroundSpace.to_ground(global_position - light.global_position, squash)
+	var outward: Vector2 = rel.normalized() if rel.length() > 0.01 else Vector2.RIGHT
+	var edge: Vector2 = _light_edge_point(light, outward)
+	if _has_navmesh():
+		var target_point: Vector2 = edge if _straight_navmesh_reach(edge) else _nearest_navmesh_outside(light, outward)
+		if target_point == Vector2.INF:
+			return
+		global_position = target_point
+		outward = GroundSpace.direction(target_point - light.global_position, squash)
+	else:
+		move_and_collide(edge - global_position)
+	velocity = _without_inward(velocity, outward, squash)
+	_knockback.set_velocity(_without_inward(_knockback.get_velocity(), outward, squash))
+
+
+## Vận tốc màn hình bỏ thành phần (mặt đất) ngược hướng `outward`.
+func _without_inward(screen_velocity: Vector2, outward: Vector2, squash: float) -> Vector2:
+	var ground_velocity: Vector2 = GroundSpace.to_ground(screen_velocity, squash)
+	var inward: float = ground_velocity.dot(outward)
+	return GroundSpace.to_screen(ground_velocity - outward * inward, squash) if inward < 0.0 else screen_velocity
+
+
+func _light_edge_point(light: VisionLight, ground_dir: Vector2) -> Vector2:
+	return light.global_position + GroundSpace.to_screen(ground_dir * (light.radius + LIGHT_EDGE_EPSILON), light.ground_squash)
+
+
+func _has_navmesh() -> bool:
+	return _nav != null and is_inside_tree() and not NavigationServer2D.map_get_path(get_world_2d().navigation_map,
+		global_position, global_position, true, _nav.navigation_layers).is_empty()
+
+
+## Điểm nằm trên navmesh tầng mình và đường tìm từ vị trí hiện tại tới đó gần như thẳng (không vòng qua vật cản).
+func _straight_navmesh_reach(point: Vector2) -> bool:
+	var path: PackedVector2Array = NavigationServer2D.map_get_path(get_world_2d().navigation_map, global_position, point, true,
+		_nav.navigation_layers)
+	if path.is_empty() or path[path.size() - 1].distance_to(point) > 0.5:
+		return false
+	var length: float = global_position.distance_to(path[0])
+	for i: int in range(1, path.size()):
+		length += path[i - 1].distance_to(path[i])
+	return length <= global_position.distance_to(point) * 1.2 + 1.0
+
+
+## Điểm navmesh (tới được, tầng mình) gần vị trí hiện tại nhất nằm ngoài vùng sáng: thử các hướng quanh mép, mỗi điểm
+## kéo về navmesh; INF nếu không có điểm nào.
+func _nearest_navmesh_outside(light: VisionLight, outward: Vector2) -> Vector2:
+	var best: Vector2 = Vector2.INF
+	for i: int in LIGHT_EDGE_SAMPLES:
+		var step: float = TAU / LIGHT_EDGE_SAMPLES * ceilf(i / 2.0) * (1.0 if i % 2 == 0 else -1.0)
+		var candidate: Vector2 = _snap_to_navmesh(_light_edge_point(light, outward.rotated(step)))
+		if light.contains(candidate):
+			continue
+		if best == Vector2.INF or candidate.distance_to(global_position) < best.distance_to(global_position):
+			best = candidate
+	return best
 
 
 ## Hướng (mặt đất) cần lùi để thoát ánh sáng; ZERO nếu không bị ánh sáng đe dọa.

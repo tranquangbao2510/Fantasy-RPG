@@ -25,6 +25,11 @@ func get_velocity() -> Vector2:
 	return _velocity
 
 
+## Thay xung lực đang giảm dần (vd. bỏ thành phần đẩy vào vùng cấm — Enemy._keep_out_of_light).
+func set_velocity(value: Vector2) -> void:
+	_velocity = value
+
+
 func clear() -> void:
 	_velocity = Vector2.ZERO
 

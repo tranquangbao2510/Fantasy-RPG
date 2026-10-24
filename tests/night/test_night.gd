@@ -430,16 +430,23 @@ func _test_shade_light() -> void:
 	await _set_time(22)
 	var fire: Campfire = _layer.spawn_deployed(_bag().database.get_item(&"campfire"), _player.global_position + Vector2(0, -24), 0) as Campfire
 	await frames(2)
-	var radius: float = fire.get_light().radius
+	var light: VisionLight = fire.get_light()
+	var radius: float = light.radius
 	var shade: Enemy = _spawn(&"shade", _around(radius + 50.0, 0.3, fire.global_position))
+	shade.set_rng_seed(1)  # tất định; seed 1 lượn phía bắc — phía tâm VisionLight lệch (0, -4) so với lửa trại
 	shade.detection_range = 2000.0  # chắc chắn đuổi Player đứng trong vùng sáng
+	# Đo từ tâm VisionLight (không phải tâm lửa trại) đúng như luật: không frame nào light.contains(vị trí).
 	var nearest: float = INF
+	var inside_frames: int = 0
 	var states: Dictionary = {}
 	for i: int in 420:
 		await physics_frame
-		nearest = minf(nearest, _dist(shade.global_position, fire.global_position))
+		nearest = minf(nearest, _dist(shade.global_position, light.global_position))
+		if light.contains(shade.global_position):
+			inside_frames += 1
 		states[shade.get_state()] = true
-	check("shade_never_enters_light", nearest >= radius - 1.0, "gần nhất %.1f / bán kính %.0f" % [nearest, radius])
+	check("shade_never_enters_light", inside_frames == 0 and nearest >= radius,
+		"gần nhất %.2f / bán kính %.0f, %d frame trong vùng sáng" % [nearest, radius, inside_frames])
 	check("shade_hovers_at_edge", nearest < radius + shade.light_margin + 30.0 and states.has(Enemy.State.AVOID_LIGHT),
 		"%.1f %s" % [nearest, states.keys()])
 	var map: RID = _world.get_world_2d().navigation_map
@@ -447,6 +454,21 @@ func _test_shade_light() -> void:
 	check("shade_hover_point_on_navmesh", hover != Vector2.INF and NavigationServer2D.map_get_closest_point(map, hover).distance_to(hover) < 1.0
 		and not fire.get_light().contains(hover), "%s" % hover)
 	check("shade_alert_signal", _alerts > 0)
+	# Bị đẩy vào trong (knockback hướng vào tâm, mạnh hơn khoảng hở tới mép): sau 1 frame vẫn ở ngoài, trên navmesh,
+	# và vận tốc không còn thành phần hướng vào trong.
+	var outward: Vector2 = Vector2.from_angle(0.3)
+	shade.global_position = light.global_position + GroundSpace.to_screen(outward * (radius + 2.0), S)
+	var knockback: KnockbackComponent = shade.get_node(^"KnockbackComponent") as KnockbackComponent
+	knockback.set_velocity(GroundSpace.to_screen(-outward * 600.0, S))
+	await physics_frame
+	var pushed: Vector2 = shade.global_position
+	var out_dir: Vector2 = GroundSpace.direction(pushed - light.global_position, S)
+	var inward_speed: float = maxf(-GroundSpace.to_ground(shade.velocity, S).dot(out_dir),
+		-GroundSpace.to_ground(knockback.get_velocity(), S).dot(out_dir))
+	check("shade_pushed_stays_out", not light.contains(pushed) and _dist(pushed, light.global_position) < radius + 3.0
+		and NavigationServer2D.map_get_closest_point(map, pushed).distance_to(pushed) < 1.0 and inward_speed <= 0.01,
+		"%.2f / %.0f, tốc độ vào trong %.2f" % [_dist(pushed, light.global_position), radius, inward_speed])
+	knockback.clear()
 	# Lửa trại vừa nhóm cạnh Shade: nó đi ra khỏi vùng sáng.
 	shade.global_position = fire.global_position + GroundSpace.to_screen(Vector2(radius * 0.8, 0), S)
 	await frames(40)
